@@ -10,6 +10,7 @@ import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 public class MiniMapItem implements CustomItem, UncraftableItem {
@@ -37,6 +38,7 @@ public class MiniMapItem implements CustomItem, UncraftableItem {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event, ItemContext context) {
+        if (event.getHand() != EquipmentSlot.HAND) return;
         switch (event.getAction()) {
         case RIGHT_CLICK_BLOCK:
         case RIGHT_CLICK_AIR:
