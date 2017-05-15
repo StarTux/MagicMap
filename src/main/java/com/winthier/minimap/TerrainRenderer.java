@@ -64,6 +64,7 @@ public final class TerrainRenderer extends MapRenderer {
     public void render(MapView view, MapCanvas canvas, Player player) {
         Session session = plugin.getSession(player);
         if (session.getLastRender() != 0 && (player.isGliding() || !isHoldingMap(player))) return;
+        if (player.getWorld().getEnvironment() != World.Environment.NORMAL) return;
         Storage storage = (Storage)session.getStorage().get(Storage.class);
         Location playerLocation = player.getLocation();
         Block playerBlock = playerLocation.getBlock();
