@@ -1,0 +1,15 @@
+name: MiniMap
+description: Dynamic map item
+author: StarTux
+version: 0.1
+main: com.winthier.minimap.MiniMapPlugin
+depend: [ Custom ]
+softdepend: [ Claims ]
+commands:
+  minimap:
+    description: Debug command
+    permission: minimap.minimap
+permissions:
+  minimap.minimap:
+    description: Use the /minimap command
+    default: op

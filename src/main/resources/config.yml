@@ -1,0 +1,9 @@
+Debug: false
+MapID: 0
+Give: true
+Persist: true
+item:
+  DisplayName: Mini Map
+  Category: Orientation
+  Description: This map centers on your player and follows as you move around the worlds of Winthier.  It displays claims and other useful information.
+  Usage: Right-click to open the help menu.
