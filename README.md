@@ -1,0 +1,2 @@
+# MiniMap
+Dynamic map item
