@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Value;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -110,7 +111,9 @@ public final class TerrainRenderer extends MapRenderer {
                             int x = ax + px;
                             int z = az + pz;
                             Block block = getHighestBlockAt(world, x, z, cache);
-                            while (block.getY() >= 0 && block.getType() != Material.AIR || block.getLightFromSky() > 0) block = block.getRelative(0, -1, 0);
+                            while (block.getY() >= 0 && (block.getType() != Material.AIR || block.getLightFromSky() > 0)) {
+                                block = block.getRelative(0, -1, 0);
+                            }
                             while (block.getY() > 0 && block.getType() == Material.AIR) block = block.getRelative(0, -1, 0);
                             if (block.getY() < 0) {
                                 canvas.setPixel(px, pz, (byte)Colors.BLACK);
@@ -156,6 +159,7 @@ public final class TerrainRenderer extends MapRenderer {
         cursors.addCursor((byte)((playerBlock.getX() - cx) * 2), (byte)((playerBlock.getZ() - cz) * 2), (byte)directionOf(playerLocation), MapCursor.Type.WHITE_POINTER.getValue());
         for (Player nearby: player.getWorld().getPlayers()) {
             if (nearby.equals(player)) continue;
+            if (nearby.getGameMode() == GameMode.SPECTATOR) continue;
             Location loc = nearby.getLocation();
             int px = (loc.getBlockX() - cx) * 2;
             int pz = (loc.getBlockZ() - cz) * 2;
