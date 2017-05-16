@@ -18,7 +18,6 @@ public class DebugRenderer extends MapRenderer {
     public void render(MapView view, MapCanvas canvas, Player player) {
         if (plugin.getSession(player).getStorage().get(Flag.class) != null) return;
         plugin.getSession(player).getStorage().put(Flag.class, new Flag());
-        player.sendMessage("Debug :D");
         for (int dz = 0; dz < 4; dz += 1) {
             for (int dx = 0; dx < 128; dx += 1) {
                 if (dz < 2) {
