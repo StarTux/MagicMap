@@ -37,6 +37,7 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         setupConfiguration();
+        getServer().getPluginManager().registerEvents(this, this);
     }
 
     @Override
@@ -81,7 +82,7 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
         }
         mapView.addRenderer(new TerrainRenderer(this));
         if (debug) mapView.addRenderer(new DebugRenderer(this));
-        getServer().getPluginManager().registerEvents(this, this);
+        sessions.clear();
     }
 
     Session getSession(Player player) {
