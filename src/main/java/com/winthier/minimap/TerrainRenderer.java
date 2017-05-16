@@ -85,70 +85,18 @@ public final class TerrainRenderer extends MapRenderer {
         int cz = az + 64;
         if (needsRedraw) {
             World world = player.getWorld();
-            Map<XZ, Block> cache = new HashMap<>();
-            if (playerBlock.getY() > 64 || playerBlock.getLightFromSky() > 0) {
+            if (playerBlock.getY() < world.getHighestBlockYAt(playerBlock.getX(), playerBlock.getZ()) - 4
+                && playerBlock.getLightFromSky() == 0
+                && playerBlock.getRelative(0, 1, 0).getLightFromSky() == 0) {
+                drawCaveMap(canvas, world, ax, az);
+            } else {
+                Map<XZ, Block> cache = new HashMap<>();
                 for (int pz = 0; pz < 128; pz += 1) {
                     for (int px = 0; px < 128; px += 1) {
                         int x = ax + px;
                         int z = az + pz;
                         Block block = getHighestBlockAt(world, x, z, cache);
                         canvas.setPixel(px, pz, (byte)colorOf(block, px, pz, cache));
-                    }
-                }
-            } else {
-                for (int pz = 0; pz < 128; pz += 1) {
-                    for (int px = 0; px < 128; px += 1) {
-                        int dx = px - 64;
-                        int dz = pz - 64;
-                        int dist = dx * dx + dz * dz;
-                        boolean gridX = px % 2 == 0;
-                        boolean gridZ = pz % 2 == 0;
-                        if (dist >= 60 * 60) {
-                            canvas.setPixel(px, pz, (byte)Colors.BLACK);
-                        } else if (dist >= 40 * 40 && (gridX ^ gridZ)) {
-                            canvas.setPixel(px, pz, (byte)Colors.BLACK);
-                        } else {
-                            int x = ax + px;
-                            int z = az + pz;
-                            Block block = getHighestBlockAt(world, x, z, cache);
-                            while (block.getY() >= 0 && (block.getType() != Material.AIR || block.getLightFromSky() > 0)) {
-                                block = block.getRelative(0, -1, 0);
-                            }
-                            while (block.getY() > 0 && block.getType() == Material.AIR) block = block.getRelative(0, -1, 0);
-                            if (block.getY() < 0) {
-                                canvas.setPixel(px, pz, (byte)Colors.BLACK);
-                            } else {
-                                int color;
-                                int y = block.getY();
-                                switch (block.getType()) {
-                                case LAVA: case STATIONARY_LAVA:
-                                    color = MapPalette.RED + 3;
-                                    break;
-                                case WATER: case STATIONARY_WATER:
-                                    color = MapPalette.BLUE + 3;
-                                    break;
-                                default:
-                                    if (y < 8) {
-                                        color = MapPalette.DARK_GREEN + 3;
-                                    } else if (y < 16) {
-                                        color = MapPalette.DARK_GREEN;
-                                    } else if (y < 24) {
-                                        color = MapPalette.DARK_GREEN + 1;
-                                    } else if (y < 32) {
-                                        color = MapPalette.DARK_GREEN + 2;
-                                    } else if (y < 40) {
-                                        color = Colors.YELLOW + 3;
-                                    } else if (y < 48) {
-                                        color = Colors.YELLOW;
-                                    } else if (y < 56) {
-                                        color = Colors.YELLOW + 1;
-                                    } else {
-                                        color = Colors.YELLOW + 2;
-                                    }
-                                }
-                                canvas.setPixel(px, pz, (byte)color);
-                            }
-                        }
                     }
                 }
             }
@@ -167,6 +115,67 @@ public final class TerrainRenderer extends MapRenderer {
             cursors.addCursor((byte)px, (byte)pz, (byte)directionOf(loc), MapCursor.Type.BLUE_POINTER.getValue());
         }
         canvas.setCursors(cursors);
+    }
+
+    void drawCaveMap(MapCanvas canvas, World world, int ax, int az) {
+        Map<XZ, Block> cache = new HashMap<>();
+        for (int pz = 0; pz < 128; pz += 1) {
+            for (int px = 0; px < 128; px += 1) {
+                int dx = px - 64;
+                int dz = pz - 64;
+                int dist = dx * dx + dz * dz;
+                if (dist >= 60 * 60) {
+                    if ((px < 1 || px > 126 || pz < 1 || pz > 126) && (px % 2 == 0 ^ pz % 2 == 0)) {
+                        canvas.setPixel(px, pz, (byte)MapPalette.TRANSPARENT);
+                    } else {
+                        canvas.setPixel(px, pz, (byte)Colors.BLACK);
+                    }
+                } else if (dist >= 40 * 40 && (px % 2 == 0 ^ pz % 2 == 0)) {
+                    canvas.setPixel(px, pz, (byte)Colors.BLACK);
+                } else {
+                    int x = ax + px;
+                    int z = az + pz;
+                    Block block = getHighestBlockAt(world, x, z, cache);
+                    while (block.getY() >= 0 && (block.getType() != Material.AIR || block.getLightFromSky() > 0)) {
+                        block = block.getRelative(0, -1, 0);
+                    }
+                    while (block.getY() > 0 && block.getType() == Material.AIR) block = block.getRelative(0, -1, 0);
+                    if (block.getY() < 0) {
+                        canvas.setPixel(px, pz, (byte)Colors.BLACK);
+                    } else {
+                        int color;
+                        int y = block.getY();
+                        switch (block.getType()) {
+                        case LAVA: case STATIONARY_LAVA:
+                            color = MapPalette.RED + 3;
+                            break;
+                        case WATER: case STATIONARY_WATER:
+                            color = MapPalette.BLUE + 3;
+                            break;
+                        default:
+                            if (y < 8) {
+                                color = MapPalette.DARK_GREEN + 3;
+                            } else if (y < 16) {
+                                color = MapPalette.DARK_GREEN;
+                            } else if (y < 24) {
+                                color = MapPalette.DARK_GREEN + 1;
+                            } else if (y < 32) {
+                                color = MapPalette.DARK_GREEN + 2;
+                            } else if (y < 40) {
+                                color = Colors.YELLOW + 3;
+                            } else if (y < 48) {
+                                color = Colors.YELLOW;
+                            } else if (y < 56) {
+                                color = Colors.YELLOW + 1;
+                            } else {
+                                color = Colors.YELLOW + 2;
+                            }
+                        }
+                        canvas.setPixel(px, pz, (byte)color);
+                    }
+                }
+            }
+        }
     }
 
     private static int directionOf(Location location) {
