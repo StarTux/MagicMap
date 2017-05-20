@@ -126,6 +126,7 @@ public final class TerrainRenderer extends MapRenderer {
             cursors.addCursor((byte)px, (byte)pz, (byte)directionOf(loc), MapCursor.Type.BLUE_POINTER.getValue());
         }
         canvas.setCursors(cursors);
+        if (plugin.getCreativeRenderer() != null) plugin.getCreativeRenderer().render(canvas, player, ax, az);
     }
 
     void drawCaveMap(MapCanvas canvas, World world, int ax, int az) {

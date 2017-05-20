@@ -76,6 +76,7 @@ public final class Font4x4 {
 
     // Return width in pixels
     public int print(MapCanvas canvas, String msg, int x, int y, int width, int height, int color, int shadowColor) {
+        if (msg == null) return 0;
         msg = msg.toUpperCase();
         int length = 0;
         for (int i = 0; i < msg.length(); i += 1) {

@@ -36,6 +36,8 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
     private MiniMapItem miniMapItem;
     private MapView mapView;
     private Font4x4 font4x4;
+    // Plugins
+    private CreativeRenderer creativeRenderer;
 
     @Override
     public void onEnable() {
@@ -43,6 +45,9 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
         readConfiguration();
         getServer().getPluginManager().registerEvents(this, this);
         font4x4 = new Font4x4(this);
+        if (getServer().getPluginManager().getPlugin("Creative") != null) {
+            creativeRenderer = new CreativeRenderer(this);
+        }
     }
 
     @Override
