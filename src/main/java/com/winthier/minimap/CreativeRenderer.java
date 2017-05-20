@@ -19,14 +19,14 @@ final class CreativeRenderer {
         String worldName = player.getWorld().getName();
         for (Warp warp: CreativePlugin.getInstance().getWarps().values()) {
             if (!worldName.equals(warp.getWorld())) continue;
-            int x = (int)warp.getX() - ax + 2;
-            int y = (int)warp.getZ() - az + 2;
+            int x = (int)warp.getX() - ax - (plugin.getFont4x4().widthOf(warp.getDisplayName()) / 2);
+            int y = (int)warp.getZ() - az - 2;
             if (x < 0 || x > 127) continue;
             if (y < 0 || y > 127) continue;
-            MapCursor cursor = Util.makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, warp.getLocation(), ax, az);
-            MapCursorCollection cursors = canvas.getCursors();
-            cursors.addCursor(cursor);
-            canvas.setCursors(cursors);
+            // MapCursor cursor = Util.makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, warp.getLocation(), ax, az);
+            // MapCursorCollection cursors = canvas.getCursors();
+            // cursors.addCursor(cursor);
+            // canvas.setCursors(cursors);
             plugin.getFont4x4().print(canvas, warp.getDisplayName(), x, y, -1, -1, (byte)MapPalette.WHITE + 2, (byte)MapPalette.DARK_GRAY + 3);
         }
     }

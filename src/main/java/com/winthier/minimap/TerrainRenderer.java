@@ -112,6 +112,14 @@ public final class TerrainRenderer extends MapRenderer {
             plugin.getFont4x4().print(canvas, worldName, 1, 0, -1, -1, MapPalette.PALE_BLUE + 2, shadowColor);
             plugin.getFont4x4().print(canvas, mapModeName, 127 - plugin.getFont4x4().widthOf(mapModeName), 0, -1, -1, MapPalette.RED, shadowColor);
             if (claimRenderer != null) claimRenderer.render(plugin, canvas, player, ax, az);
+            for (Marker marker: plugin.getMarkers()) {
+                if (!marker.getWorld().equals(player.getWorld().getName())) continue;
+                int x = marker.getX() - ax - plugin.getFont4x4().widthOf(marker.getMessage()) / 2;
+                int z = marker.getZ() - az - 2;
+                if (x < 0 || x > 127) continue;
+                if (z < 5 || z > 127) continue;
+                plugin.getFont4x4().print(canvas, marker.getMessage(), x, z, -1, -1, MapPalette.WHITE + 2, MapPalette.DARK_GRAY + 3);
+            }
             session.setLastRender(System.currentTimeMillis());
         }
         MapCursorCollection cursors = new MapCursorCollection();
