@@ -12,6 +12,7 @@ import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -28,16 +29,20 @@ import org.bukkit.scheduler.BukkitRunnable;
 @Getter
 public final class MiniMapPlugin extends JavaPlugin implements Listener {
     private final HashMap<UUID, Session> sessions = new HashMap<>();
+    private final HashMap<String, String> worldNames = new HashMap<>();
     private HashSet<UUID> given;
     private int mapId;
     private boolean debug, give, persist;
     private MiniMapItem miniMapItem;
     private MapView mapView;
+    private Font4x4 font4x4;
 
     @Override
     public void onEnable() {
-        setupConfiguration();
+        saveDefaultConfig();
+        readConfiguration();
         getServer().getPluginManager().registerEvents(this, this);
+        font4x4 = new Font4x4(this);
     }
 
     @Override
@@ -50,7 +55,7 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
     public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
         String cmd = args.length == 0 ? null : args[0].toLowerCase();
         if ("reload".equals(cmd)) {
-            setupConfiguration();
+            readConfiguration();
             sessions.clear();
             given = null;
             sender.sendMessage("MiniMap config reloaded");
@@ -69,7 +74,7 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
         }
     }
 
-    private void setupConfiguration() {
+    private void readConfiguration() {
         reloadConfig();
         resetMapView();
         mapId = getConfig().getInt("MapID");
@@ -83,6 +88,13 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
         mapView.addRenderer(new TerrainRenderer(this));
         if (debug) mapView.addRenderer(new DebugRenderer(this));
         sessions.clear();
+        worldNames.clear();
+        ConfigurationSection section = getConfig().getConfigurationSection("WorldNames");
+        if (section != null) {
+            for (String key: section.getKeys(false)) {
+                worldNames.put(key, section.getString(key));
+            }
+        }
     }
 
     Session getSession(Player player) {
@@ -117,7 +129,7 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onCustomRegister(CustomRegisterEvent event) {
-        setupConfiguration();
+        readConfiguration();
         miniMapItem = new MiniMapItem(this);
         event.addItem(miniMapItem);
     }
@@ -148,5 +160,12 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
                 sessions.remove(uuid);
             }
         }.runTask(this);
+    }
+
+    String getWorldName(String worldName) {
+        String result;
+        result = worldNames.get(worldName);
+        if (result != null) return result;
+        return worldName;
     }
 }

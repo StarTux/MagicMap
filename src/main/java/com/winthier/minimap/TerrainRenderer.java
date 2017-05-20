@@ -1,8 +1,6 @@
 package com.winthier.minimap;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Value;
@@ -85,13 +83,16 @@ public final class TerrainRenderer extends MapRenderer {
         int cz = az + 64;
         if (needsRedraw) {
             World world = player.getWorld();
-            if (playerBlock.getY() < world.getHighestBlockYAt(playerBlock.getX(), playerBlock.getZ()) - 4
+            boolean caveView = playerBlock.getY() < world.getHighestBlockYAt(playerBlock.getX(), playerBlock.getZ()) - 4
                 && playerBlock.getLightFromSky() == 0
-                && playerBlock.getRelative(0, 1, 0).getLightFromSky() == 0) {
+                && playerBlock.getRelative(0, 1, 0).getLightFromSky() == 0;
+            String mapModeName;
+            if (caveView) {
                 drawCaveMap(canvas, world, ax, az);
+                mapModeName = "Cave";
             } else {
                 Map<XZ, Block> cache = new HashMap<>();
-                for (int pz = 0; pz < 128; pz += 1) {
+                for (int pz = 5; pz < 128; pz += 1) {
                     for (int px = 0; px < 128; px += 1) {
                         int x = ax + px;
                         int z = az + pz;
@@ -99,7 +100,17 @@ public final class TerrainRenderer extends MapRenderer {
                         canvas.setPixel(px, pz, (byte)colorOf(block, px, pz, cache));
                     }
                 }
+                mapModeName = "Surface";
             }
+            for (int y = 0; y < 5; y += 1) {
+                for (int x = 0; x < 128; x += 1) {
+                    canvas.setPixel(x, y, (byte)Colors.BLACK);
+                }
+            }
+            final int shadowColor = MapPalette.DARK_GRAY + 3;
+            String worldName = plugin.getWorldName(player.getWorld().getName());
+            plugin.getFont4x4().print(canvas, worldName, 1, 0, -1, -1, MapPalette.PALE_BLUE + 2, shadowColor);
+            plugin.getFont4x4().print(canvas, mapModeName, 127 - plugin.getFont4x4().widthOf(mapModeName), 0, -1, -1, MapPalette.RED, shadowColor);
             if (claimRenderer != null) claimRenderer.render(plugin, canvas, player, ax, az);
             session.setLastRender(System.currentTimeMillis());
         }
@@ -119,7 +130,7 @@ public final class TerrainRenderer extends MapRenderer {
 
     void drawCaveMap(MapCanvas canvas, World world, int ax, int az) {
         Map<XZ, Block> cache = new HashMap<>();
-        for (int pz = 0; pz < 128; pz += 1) {
+        for (int pz = 5; pz < 128; pz += 1) {
             for (int px = 0; px < 128; px += 1) {
                 int dx = px - 64;
                 int dz = pz - 64;
@@ -261,7 +272,7 @@ public final class TerrainRenderer extends MapRenderer {
         case SANDSTONE: case SANDSTONE_STAIRS: return MapPalette.LIGHT_BROWN + shade;
         case RED_SANDSTONE: case RED_SANDSTONE_STAIRS: return Colors.PALE_RED + shade;
         case DIRT: case SOIL: case LOG: case LOG_2: return MapPalette.DARK_BROWN + shade;
-        case STONE: case COBBLESTONE: case GRAVEL: case SMOOTH_BRICK: case SMOOTH_STAIRS: return MapPalette.LIGHT_GRAY + shade;
+        case STONE: case COBBLESTONE: case MOSSY_COBBLESTONE: case GRAVEL: case SMOOTH_BRICK: case SMOOTH_STAIRS: return MapPalette.LIGHT_GRAY + shade;
         case ICE: case PACKED_ICE: return MapPalette.PALE_BLUE + shade;
         case SNOW: case SNOW_BLOCK: return MapPalette.WHITE + shade;
         case PUMPKIN: case JACK_O_LANTERN: return MapPalette.RED + shade;

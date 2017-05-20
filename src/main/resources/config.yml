@@ -7,3 +7,7 @@ item:
   Category: Orientation
   Description: This map centers on your player and follows as you move around the worlds of Winthier.  It displays claims and other useful information.
   Usage: Right-click to open the help menu.
+WorldNames:
+  world: Survival
+  world_nether: Nether
+  world_the_end: End

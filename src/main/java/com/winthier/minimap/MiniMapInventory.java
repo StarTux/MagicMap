@@ -16,7 +16,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 @Getter
-public class MiniMapInventory implements CustomInventory {
+public final class MiniMapInventory implements CustomInventory {
     private final MiniMapPlugin plugin;
     private final Player player;
     private final Inventory inventory;
