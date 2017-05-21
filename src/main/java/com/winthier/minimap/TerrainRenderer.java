@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Value;
+import org.bukkit.Color;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -17,6 +18,7 @@ import org.bukkit.map.MapCursorCollection;
 import org.bukkit.map.MapPalette;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
+import org.bukkit.material.Colorable;
 
 @Getter
 public final class TerrainRenderer extends MapRenderer {
@@ -299,6 +301,10 @@ public final class TerrainRenderer extends MapRenderer {
         case HUGE_MUSHROOM_1: return MapPalette.BROWN + shade;
         case HUGE_MUSHROOM_2: return MapPalette.RED + shade;
         case LAPIS_BLOCK: return MapPalette.BLUE + shade;
+        case WOOL:
+            Color c = ((Colorable)block.getState().getData()).getColor().getColor();
+            int result = MapPalette.matchColor(new java.awt.Color(c.getRed(), c.getGreen(), c.getBlue()));
+            return (result & ~0x3) + shade;
         default: return MapPalette.BROWN + shade;
         }
     }
