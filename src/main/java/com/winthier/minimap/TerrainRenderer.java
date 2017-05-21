@@ -289,7 +289,7 @@ public final class TerrainRenderer extends MapRenderer {
         case PUMPKIN: case JACK_O_LANTERN: return MapPalette.RED + shade;
         case CLAY: case CLAY_BRICK: case HARD_CLAY: return Colors.PALE_RED + shade;
         case QUARTZ_BLOCK: case QUARTZ_STAIRS: return MapPalette.WHITE + shade;
-        case WOOD: case BIRCH_WOOD_STAIRS: case DARK_OAK_STAIRS: case JUNGLE_WOOD_STAIRS: case SPRUCE_WOOD_STAIRS: case WOOD_STAIRS: case STEP: case WOOD_STEP: case DOUBLE_STEP: case WOOD_DOUBLE_STEP: case TRAP_DOOR: return MapPalette.BROWN + shade;
+        case WOOD: case BIRCH_WOOD_STAIRS: case DARK_OAK_STAIRS: case JUNGLE_WOOD_STAIRS: case SPRUCE_WOOD_STAIRS: case WOOD_STAIRS: case WOOD_STEP: case DOUBLE_STEP: case WOOD_DOUBLE_STEP: case TRAP_DOOR: return MapPalette.BROWN + shade;
         case STAINED_CLAY:
             switch (block.getData()) {
             case 0: return MapPalette.WHITE + shade;
@@ -298,9 +298,26 @@ public final class TerrainRenderer extends MapRenderer {
             case 15: return Colors.BLACK + shade;
             default: return Colors.PALE_RED + shade;
             }
+        case STEP:
+            switch (block.getData() & 0x7) {
+            case 0: return MapPalette.LIGHT_GRAY + shade; // Stone
+            case 1: return MapPalette.LIGHT_BROWN + shade; // Sandstone
+            case 2: return MapPalette.LIGHT_BROWN + shade; // Wood
+            case 3: return MapPalette.LIGHT_GRAY + shade; // Cobble
+            case 4: return Colors.PALE_RED + shade; // Brick
+            case 5: return MapPalette.LIGHT_GRAY + shade; // Stone Brick
+            case 6: return Colors.BLACK + shade; // Nether Brick
+            case 7: return MapPalette.WHITE + shade; // Quartz
+            default: return 0;
+            }
         case HUGE_MUSHROOM_1: return MapPalette.BROWN + shade;
         case HUGE_MUSHROOM_2: return MapPalette.RED + shade;
         case LAPIS_BLOCK: return MapPalette.BLUE + shade;
+        case EMERALD_BLOCK: return MapPalette.LIGHT_GREEN + shade;
+        case REDSTONE_BLOCK: return MapPalette.RED + shade;
+        case DIAMOND_BLOCK: return MapPalette.PALE_BLUE + shade;
+        case GOLD_BLOCK: return Colors.YELLOW + shade;
+        case IRON_BLOCK: return MapPalette.WHITE + shade;
         case WOOL:
             Color c = ((Colorable)block.getState().getData()).getColor().getColor();
             int result = MapPalette.matchColor(new java.awt.Color(c.getRed(), c.getGreen(), c.getBlue()));
