@@ -239,6 +239,8 @@ public final class TerrainRenderer extends MapRenderer {
             shade = 1;
         } else if (heightDiff > 0) {
             shade = 2;
+        } else if (heightDiff < -4) {
+            shade = 3;
         } else {
             shade = 0;
         }
