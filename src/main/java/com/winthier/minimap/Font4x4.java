@@ -66,8 +66,15 @@ public final class Font4x4 {
                 }
             }
             for (Pixel pixel: pixels) {
-                Pixel shadowPixel = new Pixel(pixel.x + 1, pixel.y);
-                if (!pixels.contains(shadowPixel)) shadowPixels.add(shadowPixel);
+                Pixel shadowPixel;
+                shadowPixel = new Pixel(pixel.x + 1, pixel.y);
+                if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) shadowPixels.add(shadowPixel);
+                shadowPixel = new Pixel(pixel.x, pixel.y + 1);
+                if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) shadowPixels.add(shadowPixel);
+                shadowPixel = new Pixel(pixel.x - 1, pixel.y);
+                if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) shadowPixels.add(shadowPixel);
+                shadowPixel = new Pixel(pixel.x, pixel.y - 1);
+                if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) shadowPixels.add(shadowPixel);
             }
             charMap.put(c, new Char(width, height, pixels, shadowPixels));
         }
