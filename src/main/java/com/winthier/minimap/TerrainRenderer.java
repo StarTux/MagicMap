@@ -116,10 +116,11 @@ public final class TerrainRenderer extends MapRenderer {
             if (claimRenderer != null) claimRenderer.render(plugin, canvas, player, ax, az);
             for (Marker marker: plugin.getMarkers()) {
                 if (!marker.getWorld().equals(player.getWorld().getName())) continue;
-                int x = marker.getX() - ax - plugin.getFont4x4().widthOf(marker.getMessage()) / 2;
+                int x = marker.getX() - ax;
                 int z = marker.getZ() - az - 2;
                 if (x < 0 || x > 127) continue;
                 if (z < 5 || z > 127) continue;
+                x -= plugin.getFont4x4().widthOf(marker.getMessage()) / 2;
                 plugin.getFont4x4().print(canvas, marker.getMessage(), x, z, -1, -1, MapPalette.WHITE + 2, MapPalette.DARK_GRAY + 3);
             }
             session.setLastRender(System.currentTimeMillis());
@@ -147,11 +148,7 @@ public final class TerrainRenderer extends MapRenderer {
                 int dz = pz - 64;
                 int dist = dx * dx + dz * dz;
                 if (dist >= 60 * 60) {
-                    if ((px < 1 || px > 126 || pz < 1 || pz > 126) && (px % 2 == 0 ^ pz % 2 == 0)) {
-                        canvas.setPixel(px, pz, (byte)MapPalette.TRANSPARENT);
-                    } else {
-                        canvas.setPixel(px, pz, (byte)Colors.BLACK);
-                    }
+                    canvas.setPixel(px, pz, (byte)Colors.BLACK);
                 } else if (dist >= 40 * 40 && (px % 2 == 0 ^ pz % 2 == 0)) {
                     canvas.setPixel(px, pz, (byte)Colors.BLACK);
                 } else {
@@ -161,7 +158,7 @@ public final class TerrainRenderer extends MapRenderer {
                     while (block.getY() >= 0 && (block.getType() != Material.AIR || block.getLightFromSky() > 0)) {
                         block = block.getRelative(0, -1, 0);
                     }
-                    while (block.getY() > 0 && block.getType() == Material.AIR) block = block.getRelative(0, -1, 0);
+                    while (block.getY() > 0 && !block.getType().isSolid() && !block.isLiquid()) block = block.getRelative(0, -1, 0);
                     if (block.getY() < 0) {
                         canvas.setPixel(px, pz, (byte)Colors.BLACK);
                     } else {
