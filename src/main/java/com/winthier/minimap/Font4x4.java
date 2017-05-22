@@ -66,7 +66,7 @@ public final class Font4x4 {
                 }
             }
             for (Pixel pixel: pixels) {
-                Pixel shadowPixel = new Pixel(pixel.x + 1, pixel.y + 1);
+                Pixel shadowPixel = new Pixel(pixel.x + 1, pixel.y);
                 if (!pixels.contains(shadowPixel)) shadowPixels.add(shadowPixel);
             }
             charMap.put(c, new Char(width, height, pixels, shadowPixels));
