@@ -23,6 +23,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.map.MapPalette;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -92,6 +93,12 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
             marker.setMessage(sb.toString());
             saveMarkers();
             player.sendMessage("Marker set");
+        } else if ("color".equals(cmd) && args.length == 2) {
+            int color = Integer.parseInt(args[1]);
+            sender.sendMessage(String.format("%d = (%d, %d, %d)", color,
+                                             MapPalette.getColor((byte)color).getRed(),
+                                             MapPalette.getColor((byte)color).getGreen(),
+                                             MapPalette.getColor((byte)color).getBlue()));
         } else {
             return false;
         }

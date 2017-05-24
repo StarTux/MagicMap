@@ -236,7 +236,7 @@ public final class TerrainRenderer extends MapRenderer {
             shade = 1;
         } else if (heightDiff > 0) {
             shade = 2;
-        } else if (heightDiff < -4) {
+        } else if (heightDiff < -3) {
             shade = 3;
         } else {
             shade = 0;
@@ -317,6 +317,7 @@ public final class TerrainRenderer extends MapRenderer {
         case DIAMOND_BLOCK: return MapPalette.PALE_BLUE + shade;
         case GOLD_BLOCK: return Colors.YELLOW + shade;
         case IRON_BLOCK: return MapPalette.WHITE + shade;
+        case MYCEL: return Colors.DARK_PURPLE + shade;
         case WOOL:
             Color c = ((Colorable)block.getState().getData()).getColor().getColor();
             int result = MapPalette.matchColor(new java.awt.Color(c.getRed(), c.getGreen(), c.getBlue()));

@@ -29,8 +29,10 @@ public class DebugRenderer extends MapRenderer {
         }
         for (int dx = 0; dx < 128; dx += 8) {
             int v = dx / 4;
-            while (v >= 10) v -= 10;
-            canvas.drawText(dx, 4, MinecraftFont.Font, "" + v);
+            // while (v >= 10) v -= 10;
+            int color = (dx / 8) % 2 == 0 ? MapPalette.WHITE + 2 : MapPalette.LIGHT_GRAY + 2;
+            plugin.getFont4x4().print(canvas, "" + v, dx, 5, -1, -1, color, Colors.BLACK);
+            // canvas.drawText(dx, 4, MinecraftFont.Font, "" + v);
         }
         player.sendMessage("" + (int)player.getLocation().getYaw() + " " + (int)player.getLocation().getPitch());
     }
