@@ -288,7 +288,7 @@ public final class TerrainRenderer extends MapRenderer {
         case PUMPKIN: case JACK_O_LANTERN: return MapPalette.RED + shade;
         case CLAY: case CLAY_BRICK: case HARD_CLAY: return Colors.PALE_RED + shade;
         case QUARTZ_BLOCK: case QUARTZ_STAIRS: return MapPalette.WHITE + shade;
-        case WOOD: case BIRCH_WOOD_STAIRS: case DARK_OAK_STAIRS: case JUNGLE_WOOD_STAIRS: case SPRUCE_WOOD_STAIRS: case WOOD_STAIRS: case WOOD_STEP: case DOUBLE_STEP: case WOOD_DOUBLE_STEP: case TRAP_DOOR: return MapPalette.BROWN + shade;
+        case WOOD: case BIRCH_WOOD_STAIRS: case DARK_OAK_STAIRS: case JUNGLE_WOOD_STAIRS: case SPRUCE_WOOD_STAIRS: case WOOD_STAIRS: case WOOD_STEP: case WOOD_DOUBLE_STEP: case TRAP_DOOR: return MapPalette.BROWN + shade;
         case STAINED_CLAY:
             switch (block.getData()) {
             case 0: return MapPalette.WHITE + shade;
@@ -298,6 +298,7 @@ public final class TerrainRenderer extends MapRenderer {
             default: return Colors.PALE_RED + shade;
             }
         case STEP:
+        case DOUBLE_STEP:
             switch (block.getData() & 0x7) {
             case 0: return MapPalette.LIGHT_GRAY + shade; // Stone
             case 1: return MapPalette.LIGHT_BROWN + shade; // Sandstone
