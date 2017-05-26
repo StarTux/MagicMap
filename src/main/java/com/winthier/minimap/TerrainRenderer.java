@@ -317,22 +317,22 @@ public final class TerrainRenderer extends MapRenderer {
         case WOOL:
         case STAINED_CLAY:
             switch (block.getData()) {
-            case 0: return 32; // DyeColor.WHITE
-            case 1: return 60; // DyeColor.ORANGE
-            case 2: return 64; // DyeColor.MAGENTA
-            case 3: return 68; // DyeColor.LIGHT_BLUE
-            case 4: return 72; // DyeColor.YELLOW
-            case 5: return 76; // DyeColor.LIME
-            case 6: return 80; // DyeColor.PINK
-            case 7: return 84; // DyeColor.GRAY
-            case 8: return 88; // DyeColor.SILVER
-            case 9: return 92; // DyeColor.CYAN
-            case 10: return 96; // DyeColor.PURPLE
-            case 11: return 100; // DyeColor.BLUE
-            case 12: return 104; // DyeColor.BROWN
-            case 13: return 108; // DyeColor.GREEN
-            case 14: return 112; // DyeColor.RED
-            case 15: return 116; // DyeColor.BLACK
+            case 0: return 32 + shade; // DyeColor.WHITE
+            case 1: return 60 + shade; // DyeColor.ORANGE
+            case 2: return 64 + shade; // DyeColor.MAGENTA
+            case 3: return 68 + shade; // DyeColor.LIGHT_BLUE
+            case 4: return 72 + shade; // DyeColor.YELLOW
+            case 5: return 76 + shade; // DyeColor.LIME
+            case 6: return 80 + shade; // DyeColor.PINK
+            case 7: return 84 + shade; // DyeColor.GRAY
+            case 8: return 88 + shade; // DyeColor.SILVER
+            case 9: return 92 + shade; // DyeColor.CYAN
+            case 10: return 96 + shade; // DyeColor.PURPLE
+            case 11: return 100 + shade; // DyeColor.BLUE
+            case 12: return 104 + shade; // DyeColor.BROWN
+            case 13: return 108 + shade; // DyeColor.GREEN
+            case 14: return 112 + shade; // DyeColor.RED
+            case 15: return 116 + shade; // DyeColor.BLACK
             default: return 0;
             }
         case SUGAR_CANE_BLOCK: return Colors.LIGHT_GREEN + shade;
