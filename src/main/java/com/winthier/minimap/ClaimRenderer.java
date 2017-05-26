@@ -34,13 +34,13 @@ final class ClaimRenderer {
             if (claim.getSuperClaim() == null) {
                 colorA = Colors.WHITE + 2;
                 colorB = Colors.BLACK + 3;
-                fontA = Colors.YELLOW + 2;
-                fontB = Colors.BLACK + 3;
+                fontA = Colors.WHITE + 2;
+                fontB = Colors.DARK_GRAY + 3;
             } else {
                 colorA = Colors.DARK_GRAY + 3;
                 colorB = Colors.LIGHT_GRAY + 2;
-                fontA = Colors.YELLOW + 1;
-                fontB = Colors.BLACK;
+                fontA = Colors.WHITE + 1;
+                fontB = Colors.DARK_GRAY + 3;
             }
             coords[0] = claim.getWestBorder() - ax;
             if (coords[0] > 127) continue;

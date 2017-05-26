@@ -62,17 +62,19 @@ public final class TerrainRenderer extends MapRenderer {
     @Override
     public void render(MapView view, MapCanvas canvas, Player player) {
         Session session = plugin.getSession(player);
-        if (session.getLastRender() != 0 && (player.isGliding() || !isHoldingMap(player))) return;
+        if (session.getLastRender() != 0 && !isHoldingMap(player)) return;
         if (player.getWorld().getEnvironment() != World.Environment.NORMAL) return;
         Storage storage = (Storage)session.getStorage().get(Storage.class);
         Location playerLocation = player.getLocation();
         Block playerBlock = playerLocation.getBlock();
         boolean needsRedraw;
-        if (storage == null || storage.isTooFar(playerBlock)) {
+        long now = System.currentTimeMillis();
+        long sinceLastRender = System.currentTimeMillis() - session.getLastRender();
+        if (storage == null || (sinceLastRender > 3000 && storage.isTooFar(playerBlock))) {
             storage = new Storage(playerBlock);
             session.getStorage().put(Storage.class, storage);
             needsRedraw = true;
-        } else if (session.getLastRender() + 10000 < System.currentTimeMillis()) {
+        } else if (sinceLastRender > 10000) {
             needsRedraw = true;
         } else {
             needsRedraw = false;
@@ -81,7 +83,8 @@ public final class TerrainRenderer extends MapRenderer {
         int az = storage.getZ();
         int cx = ax + 64;
         int cz = az + 64;
-        if (needsRedraw) {
+        int dist = Math.max(Math.abs(cx - playerBlock.getX()), Math.abs(cz - playerBlock.getZ()));
+        if (needsRedraw && dist < 64) {
             World world = player.getWorld();
             boolean caveView = playerBlock.getY() < world.getHighestBlockYAt(playerBlock.getX(), playerBlock.getZ()) - 4
                 && playerBlock.getLightFromSky() == 0
@@ -124,15 +127,17 @@ public final class TerrainRenderer extends MapRenderer {
             session.setLastRender(System.currentTimeMillis());
         }
         MapCursorCollection cursors = new MapCursorCollection();
-        cursors.addCursor((byte)((playerBlock.getX() - cx) * 2), (byte)((playerBlock.getZ() - cz) * 2), (byte)directionOf(playerLocation), MapCursor.Type.WHITE_POINTER.getValue());
-        for (Player nearby: player.getWorld().getPlayers()) {
-            if (nearby.equals(player)) continue;
-            if (nearby.getGameMode() == GameMode.SPECTATOR) continue;
-            Location loc = nearby.getLocation();
-            int px = (loc.getBlockX() - cx) * 2;
-            int pz = (loc.getBlockZ() - cz) * 2;
-            if (px < -128 || px > 128 || pz < -128 || pz > 128) continue;
-            cursors.addCursor((byte)px, (byte)pz, (byte)directionOf(loc), MapCursor.Type.BLUE_POINTER.getValue());
+        cursors.addCursor(Util.makeCursor(MapCursor.Type.WHITE_POINTER, playerLocation, ax, az));
+        if (dist < 128) {
+            for (Player nearby: player.getWorld().getPlayers()) {
+                if (nearby.equals(player)) continue;
+                if (nearby.getGameMode() == GameMode.SPECTATOR) continue;
+                Location loc = nearby.getLocation();
+                int px = (loc.getBlockX() - cx) * 2;
+                int pz = (loc.getBlockZ() - cz) * 2;
+                if (px < -127 || px > 127 || pz < -127 || pz > 127) continue;
+                cursors.addCursor(Util.makeCursor(MapCursor.Type.BLUE_POINTER, loc, ax, az));
+            }
         }
         canvas.setCursors(cursors);
         if (plugin.getCreativeRenderer() != null) plugin.getCreativeRenderer().render(canvas, player, ax, az);
@@ -332,6 +337,7 @@ public final class TerrainRenderer extends MapRenderer {
             }
         case SUGAR_CANE_BLOCK: return Colors.LIGHT_GREEN + shade;
         case WATER_LILY: return Colors.DARK_GREEN + shade;
+        case CACTUS: return Colors.DARK_GREEN + shade;
         default: return Colors.BROWN + shade;
         }
     }

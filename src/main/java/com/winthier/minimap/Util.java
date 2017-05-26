@@ -17,8 +17,8 @@ final class Util {
         int y = (location.getBlockZ() - az - 64) * 2;
         if (x < -127) x = -127;
         if (y < -127) y = -127;
-        if (x > 128) x = 128;
-        if (y > 128) y = 128;
+        if (x > 127) x = 127;
+        if (y > 127) y = 127;
         return new MapCursor((byte)x, (byte)y, (byte)dir, cursorType.getValue(), true);
     }
 }
