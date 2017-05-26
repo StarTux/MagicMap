@@ -5,6 +5,7 @@ import com.winthier.custom.item.CustomItem;
 import com.winthier.custom.item.ItemContext;
 import com.winthier.custom.item.ItemDescription;
 import com.winthier.custom.item.UncraftableItem;
+import com.winthier.custom.item.UpdatableItem;
 import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -16,7 +17,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-public class MiniMapItem implements CustomItem, UncraftableItem {
+public class MiniMapItem implements CustomItem, UncraftableItem, UpdatableItem {
     public static final String CUSTOM_ID = "minimap:minimap";
     private final MiniMapPlugin plugin;
     private final ItemStack itemStack;
@@ -56,5 +57,15 @@ public class MiniMapItem implements CustomItem, UncraftableItem {
         event.setCancelled(true);
         // CustomPlugin.getInstance().getInventoryManager().openInventory(event.getPlayer(), new MiniMapInventory(plugin, event.getPlayer()));
         event.getPlayer().performCommand("help");
+    }
+
+    @Override
+    public void updateItem(ItemStack item) {
+        item.setDurability((short)plugin.getMapId());
+        itemDescription.apply(item);
+        ItemMeta meta = item.getItemMeta();
+        meta.addEnchant(Enchantment.DURABILITY, 1, true);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS);
+        item.setItemMeta(meta);
     }
 }
