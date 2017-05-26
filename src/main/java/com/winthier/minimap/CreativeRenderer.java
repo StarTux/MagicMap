@@ -8,7 +8,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.map.MapCanvas;
 import org.bukkit.map.MapCursor;
 import org.bukkit.map.MapCursorCollection;
-import org.bukkit.map.MapPalette;
 import org.bukkit.map.MapView;
 
 @RequiredArgsConstructor
@@ -27,7 +26,7 @@ final class CreativeRenderer {
             // MapCursorCollection cursors = canvas.getCursors();
             // cursors.addCursor(cursor);
             // canvas.setCursors(cursors);
-            plugin.getFont4x4().print(canvas, warp.getDisplayName(), x, y, -1, -1, (byte)MapPalette.WHITE + 2, (byte)MapPalette.DARK_GRAY + 3);
+            plugin.getFont4x4().print(canvas, warp.getDisplayName(), x, y, -1, -1, (byte)Colors.WHITE + 2, (byte)Colors.DARK_GRAY + 3);
         }
     }
 }

@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapCanvas;
-import org.bukkit.map.MapPalette;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.map.MinecraftFont;
@@ -30,7 +29,7 @@ public class DebugRenderer extends MapRenderer {
         for (int dx = 0; dx < 128; dx += 8) {
             int v = dx / 4;
             // while (v >= 10) v -= 10;
-            int color = (dx / 8) % 2 == 0 ? MapPalette.WHITE + 2 : MapPalette.LIGHT_GRAY + 2;
+            int color = (dx / 8) % 2 == 0 ? Colors.WHITE + 2 : Colors.LIGHT_GRAY + 2;
             plugin.getFont4x4().print(canvas, "" + v, dx, 5, -1, -1, color, Colors.BLACK);
             // canvas.drawText(dx, 4, MinecraftFont.Font, "" + v);
         }
