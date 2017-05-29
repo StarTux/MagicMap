@@ -316,6 +316,7 @@ public final class TerrainRenderer extends MapRenderer {
         case MYCEL: return Colors.DARK_PURPLE + shade;
         case WOOL:
         case STAINED_CLAY:
+        case STAINED_GLASS:
             switch (block.getData()) {
             case 0: return 32 + shade; // DyeColor.WHITE
             case 1: return 60 + shade; // DyeColor.ORANGE
@@ -346,7 +347,7 @@ public final class TerrainRenderer extends MapRenderer {
         XZ xz = new XZ(x, z);
         Block block = cache.get(xz);
         if (block != null) return block;
-        block = world.getHighestBlockAt(x, z);
+        block = world.getHighestBlockAt(x, z).getRelative(0, -1, 0);
         LOOP:
         while (block.getY() >= 0 && !block.getType().isSolid() && !block.isLiquid()) {
             switch (block.getType()) {
