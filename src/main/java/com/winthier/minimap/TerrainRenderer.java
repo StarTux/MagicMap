@@ -376,7 +376,7 @@ public final class TerrainRenderer extends MapRenderer {
         case COAL_ORE: case DIAMOND_ORE: case EMERALD_ORE: case GLOWING_REDSTONE_ORE: case GOLD_ORE: case IRON_ORE: case LAPIS_ORE: case REDSTONE_ORE: return Colors.LIGHT_GRAY + shade;
         case ICE: case PACKED_ICE: return Colors.ROYAL_BLUE + shade;
         case SNOW: case SNOW_BLOCK: return Colors.WHITE + shade;
-        case PUMPKIN: case JACK_O_LANTERN: return Colors.WOOL_ORANGE + shade;
+        case PUMPKIN: return Colors.WOOL_ORANGE + shade;
         case CLAY: return Colors.GRAY_1 + shade;
         case HARD_CLAY: return Colors.WOOL_RED + shade;
         case BRICK: return Colors.WOOL_RED + shade;
@@ -453,7 +453,8 @@ public final class TerrainRenderer extends MapRenderer {
         case PRISMARINE: return Colors.CYAN + shade;
         case CHORUS_FLOWER: case CHORUS_FRUIT: case CHORUS_PLANT: return Colors.WOOL_PURPLE + shade;
         case BEDROCK: return Colors.DARK_GRAY + shade;
-        case TORCH: return Colors.WOOL_YELLOW + 2;
+        case TORCH: case GLOWSTONE: case REDSTONE_LAMP_ON: case JACK_O_LANTERN: case FIRE: return Colors.WOOL_YELLOW + 2;
+        case SEA_LANTERN: return Colors.ROYAL_BLUE + 2;
         default: return Colors.WOOL_BROWN + shade;
         }
     }
@@ -473,6 +474,8 @@ public final class TerrainRenderer extends MapRenderer {
             case CARROT:
             case BEETROOT_BLOCK:
             case TORCH:
+            case FIRE:
+            case SUGAR_CANE_BLOCK:
                 break LOOP;
             }
             block = block.getRelative(0, -1, 0);
