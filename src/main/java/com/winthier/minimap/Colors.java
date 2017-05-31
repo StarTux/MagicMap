@@ -17,17 +17,28 @@ public final class Colors {
     public static final int DARK_GRAY = 44;
     public static final int BLUE = 48;
     public static final int DARK_BROWN = 52;
-    // Custom found out
-    public static final int PALE_RED = 60;
-    public static final int PURPLE = 64;
-    public static final int CYAN = 68;
-    public static final int YELLOW = 72;
-    // 76
-    public static final int PINK = 80;
-    // 84 88 92
-    public static final int DARK_PURPLE = 96;
-    // 100 104 108 112
-    public static final int BLACK = 116;
-    // 120
-    public static final int ORANGE = 124;
+    // Wool and other stained blocks
+    public static final int WOOL_WHITE = 56;
+    public static final int WOOL_ORANGE = 60;
+    public static final int WOOL_MAGENTA = 64;
+    public static final int WOOL_LIGHT_BLUE = 68;
+    public static final int WOOL_YELLOW = 72;
+    public static final int WOOL_LIME = 76;
+    public static final int WOOL_PINK = 80;
+    public static final int WOOL_GRAY = 84;
+    public static final int WOOL_SILVER = 88;
+    public static final int WOOL_CYAN = 92;
+    public static final int WOOL_PURPLE = 96;
+    public static final int WOOL_BLUE = 100;
+    public static final int WOOL_BROWN = 104;
+    public static final int WOOL_GREEN = 108;
+    public static final int WOOL_RED = 112;
+    public static final int WOOL_BLACK = 116;
+
+    public static final int BRASS = 120;
+    public static final int CYAN = 124;
+    public static final int ROYAL_BLUE = 128;
+    public static final int GREEN = 132;
+    public static final int COFFEE_BROWN = 136;
+    public static final int MAROON = 140;
 }

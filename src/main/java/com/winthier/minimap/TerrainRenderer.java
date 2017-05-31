@@ -9,6 +9,8 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.map.MapCanvas;
@@ -43,6 +45,10 @@ public final class TerrainRenderer extends MapRenderer {
         }
     }
 
+    enum RenderMode {
+        SURFACE, CAVE, END, NETHER;
+    }
+
     TerrainRenderer(MiniMapPlugin plugin) {
         super(true);
         this.plugin = plugin;
@@ -63,7 +69,6 @@ public final class TerrainRenderer extends MapRenderer {
     public void render(MapView view, MapCanvas canvas, Player player) {
         Session session = plugin.getSession(player);
         if (session.getLastRender() != 0 && !isHoldingMap(player)) return;
-        if (player.getWorld().getEnvironment() != World.Environment.NORMAL) return;
         Storage storage = (Storage)session.getStorage().get(Storage.class);
         Location playerLocation = player.getLocation();
         Block playerBlock = playerLocation.getBlock();
@@ -86,14 +91,27 @@ public final class TerrainRenderer extends MapRenderer {
         int dist = Math.max(Math.abs(cx - playerBlock.getX()), Math.abs(cz - playerBlock.getZ()));
         if (needsRedraw && dist < 64) {
             World world = player.getWorld();
-            boolean caveView = playerBlock.getY() < world.getHighestBlockYAt(playerBlock.getX(), playerBlock.getZ()) - 4
+            RenderMode renderMode;
+            World.Environment environment = world.getEnvironment();
+            if (environment == World.Environment.NETHER) {
+                renderMode = RenderMode.NETHER;
+            } else if (environment == World.Environment.THE_END) {
+                renderMode = RenderMode.END;
+            } else if (playerBlock.getY() < world.getHighestBlockYAt(playerBlock.getX(), playerBlock.getZ()) - 4
                 && playerBlock.getLightFromSky() == 0
-                && playerBlock.getRelative(0, 1, 0).getLightFromSky() == 0;
-            String mapModeName;
-            if (caveView) {
-                drawCaveMap(canvas, world, ax, az);
-                mapModeName = "Cave";
+                && playerBlock.getRelative(0, 1, 0).getLightFromSky() == 0) {
+                renderMode = RenderMode.CAVE;
             } else {
+                renderMode = RenderMode.SURFACE;
+            }
+            switch (renderMode) {
+            case CAVE:
+                drawCaveMap(canvas, world, ax, az);
+                break;
+            case NETHER:
+                drawNetherMap(canvas, world, ax, az);
+                break;
+            case SURFACE: case END:
                 Map<XZ, Block> cache = new HashMap<>();
                 for (int pz = 5; pz < 128; pz += 1) {
                     for (int px = 0; px < 128; px += 1) {
@@ -103,17 +121,19 @@ public final class TerrainRenderer extends MapRenderer {
                         canvas.setPixel(px, pz, (byte)colorOf(block, px, pz, cache));
                     }
                 }
-                mapModeName = "Surface";
+                break;
+            default:
+                break;
             }
             for (int y = 0; y < 5; y += 1) {
                 for (int x = 0; x < 128; x += 1) {
-                    canvas.setPixel(x, y, (byte)Colors.BLACK);
+                    canvas.setPixel(x, y, (byte)Colors.WOOL_BLACK);
                 }
             }
             final int shadowColor = Colors.DARK_GRAY + 3;
             String worldName = plugin.getWorldName(player.getWorld().getName());
             plugin.getFont4x4().print(canvas, worldName, 1, 0, -1, -1, Colors.PALE_BLUE + 2, shadowColor);
-            plugin.getFont4x4().print(canvas, mapModeName, 127 - plugin.getFont4x4().widthOf(mapModeName), 0, -1, -1, Colors.RED, shadowColor);
+            plugin.getFont4x4().print(canvas, renderMode.name(), 127 - plugin.getFont4x4().widthOf(renderMode.name()), 0, -1, -1, Colors.RED, shadowColor);
             if (claimRenderer != null) claimRenderer.render(plugin, canvas, player, ax, az);
             for (Marker marker: plugin.getMarkers()) {
                 if (!marker.getWorld().equals(player.getWorld().getName())) continue;
@@ -129,14 +149,21 @@ public final class TerrainRenderer extends MapRenderer {
         MapCursorCollection cursors = new MapCursorCollection();
         cursors.addCursor(Util.makeCursor(MapCursor.Type.WHITE_POINTER, playerLocation, ax, az));
         if (dist < 128) {
-            for (Player nearby: player.getWorld().getPlayers()) {
-                if (nearby.equals(player)) continue;
-                if (nearby.getGameMode() == GameMode.SPECTATOR) continue;
-                Location loc = nearby.getLocation();
-                int px = (loc.getBlockX() - cx) * 2;
-                int pz = (loc.getBlockZ() - cz) * 2;
-                if (px < -127 || px > 127 || pz < -127 || pz > 127) continue;
-                cursors.addCursor(Util.makeCursor(MapCursor.Type.BLUE_POINTER, loc, ax, az));
+            for (Entity e: player.getNearbyEntities(64, 64, 64)) {
+                if (e instanceof Player) {
+                    Player nearby = (Player)e;
+                    if (nearby.equals(player)) continue;
+                    if (nearby.getGameMode() == GameMode.SPECTATOR) continue;
+                    cursors.addCursor(Util.makeCursor(MapCursor.Type.BLUE_POINTER, nearby.getLocation(), ax, az));
+                } else {
+                    switch (e.getType()) {
+                    case ENDER_DRAGON:
+                    case WITHER:
+                        cursors.addCursor(Util.makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), ax, az));
+                        break;
+                    default: break;
+                    }
+                }
             }
         }
         canvas.setCursors(cursors);
@@ -151,9 +178,9 @@ public final class TerrainRenderer extends MapRenderer {
                 int dz = pz - 64;
                 int dist = dx * dx + dz * dz;
                 if (dist >= 60 * 60) {
-                    canvas.setPixel(px, pz, (byte)Colors.BLACK);
+                    canvas.setPixel(px, pz, (byte)Colors.WOOL_BLACK);
                 } else if (dist >= 40 * 40 && (px % 2 == 0 ^ pz % 2 == 0)) {
-                    canvas.setPixel(px, pz, (byte)Colors.BLACK);
+                    canvas.setPixel(px, pz, (byte)Colors.WOOL_BLACK);
                 } else {
                     int x = ax + px;
                     int z = az + pz;
@@ -163,7 +190,7 @@ public final class TerrainRenderer extends MapRenderer {
                     }
                     while (block.getY() > 0 && !block.getType().isSolid() && !block.isLiquid()) block = block.getRelative(0, -1, 0);
                     if (block.getY() < 0) {
-                        canvas.setPixel(px, pz, (byte)Colors.BLACK);
+                        canvas.setPixel(px, pz, (byte)Colors.WOOL_BLACK);
                     } else {
                         int color;
                         int y = block.getY();
@@ -184,17 +211,71 @@ public final class TerrainRenderer extends MapRenderer {
                             } else if (y < 32) {
                                 color = Colors.DARK_GREEN + 2;
                             } else if (y < 40) {
-                                color = Colors.YELLOW + 3;
+                                color = Colors.WOOL_YELLOW + 3;
                             } else if (y < 48) {
-                                color = Colors.YELLOW;
+                                color = Colors.WOOL_YELLOW;
                             } else if (y < 56) {
-                                color = Colors.YELLOW + 1;
+                                color = Colors.WOOL_YELLOW + 1;
                             } else {
-                                color = Colors.YELLOW + 2;
+                                color = Colors.WOOL_YELLOW + 2;
                             }
                         }
                         canvas.setPixel(px, pz, (byte)color);
                     }
+                }
+            }
+        }
+    }
+
+    void drawNetherMap(MapCanvas canvas, World world, int ax, int az) {
+        for (int pz = 5; pz < 128; pz += 1) {
+            for (int px = 0; px < 128; px += 1) {
+                int x = ax + px;
+                int z = az + pz;
+                Block block = world.getBlockAt(x, 127, z);
+                while (block.getY() >= 0 && block.getType() != Material.AIR) {
+                    block = block.getRelative(0, -1, 0);
+                }
+                while (block.getY() > 0 && !block.getType().isSolid() && !block.isLiquid()) block = block.getRelative(0, -1, 0);
+                if (block.getY() < 0) {
+                    canvas.setPixel(px, pz, (byte)Colors.WOOL_BLACK);
+                } else {
+                    int color;
+                    int y = block.getY();
+                    if (y < 8) {
+                        color = Colors.MAROON + 3;
+                    } else if (y < 16) {
+                        color = Colors.MAROON;
+                    } else if (y < 24) {
+                        color = Colors.MAROON + 1;
+                    } else if (y < 32) {
+                        color = Colors.MAROON + 2;
+                    } else if (y < 40) {
+                        color = Colors.WOOL_RED + 3;
+                    } else if (y < 48) {
+                        color = Colors.WOOL_RED;
+                    } else if (y < 56) {
+                        color = Colors.WOOL_RED + 1;
+                    } else if (y < 64) {
+                        color = Colors.WOOL_RED + 2;
+                    } else if (y < 72) {
+                        color = Colors.WOOL_ORANGE + 3;
+                    } else if (y < 80) {
+                        color = Colors.WOOL_ORANGE;
+                    } else if (y < 88) {
+                        color = Colors.WOOL_ORANGE + 1;
+                    } else if (y < 96) {
+                        color = Colors.WOOL_ORANGE + 2;
+                    } else if (y < 104) {
+                        color = Colors.WOOL_YELLOW + 3;
+                    } else if (y < 112) {
+                        color = Colors.WOOL_YELLOW;
+                    } else if (y < 120) {
+                        color = Colors.WOOL_YELLOW + 1;
+                    } else {
+                        color = Colors.WOOL_YELLOW + 2;
+                    }
+                    canvas.setPixel(px, pz, (byte)color);
                 }
             }
         }
@@ -211,7 +292,7 @@ public final class TerrainRenderer extends MapRenderer {
     }
 
     private static int colorOf(Block block, int x, int y, Map<XZ, Block> cache) {
-        if (block.getY() < 0) return Colors.TRANSPARENT;
+        if (block.getY() < 0) return Colors.WOOL_BLACK + 3;
         final int shade;
         int lx, ly;
         long time = block.getWorld().getTime();
@@ -252,9 +333,7 @@ public final class TerrainRenderer extends MapRenderer {
             if (depth <= 2) {
                 depthShade = 2;
             } else if (depth <= 4) {
-                boolean x1 = x % 2 == 0;
-                boolean x2 = y % 2 == 0;
-                if (x1 ^ x2) {
+                if ((x % 2 == 0) ^ (y % 2 == 0)) {
                     depthShade = 2;
                 } else {
                     depthShade = 1;
@@ -262,9 +341,7 @@ public final class TerrainRenderer extends MapRenderer {
             } else if (depth <= 6) {
                 depthShade = 1;
             } else if (depth <= 8) {
-                boolean x1 = x % 2 == 0;
-                boolean x2 = y % 2 == 0;
-                if (x1 ^ x2) {
+                if ((x % 2 == 0) ^ (y % 2 == 0)) {
                     depthShade = 1;
                 } else {
                     depthShade = 0;
@@ -278,20 +355,33 @@ public final class TerrainRenderer extends MapRenderer {
         case LEAVES: case LEAVES_2: return Colors.DARK_GREEN + shade;
         case SAND:
             switch (block.getData()) {
-            case 1: return Colors.PALE_RED + shade;
+            case 1: return Colors.WOOL_ORANGE + shade;
             default: return Colors.LIGHT_BROWN + shade;
             }
         case GRASS_PATH: return Colors.BROWN + shade;
         case SANDSTONE: case SANDSTONE_STAIRS: return Colors.LIGHT_BROWN + shade;
-        case RED_SANDSTONE: case RED_SANDSTONE_STAIRS: return Colors.PALE_RED + shade;
+        case RED_SANDSTONE: case RED_SANDSTONE_STAIRS: return Colors.WOOL_ORANGE + shade;
         case DIRT: case SOIL: case LOG: case LOG_2: return Colors.DARK_BROWN + shade;
-        case STONE: case COBBLESTONE: case MOSSY_COBBLESTONE: case GRAVEL: case SMOOTH_BRICK: case SMOOTH_STAIRS: return Colors.LIGHT_GRAY + shade;
-        case ICE: case PACKED_ICE: return Colors.PALE_BLUE + shade;
+        case COBBLESTONE: case COBBLE_WALL: case MOSSY_COBBLESTONE: case SMOOTH_BRICK: case SMOOTH_STAIRS: return Colors.LIGHT_GRAY + shade;
+        case GRAVEL:
+            return (x % 2 == 0) ^ (y % 2 == 0) ? Colors.GRAY_1 + shade : Colors.LIGHT_GRAY + shade;
+        case STONE:
+            switch (block.getData() & 0x7) {
+            case 0: return Colors.LIGHT_GRAY + shade; // Smoothstone
+            case 1: case 2: return Colors.BROWN + shade; // Granite
+            case 3: case 4: return Colors.WHITE + shade; // Diorite
+            case 5: case 6: return Colors.LIGHT_GRAY + shade; // Andesite
+            default: return Colors.LIGHT_GRAY + shade;
+            }
+        case COAL_ORE: case DIAMOND_ORE: case EMERALD_ORE: case GLOWING_REDSTONE_ORE: case GOLD_ORE: case IRON_ORE: case LAPIS_ORE: case REDSTONE_ORE: return Colors.LIGHT_GRAY + shade;
+        case ICE: case PACKED_ICE: return Colors.ROYAL_BLUE + shade;
         case SNOW: case SNOW_BLOCK: return Colors.WHITE + shade;
-        case PUMPKIN: case JACK_O_LANTERN: return Colors.RED + shade;
-        case CLAY: case CLAY_BRICK: case HARD_CLAY: return Colors.PALE_RED + shade;
+        case PUMPKIN: case JACK_O_LANTERN: return Colors.WOOL_ORANGE + shade;
+        case CLAY: return Colors.GRAY_1 + shade;
+        case HARD_CLAY: return Colors.WOOL_RED + shade;
+        case BRICK: return Colors.WOOL_RED + shade;
         case QUARTZ_BLOCK: case QUARTZ_STAIRS: return Colors.WHITE + shade;
-        case WOOD: case BIRCH_WOOD_STAIRS: case DARK_OAK_STAIRS: case JUNGLE_WOOD_STAIRS: case SPRUCE_WOOD_STAIRS: case WOOD_STAIRS: case WOOD_STEP: case WOOD_DOUBLE_STEP: case TRAP_DOOR: return Colors.BROWN + shade;
+        case WOOD: case WOOD_STAIRS: case WOOD_STEP: case WOOD_DOUBLE_STEP: case TRAP_DOOR: return Colors.BROWN + shade;
         case STEP:
         case DOUBLE_STEP:
             switch (block.getData() & 0x7) {
@@ -299,9 +389,9 @@ public final class TerrainRenderer extends MapRenderer {
             case 1: return Colors.LIGHT_BROWN + shade; // Sandstone
             case 2: return Colors.LIGHT_BROWN + shade; // Wood
             case 3: return Colors.LIGHT_GRAY + shade; // Cobble
-            case 4: return Colors.PALE_RED + shade; // Brick
+            case 4: return Colors.WOOL_RED + shade; // Brick
             case 5: return Colors.LIGHT_GRAY + shade; // Stone Brick
-            case 6: return Colors.BLACK + shade; // Nether Brick
+            case 6: return Colors.MAROON + shade; // Nether Brick
             case 7: return Colors.WHITE + shade; // Quartz
             default: return 0;
             }
@@ -311,35 +401,59 @@ public final class TerrainRenderer extends MapRenderer {
         case EMERALD_BLOCK: return Colors.LIGHT_GREEN + shade;
         case REDSTONE_BLOCK: return Colors.RED + shade;
         case DIAMOND_BLOCK: return Colors.PALE_BLUE + shade;
-        case GOLD_BLOCK: return Colors.YELLOW + shade;
+        case GOLD_BLOCK: return Colors.WOOL_YELLOW + shade;
         case IRON_BLOCK: return Colors.WHITE + shade;
-        case MYCEL: return Colors.DARK_PURPLE + shade;
+        case MYCEL: return Colors.WOOL_PURPLE + shade;
+        case OBSIDIAN: case ENDER_CHEST: return Colors.WOOL_BLACK + shade;
         case WOOL:
         case STAINED_CLAY:
         case STAINED_GLASS:
             switch (block.getData()) {
-            case 0: return 32 + shade; // DyeColor.WHITE
-            case 1: return 60 + shade; // DyeColor.ORANGE
-            case 2: return 64 + shade; // DyeColor.MAGENTA
-            case 3: return 68 + shade; // DyeColor.LIGHT_BLUE
-            case 4: return 72 + shade; // DyeColor.YELLOW
-            case 5: return 76 + shade; // DyeColor.LIME
-            case 6: return 80 + shade; // DyeColor.PINK
-            case 7: return 84 + shade; // DyeColor.GRAY
-            case 8: return 88 + shade; // DyeColor.SILVER
-            case 9: return 92 + shade; // DyeColor.CYAN
-            case 10: return 96 + shade; // DyeColor.PURPLE
-            case 11: return 100 + shade; // DyeColor.BLUE
-            case 12: return 104 + shade; // DyeColor.BROWN
-            case 13: return 108 + shade; // DyeColor.GREEN
-            case 14: return 112 + shade; // DyeColor.RED
-            case 15: return 116 + shade; // DyeColor.BLACK
+            case 0: return Colors.WOOL_WHITE;
+            case 1: return Colors.WOOL_ORANGE;
+            case 2: return Colors.WOOL_MAGENTA;
+            case 3: return Colors.WOOL_LIGHT_BLUE;
+            case 4: return Colors.WOOL_YELLOW;
+            case 5: return Colors.WOOL_LIME;
+            case 6: return Colors.WOOL_PINK;
+            case 7: return Colors.WOOL_GRAY;
+            case 8: return Colors.WOOL_SILVER;
+            case 9: return Colors.WOOL_CYAN;
+            case 10: return Colors.WOOL_PURPLE;
+            case 11: return Colors.WOOL_BLUE;
+            case 12: return Colors.WOOL_BROWN;
+            case 13: return Colors.WOOL_GREEN;
+            case 14: return Colors.WOOL_RED;
+            case 15: return Colors.WOOL_BLACK;
             default: return 0;
             }
         case SUGAR_CANE_BLOCK: return Colors.LIGHT_GREEN + shade;
         case WATER_LILY: return Colors.DARK_GREEN + shade;
         case CACTUS: return Colors.DARK_GREEN + shade;
-        default: return Colors.BROWN + shade;
+        case NETHERRACK: case QUARTZ_ORE: case SOUL_SAND: case NETHER_STALK: case NETHER_WART_BLOCK: return Colors.MAROON + shade;
+        case CROPS: return Colors.LIGHT_BROWN + shade;
+        case POTATO: return Colors.LIGHT_BROWN + shade;
+        case CARROT: return Colors.WOOL_ORANGE + shade;
+        case BEETROOT_BLOCK: return Colors.RED + shade;
+        case ACACIA_DOOR: case ACACIA_FENCE: case ACACIA_FENCE_GATE: case ACACIA_STAIRS: return Colors.WOOL_ORANGE + shade;
+        case BIRCH_DOOR: case BIRCH_FENCE: case BIRCH_WOOD_STAIRS: return Colors.LIGHT_BROWN + shade;
+        case DARK_OAK_DOOR: case DARK_OAK_FENCE: case DARK_OAK_STAIRS: return Colors.DARK_BROWN + shade;
+        case SPRUCE_DOOR: case SPRUCE_FENCE: case SPRUCE_WOOD_STAIRS: return Colors.DARK_BROWN + shade;
+        case JUNGLE_DOOR: case JUNGLE_FENCE: case JUNGLE_WOOD_STAIRS: return Colors.BROWN + shade;
+        case NETHER_FENCE: return Colors.MAROON + shade;
+        case FENCE: case FENCE_GATE: return Colors.BROWN + shade;
+        case IRON_DOOR: return Colors.WHITE + shade;
+        case IRON_FENCE: return Colors.LIGHT_GRAY + shade;
+        case VINE: return Colors.DARK_GREEN + shade;
+        case WEB: return Colors.WHITE + shade;
+        case MELON_BLOCK: return Colors.DARK_GREEN + shade;
+        case ENDER_STONE: case END_BRICKS: return Colors.LIGHT_BROWN + shade;
+        case END_ROD: case BEACON: case END_CRYSTAL: return Colors.WHITE + shade;
+        case PURPUR_BLOCK: case PURPUR_DOUBLE_SLAB: case PURPUR_PILLAR: case PURPUR_SLAB: case PURPUR_STAIRS: return Colors.WOOL_MAGENTA + shade;
+        case PRISMARINE: return Colors.CYAN + shade;
+        case CHORUS_FLOWER: case CHORUS_FRUIT: case CHORUS_PLANT: return Colors.WOOL_PURPLE + shade;
+        case BEDROCK: return Colors.DARK_GRAY + shade;
+        default: return Colors.WOOL_BROWN + shade;
         }
     }
 
@@ -347,15 +461,13 @@ public final class TerrainRenderer extends MapRenderer {
         XZ xz = new XZ(x, z);
         Block block = cache.get(xz);
         if (block != null) return block;
-        block = world.getHighestBlockAt(x, z).getRelative(0, -1, 0);
+        block = world.getHighestBlockAt(x, z);
         LOOP:
-        while (block.getY() >= 0 && !block.getType().isSolid() && !block.isLiquid()) {
+        while (block.getY() >= 0 && !block.getType().isSolid() && !block.isLiquid() && block.getType().isTransparent()) {
             switch (block.getType()) {
             case SNOW:
-            case SUGAR_CANE_BLOCK:
             case WATER_LILY:
                 break LOOP;
-            default: break;
             }
             block = block.getRelative(0, -1, 0);
         }

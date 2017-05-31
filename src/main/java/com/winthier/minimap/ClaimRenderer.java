@@ -33,7 +33,7 @@ final class ClaimRenderer {
             int colorA, colorB, fontA, fontB;
             if (claim.getSuperClaim() == null) {
                 colorA = Colors.WHITE + 2;
-                colorB = Colors.BLACK + 3;
+                colorB = Colors.WOOL_BLACK + 3;
                 fontA = Colors.WHITE + 2;
                 fontB = Colors.DARK_GRAY + 3;
             } else {
