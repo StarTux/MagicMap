@@ -453,6 +453,7 @@ public final class TerrainRenderer extends MapRenderer {
         case PRISMARINE: return Colors.CYAN + shade;
         case CHORUS_FLOWER: case CHORUS_FRUIT: case CHORUS_PLANT: return Colors.WOOL_PURPLE + shade;
         case BEDROCK: return Colors.DARK_GRAY + shade;
+        case TORCH: return Colors.WOOL_YELLOW + 2;
         default: return Colors.WOOL_BROWN + shade;
         }
     }
@@ -463,10 +464,15 @@ public final class TerrainRenderer extends MapRenderer {
         if (block != null) return block;
         block = world.getHighestBlockAt(x, z);
         LOOP:
-        while (block.getY() >= 0 && !block.getType().isSolid() && !block.isLiquid() && block.getType().isTransparent()) {
+        while (block.getY() >= 0 && block.getType().isTransparent()) {
             switch (block.getType()) {
             case SNOW:
             case WATER_LILY:
+            case CROPS:
+            case POTATO:
+            case CARROT:
+            case BEETROOT_BLOCK:
+            case TORCH:
                 break LOOP;
             }
             block = block.getRelative(0, -1, 0);
