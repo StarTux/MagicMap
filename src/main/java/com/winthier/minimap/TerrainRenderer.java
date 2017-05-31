@@ -409,22 +409,22 @@ public final class TerrainRenderer extends MapRenderer {
         case STAINED_CLAY:
         case STAINED_GLASS:
             switch (block.getData()) {
-            case 0: return Colors.WOOL_WHITE;
-            case 1: return Colors.WOOL_ORANGE;
-            case 2: return Colors.WOOL_MAGENTA;
-            case 3: return Colors.WOOL_LIGHT_BLUE;
-            case 4: return Colors.WOOL_YELLOW;
-            case 5: return Colors.WOOL_LIME;
-            case 6: return Colors.WOOL_PINK;
-            case 7: return Colors.WOOL_GRAY;
-            case 8: return Colors.WOOL_SILVER;
-            case 9: return Colors.WOOL_CYAN;
-            case 10: return Colors.WOOL_PURPLE;
-            case 11: return Colors.WOOL_BLUE;
-            case 12: return Colors.WOOL_BROWN;
-            case 13: return Colors.WOOL_GREEN;
-            case 14: return Colors.WOOL_RED;
-            case 15: return Colors.WOOL_BLACK;
+            case 0: return Colors.WOOL_WHITE + shade;
+            case 1: return Colors.WOOL_ORANGE + shade;
+            case 2: return Colors.WOOL_MAGENTA + shade;
+            case 3: return Colors.WOOL_LIGHT_BLUE + shade;
+            case 4: return Colors.WOOL_YELLOW + shade;
+            case 5: return Colors.WOOL_LIME + shade;
+            case 6: return Colors.WOOL_PINK + shade;
+            case 7: return Colors.WOOL_GRAY + shade;
+            case 8: return Colors.WOOL_SILVER + shade;
+            case 9: return Colors.WOOL_CYAN + shade;
+            case 10: return Colors.WOOL_PURPLE + shade;
+            case 11: return Colors.WOOL_BLUE + shade;
+            case 12: return Colors.WOOL_BROWN + shade;
+            case 13: return Colors.WOOL_GREEN + shade;
+            case 14: return Colors.WOOL_RED + shade;
+            case 15: return Colors.WOOL_BLACK + shade;
             default: return 0;
             }
         case SUGAR_CANE_BLOCK: return Colors.LIGHT_GREEN + shade;
