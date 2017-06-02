@@ -10,7 +10,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.map.MapCanvas;
@@ -18,7 +17,6 @@ import org.bukkit.map.MapCursor;
 import org.bukkit.map.MapCursorCollection;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
-import org.bukkit.material.Colorable;
 
 @Getter
 public final class TerrainRenderer extends MapRenderer {
@@ -408,6 +406,8 @@ public final class TerrainRenderer extends MapRenderer {
         case WOOL:
         case STAINED_CLAY:
         case STAINED_GLASS:
+        case CONCRETE:
+        case CONCRETE_POWDER:
             switch (block.getData()) {
             case 0: return Colors.WOOL_WHITE + shade;
             case 1: return Colors.WOOL_ORANGE + shade;
@@ -427,6 +427,22 @@ public final class TerrainRenderer extends MapRenderer {
             case 15: return Colors.WOOL_BLACK + shade;
             default: return 0;
             }
+        case WHITE_GLAZED_TERRACOTTA: return Colors.WOOL_WHITE + shade;
+        case ORANGE_GLAZED_TERRACOTTA: return Colors.WOOL_ORANGE + shade;
+        case MAGENTA_GLAZED_TERRACOTTA: return Colors.WOOL_MAGENTA + shade;
+        case LIGHT_BLUE_GLAZED_TERRACOTTA: return Colors.WOOL_LIGHT_BLUE + shade;
+        case YELLOW_GLAZED_TERRACOTTA: return Colors.WOOL_YELLOW + shade;
+        case LIME_GLAZED_TERRACOTTA: return Colors.WOOL_LIME + shade;
+        case PINK_GLAZED_TERRACOTTA: return Colors.WOOL_PINK + shade;
+        case GRAY_GLAZED_TERRACOTTA: return Colors.WOOL_GRAY + shade;
+        case SILVER_GLAZED_TERRACOTTA: return Colors.WOOL_SILVER + shade;
+        case CYAN_GLAZED_TERRACOTTA: return Colors.WOOL_CYAN + shade;
+        case PURPLE_GLAZED_TERRACOTTA: return Colors.WOOL_PURPLE + shade;
+        case BLUE_GLAZED_TERRACOTTA: return Colors.WOOL_BLUE + shade;
+        case BROWN_GLAZED_TERRACOTTA: return Colors.WOOL_BROWN + shade;
+        case GREEN_GLAZED_TERRACOTTA: return Colors.WOOL_GREEN + shade;
+        case RED_GLAZED_TERRACOTTA: return Colors.WOOL_RED + shade;
+        case BLACK_GLAZED_TERRACOTTA: return Colors.WOOL_BLACK + shade;
         case SUGAR_CANE_BLOCK: return Colors.LIGHT_GREEN + shade;
         case WATER_LILY: return Colors.DARK_GREEN + shade;
         case CACTUS: return Colors.DARK_GREEN + shade;
@@ -477,6 +493,7 @@ public final class TerrainRenderer extends MapRenderer {
             case FIRE:
             case SUGAR_CANE_BLOCK:
                 break LOOP;
+            default: break;
             }
             block = block.getRelative(0, -1, 0);
         }

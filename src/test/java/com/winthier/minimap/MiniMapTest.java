@@ -18,9 +18,9 @@ public final class MiniMapTest {
         BufferedImage image = ImageIO.read(new File("src/main/resources/Font4x4.png"));
         Font4x4 font4x4 = new Font4x4(image);
         for (org.bukkit.DyeColor dye: org.bukkit.DyeColor.values()) {
-            org.bukkit.Color c = dye.getColor();
-            int result = MapPalette.matchColor(new java.awt.Color(c.getRed(), c.getGreen(), c.getBlue()));
-            System.out.println("case " + dye.getWoolData() + ": return Colors.WOOL_" + dye + ";");
+            // org.bukkit.Color c = dye.getColor();
+            // int result = MapPalette.matchColor(new java.awt.Color(c.getRed(), c.getGreen(), c.getBlue()));
+            System.out.println("case " + dye + "_GLAZED_TERRACOTTA: return Colors.WOOL_" + dye + " + shade;");
         }
         for (Field field: MapPalette.class.getDeclaredFields()) {
             if (field.getType() != byte.class) continue;
