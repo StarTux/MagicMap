@@ -8,7 +8,6 @@ import java.util.Comparator;
 import java.util.List;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapCanvas;
-import org.bukkit.map.MapView;
 
 final class ClaimRenderer {
     private final Comparator<Claim> claimComparator = new Comparator<Claim>() {

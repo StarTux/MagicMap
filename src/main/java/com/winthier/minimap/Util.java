@@ -1,7 +1,7 @@
 package com.winthier.minimap;
 
-import org.bukkit.map.MapCursor;
 import org.bukkit.Location;
+import org.bukkit.map.MapCursor;
 
 final class Util {
     private Util() { }

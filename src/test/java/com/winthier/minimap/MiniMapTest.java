@@ -2,14 +2,9 @@ package com.winthier.minimap;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.UUID;
 import javax.imageio.ImageIO;
 import org.bukkit.map.MapPalette;
-import org.junit.Assert;
 import org.junit.Test;
 
 public final class MiniMapTest {

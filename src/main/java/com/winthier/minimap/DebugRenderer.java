@@ -1,12 +1,10 @@
 package com.winthier.minimap;
 
 import lombok.RequiredArgsConstructor;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapCanvas;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
-import org.bukkit.map.MinecraftFont;
 
 @RequiredArgsConstructor
 public class DebugRenderer extends MapRenderer {
