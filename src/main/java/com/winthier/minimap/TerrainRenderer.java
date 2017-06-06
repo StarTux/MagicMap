@@ -146,7 +146,7 @@ public final class TerrainRenderer extends MapRenderer {
                 if (x < 0 || x > 127) continue;
                 if (z < 5 || z > 127) continue;
                 x -= plugin.getFont4x4().widthOf(marker.getMessage()) / 2;
-                plugin.getFont4x4().print(canvas, marker.getMessage(), x, z, -1, -1, Colors.WHITE + 2, Colors.DARK_GRAY + 3);
+                plugin.getFont4x4().print(marker.getMessage(), x, z, (mx, my, shadow) -> canvas.setPixel(mx, my, shadow ? (byte)((canvas.getPixel(mx, my) & ~0x3) + 3) : (byte)Colors.WHITE + 2));
             }
             session.setLastRender(System.currentTimeMillis());
         }
@@ -467,7 +467,7 @@ public final class TerrainRenderer extends MapRenderer {
         case CROPS: return Colors.LIGHT_BROWN + shade;
         case POTATO: return Colors.LIGHT_BROWN + shade;
         case CARROT: return Colors.WOOL_ORANGE + shade;
-        case BEETROOT_BLOCK: return Colors.RED + shade;
+        case BEETROOT_BLOCK: return Colors.WOOL_PINK + shade;
         case ACACIA_DOOR: case ACACIA_FENCE: case ACACIA_FENCE_GATE: case ACACIA_STAIRS: return Colors.WOOL_ORANGE + shade;
         case BIRCH_DOOR: case BIRCH_FENCE: case BIRCH_WOOD_STAIRS: return Colors.LIGHT_BROWN + shade;
         case DARK_OAK_DOOR: case DARK_OAK_FENCE: case DARK_OAK_STAIRS: return Colors.DARK_BROWN + shade;
