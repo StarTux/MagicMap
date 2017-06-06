@@ -67,8 +67,8 @@ public final class TerrainRenderer extends MapRenderer {
 
     @Override
     public void render(MapView view, MapCanvas canvas, Player player) {
+        if (!isHoldingMap(player)) return;
         Session session = plugin.getSession(player);
-        if (session.getLastRender() != 0 && !isHoldingMap(player)) return;
         Storage storage = session.fetch(Storage.class);
         Location playerLocation = player.getLocation();
         Block playerBlock = playerLocation.getBlock();
