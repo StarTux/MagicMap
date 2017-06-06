@@ -68,21 +68,16 @@ final class ClaimRenderer {
             } else {
                 claimName = claim.getOwnerName();
             }
-            int width = coords[2] - coords[0] - 4;
-            int height = coords[3] - coords[1] - 4;
-            if (width > 16) {
-                plugin.getFont4x4().print(canvas, claimName, coords[0] + 2, coords[1] + 2, width, height, fontA, fontB);
-            }
+            plugin.getFont4x4().print(claimName, coords[0] + 2, coords[1] + 2, (x, y, shadow) -> { if (x < coords[2] - 1 && y < coords[2] - 1) canvas.setPixel(x, y, shadow ? (byte)((canvas.getPixel(x, y) & ~0x3) + 3) : (byte)Colors.WHITE + 2); });
         }
     }
 
     private void dottedLine(MapCanvas canvas, int x, int y, int colorA, int colorB) {
-        int dx = x / 2;
-        int dy = y / 2;
-        if ((dx % 2 == 0) ^ (dy % 2 == 0)) {
-            canvas.setPixel(x, y, (byte)colorA);
+        int color = canvas.getPixel(x, y) & ~0x3;
+        if ((x % 2 == 0) ^ (y % 2 == 0)) {
+            canvas.setPixel(x, y, (byte)(color + 3));
         } else {
-            canvas.setPixel(x, y, (byte)colorB);
+            canvas.setPixel(x, y, (byte)(Colors.WHITE + 2));
         }
     }
 }

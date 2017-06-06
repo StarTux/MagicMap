@@ -8,4 +8,16 @@ import lombok.Data;
 final class Session {
     private long lastRender;
     private final Map<Class<?>, Object> storage = new HashMap<>();
+
+    void store(Object o) {
+        storage.put(o.getClass(), o);
+    }
+
+    <T> T fetch(Class<T> clazz) {
+        return clazz.cast(storage.get(clazz));
+    }
+
+    <T> T remove(Class<T> clazz) {
+        return clazz.cast(storage.remove(clazz));
+    }
 }

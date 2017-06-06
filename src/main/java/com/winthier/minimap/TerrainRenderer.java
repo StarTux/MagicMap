@@ -11,12 +11,14 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Tameable;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.map.MapCanvas;
 import org.bukkit.map.MapCursor;
 import org.bukkit.map.MapCursorCollection;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
+import org.bukkit.scheduler.BukkitRunnable;
 
 @Getter
 public final class TerrainRenderer extends MapRenderer {
@@ -67,7 +69,7 @@ public final class TerrainRenderer extends MapRenderer {
     public void render(MapView view, MapCanvas canvas, Player player) {
         Session session = plugin.getSession(player);
         if (session.getLastRender() != 0 && !isHoldingMap(player)) return;
-        Storage storage = (Storage)session.getStorage().get(Storage.class);
+        Storage storage = session.fetch(Storage.class);
         Location playerLocation = player.getLocation();
         Block playerBlock = playerLocation.getBlock();
         boolean needsRedraw;
@@ -75,7 +77,7 @@ public final class TerrainRenderer extends MapRenderer {
         long sinceLastRender = System.currentTimeMillis() - session.getLastRender();
         if (storage == null || (sinceLastRender > 3000 && storage.isTooFar(playerBlock))) {
             storage = new Storage(playerBlock);
-            session.getStorage().put(Storage.class, storage);
+            session.store(storage);
             needsRedraw = true;
         } else if (sinceLastRender > 10000) {
             needsRedraw = true;
@@ -111,7 +113,7 @@ public final class TerrainRenderer extends MapRenderer {
                 break;
             case SURFACE: case END:
                 Map<XZ, Block> cache = new HashMap<>();
-                for (int pz = 5; pz < 128; pz += 1) {
+                for (int pz = 4; pz < 128; pz += 1) {
                     for (int px = 0; px < 128; px += 1) {
                         int x = ax + px;
                         int z = az + pz;
@@ -123,16 +125,20 @@ public final class TerrainRenderer extends MapRenderer {
             default:
                 break;
             }
-            for (int y = 0; y < 5; y += 1) {
+            for (int y = 0; y < 4; y += 1) {
                 for (int x = 0; x < 128; x += 1) {
-                    canvas.setPixel(x, y, (byte)Colors.WOOL_BLACK);
+                    canvas.setPixel(x, y, (byte)(Colors.WOOL_BLACK + 3));
                 }
+            }
+            for (int x = 0; x < 128; x += 1) {
+                canvas.setPixel(x, 4, (byte)((canvas.getPixel(x, 4) & ~0x3) + 3));
             }
             final int shadowColor = Colors.DARK_GRAY + 3;
             String worldName = plugin.getWorldName(player.getWorld().getName());
-            plugin.getFont4x4().print(canvas, worldName, 1, 0, -1, -1, Colors.PALE_BLUE + 2, shadowColor);
-            plugin.getFont4x4().print(canvas, renderMode.name(), 127 - plugin.getFont4x4().widthOf(renderMode.name()), 0, -1, -1, Colors.RED, shadowColor);
+            plugin.getFont4x4().print(worldName, 1, 0, (x, y, shadow) -> { if (y < 4) canvas.setPixel(x, y, !shadow ? (byte)(Colors.PALE_BLUE + 2) : (byte)shadowColor); });
+            plugin.getFont4x4().print(renderMode.name(), 128 - plugin.getFont4x4().widthOf(renderMode.name()), 0, (x, y, shadow) -> { if (y < 4) canvas.setPixel(x, y, !shadow ? (byte)(Colors.RED + 2) : (byte)shadowColor); });
             if (claimRenderer != null) claimRenderer.render(plugin, canvas, player, ax, az);
+            if (plugin.getCreativeRenderer() != null) plugin.getCreativeRenderer().render(canvas, player, ax, az);
             for (Marker marker: plugin.getMarkers()) {
                 if (!marker.getWorld().equals(player.getWorld().getName())) continue;
                 int x = marker.getX() - ax;
@@ -144,33 +150,44 @@ public final class TerrainRenderer extends MapRenderer {
             }
             session.setLastRender(System.currentTimeMillis());
         }
-        MapCursorCollection cursors = new MapCursorCollection();
-        cursors.addCursor(Util.makeCursor(MapCursor.Type.WHITE_POINTER, playerLocation, ax, az));
-        if (dist < 128) {
-            for (Entity e: player.getNearbyEntities(64, 64, 64)) {
-                if (e instanceof Player) {
-                    Player nearby = (Player)e;
-                    if (nearby.equals(player)) continue;
-                    if (nearby.getGameMode() == GameMode.SPECTATOR) continue;
-                    cursors.addCursor(Util.makeCursor(MapCursor.Type.BLUE_POINTER, nearby.getLocation(), ax, az));
-                } else {
-                    switch (e.getType()) {
-                    case ENDER_DRAGON:
-                    case WITHER:
-                        cursors.addCursor(Util.makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), ax, az));
-                        break;
-                    default: break;
+        MapCursorCollection oldCursors = session.remove(MapCursorCollection.class);
+        if (oldCursors != null) canvas.setCursors(oldCursors);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!player.isValid() || !player.isOnline()) return;
+                MapCursorCollection cursors = new MapCursorCollection();
+                cursors.addCursor(Util.makeCursor(MapCursor.Type.WHITE_POINTER, playerLocation, ax, az));
+                if (dist < 128) {
+                    for (Entity e: player.getNearbyEntities(64, 64, 64)) {
+                        if (e instanceof Player) {
+                            Player nearby = (Player)e;
+                            if (nearby.equals(player)) continue;
+                            if (nearby.getGameMode() == GameMode.SPECTATOR) continue;
+                            cursors.addCursor(Util.makeCursor(MapCursor.Type.BLUE_POINTER, nearby.getLocation(), ax, az));
+                        } else if (e instanceof Tameable) {
+                            if (player.equals(((Tameable)e).getOwner())) {
+                                cursors.addCursor(Util.makeCursor(MapCursor.Type.GREEN_POINTER, e.getLocation(), ax, az));
+                            }
+                        } else {
+                            switch (e.getType()) {
+                            case ENDER_DRAGON:
+                            case WITHER:
+                                cursors.addCursor(Util.makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), ax, az));
+                                break;
+                            default: break;
+                            }
+                        }
                     }
                 }
+                session.store(cursors);
             }
-        }
-        canvas.setCursors(cursors);
-        if (plugin.getCreativeRenderer() != null) plugin.getCreativeRenderer().render(canvas, player, ax, az);
+        }.runTask(plugin);
     }
 
     void drawCaveMap(MapCanvas canvas, World world, int ax, int az) {
         Map<XZ, Block> cache = new HashMap<>();
-        for (int pz = 5; pz < 128; pz += 1) {
+        for (int pz = 4; pz < 128; pz += 1) {
             for (int px = 0; px < 128; px += 1) {
                 int dx = px - 64;
                 int dz = pz - 64;
@@ -226,7 +243,7 @@ public final class TerrainRenderer extends MapRenderer {
     }
 
     void drawNetherMap(MapCanvas canvas, World world, int ax, int az) {
-        for (int pz = 5; pz < 128; pz += 1) {
+        for (int pz = 4; pz < 128; pz += 1) {
             for (int px = 0; px < 128; px += 1) {
                 int x = ax + px;
                 int z = az + pz;
@@ -406,8 +423,8 @@ public final class TerrainRenderer extends MapRenderer {
         case WOOL:
         case STAINED_CLAY:
         case STAINED_GLASS:
-        case CONCRETE:
-        case CONCRETE_POWDER:
+        // case CONCRETE:
+        // case CONCRETE_POWDER:
             switch (block.getData()) {
             case 0: return Colors.WOOL_WHITE + shade;
             case 1: return Colors.WOOL_ORANGE + shade;
@@ -427,22 +444,22 @@ public final class TerrainRenderer extends MapRenderer {
             case 15: return Colors.WOOL_BLACK + shade;
             default: return 0;
             }
-        case WHITE_GLAZED_TERRACOTTA: return Colors.WOOL_WHITE + shade;
-        case ORANGE_GLAZED_TERRACOTTA: return Colors.WOOL_ORANGE + shade;
-        case MAGENTA_GLAZED_TERRACOTTA: return Colors.WOOL_MAGENTA + shade;
-        case LIGHT_BLUE_GLAZED_TERRACOTTA: return Colors.WOOL_LIGHT_BLUE + shade;
-        case YELLOW_GLAZED_TERRACOTTA: return Colors.WOOL_YELLOW + shade;
-        case LIME_GLAZED_TERRACOTTA: return Colors.WOOL_LIME + shade;
-        case PINK_GLAZED_TERRACOTTA: return Colors.WOOL_PINK + shade;
-        case GRAY_GLAZED_TERRACOTTA: return Colors.WOOL_GRAY + shade;
-        case SILVER_GLAZED_TERRACOTTA: return Colors.WOOL_SILVER + shade;
-        case CYAN_GLAZED_TERRACOTTA: return Colors.WOOL_CYAN + shade;
-        case PURPLE_GLAZED_TERRACOTTA: return Colors.WOOL_PURPLE + shade;
-        case BLUE_GLAZED_TERRACOTTA: return Colors.WOOL_BLUE + shade;
-        case BROWN_GLAZED_TERRACOTTA: return Colors.WOOL_BROWN + shade;
-        case GREEN_GLAZED_TERRACOTTA: return Colors.WOOL_GREEN + shade;
-        case RED_GLAZED_TERRACOTTA: return Colors.WOOL_RED + shade;
-        case BLACK_GLAZED_TERRACOTTA: return Colors.WOOL_BLACK + shade;
+        // case WHITE_GLAZED_TERRACOTTA: return Colors.WOOL_WHITE + shade;
+        // case ORANGE_GLAZED_TERRACOTTA: return Colors.WOOL_ORANGE + shade;
+        // case MAGENTA_GLAZED_TERRACOTTA: return Colors.WOOL_MAGENTA + shade;
+        // case LIGHT_BLUE_GLAZED_TERRACOTTA: return Colors.WOOL_LIGHT_BLUE + shade;
+        // case YELLOW_GLAZED_TERRACOTTA: return Colors.WOOL_YELLOW + shade;
+        // case LIME_GLAZED_TERRACOTTA: return Colors.WOOL_LIME + shade;
+        // case PINK_GLAZED_TERRACOTTA: return Colors.WOOL_PINK + shade;
+        // case GRAY_GLAZED_TERRACOTTA: return Colors.WOOL_GRAY + shade;
+        // case SILVER_GLAZED_TERRACOTTA: return Colors.WOOL_SILVER + shade;
+        // case CYAN_GLAZED_TERRACOTTA: return Colors.WOOL_CYAN + shade;
+        // case PURPLE_GLAZED_TERRACOTTA: return Colors.WOOL_PURPLE + shade;
+        // case BLUE_GLAZED_TERRACOTTA: return Colors.WOOL_BLUE + shade;
+        // case BROWN_GLAZED_TERRACOTTA: return Colors.WOOL_BROWN + shade;
+        // case GREEN_GLAZED_TERRACOTTA: return Colors.WOOL_GREEN + shade;
+        // case RED_GLAZED_TERRACOTTA: return Colors.WOOL_RED + shade;
+        // case BLACK_GLAZED_TERRACOTTA: return Colors.WOOL_BLACK + shade;
         case SUGAR_CANE_BLOCK: return Colors.LIGHT_GREEN + shade;
         case WATER_LILY: return Colors.DARK_GREEN + shade;
         case CACTUS: return Colors.DARK_GREEN + shade;

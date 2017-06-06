@@ -81,6 +81,30 @@ public final class Font4x4 {
         charMap.put(' ', new Char(2, 4, new ArrayList<Pixel>(), new ArrayList<Pixel>()));
     }
 
+    public interface Drawer {
+        void draw(int x, int y, boolean shadow);
+    }
+
+    // Return width in pixels
+    public int print(String msg, int x, int y, Drawer drawer) {
+        if (msg == null) return 0;
+        msg = msg.toUpperCase();
+        int length = 0;
+        for (int i = 0; i < msg.length(); i += 1) {
+            char c = msg.charAt(i);
+            Char chr = charMap.get(c);
+            if (chr == null) continue;
+            for (Pixel pixel: chr.pixels) {
+                drawer.draw(length + x + pixel.x, y + pixel.y, false);
+            }
+            for (Pixel pixel: chr.shadowPixels) {
+                drawer.draw(length + x + pixel.x, y + pixel.y, true);
+            }
+            length += chr.width + 1;
+        }
+        return length;
+    }
+
     // Return width in pixels
     public int print(MapCanvas canvas, String msg, int x, int y, int width, int height, int color, int shadowColor) {
         if (msg == null) return 0;
