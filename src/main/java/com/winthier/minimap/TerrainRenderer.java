@@ -391,7 +391,8 @@ public final class TerrainRenderer extends MapRenderer {
             default: return Colors.LIGHT_GRAY + shade;
             }
         case COAL_ORE: case DIAMOND_ORE: case EMERALD_ORE: case GLOWING_REDSTONE_ORE: case GOLD_ORE: case IRON_ORE: case LAPIS_ORE: case REDSTONE_ORE: return Colors.LIGHT_GRAY + shade;
-        case ICE: case PACKED_ICE: return Colors.ROYAL_BLUE + shade;
+        case ICE: return Colors.ROYAL_BLUE + shade;
+        case PACKED_ICE: return Colors.WOOL_LIGHT_BLUE + shade;
         case SNOW: case SNOW_BLOCK: return Colors.WHITE + shade;
         case PUMPKIN: return Colors.WOOL_ORANGE + shade;
         case CLAY: return Colors.GRAY_1 + shade;
