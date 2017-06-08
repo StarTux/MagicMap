@@ -9,6 +9,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Tameable;
@@ -18,6 +19,7 @@ import org.bukkit.map.MapCursor;
 import org.bukkit.map.MapCursorCollection;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
+import org.bukkit.material.Colorable;
 import org.bukkit.scheduler.BukkitRunnable;
 
 @Getter
@@ -444,6 +446,7 @@ public final class TerrainRenderer extends MapRenderer {
             case 15: return Colors.WOOL_BLACK + shade;
             default: return 0;
             }
+        // Terracotta
         case WHITE_GLAZED_TERRACOTTA: return Colors.WOOL_WHITE + shade;
         case ORANGE_GLAZED_TERRACOTTA: return Colors.WOOL_ORANGE + shade;
         case MAGENTA_GLAZED_TERRACOTTA: return Colors.WOOL_MAGENTA + shade;
@@ -460,6 +463,24 @@ public final class TerrainRenderer extends MapRenderer {
         case GREEN_GLAZED_TERRACOTTA: return Colors.WOOL_GREEN + shade;
         case RED_GLAZED_TERRACOTTA: return Colors.WOOL_RED + shade;
         case BLACK_GLAZED_TERRACOTTA: return Colors.WOOL_BLACK + shade;
+        // Shulker
+        case WHITE_SHULKER_BOX: return Colors.WOOL_WHITE + shade;
+        case ORANGE_SHULKER_BOX: return Colors.WOOL_ORANGE + shade;
+        case MAGENTA_SHULKER_BOX: return Colors.WOOL_MAGENTA + shade;
+        case LIGHT_BLUE_SHULKER_BOX: return Colors.WOOL_LIGHT_BLUE + shade;
+        case YELLOW_SHULKER_BOX: return Colors.WOOL_YELLOW + shade;
+        case LIME_SHULKER_BOX: return Colors.WOOL_LIME + shade;
+        case PINK_SHULKER_BOX: return Colors.WOOL_PINK + shade;
+        case GRAY_SHULKER_BOX: return Colors.WOOL_GRAY + shade;
+        case SILVER_SHULKER_BOX: return Colors.WOOL_SILVER + shade;
+        case CYAN_SHULKER_BOX: return Colors.WOOL_CYAN + shade;
+        case PURPLE_SHULKER_BOX: return Colors.WOOL_PURPLE + shade;
+        case BLUE_SHULKER_BOX: return Colors.WOOL_BLUE + shade;
+        case BROWN_SHULKER_BOX: return Colors.WOOL_BROWN + shade;
+        case GREEN_SHULKER_BOX: return Colors.WOOL_GREEN + shade;
+        case RED_SHULKER_BOX: return Colors.WOOL_RED + shade;
+        case BLACK_SHULKER_BOX: return Colors.WOOL_BLACK + shade;
+        //
         case SUGAR_CANE_BLOCK: return Colors.LIGHT_GREEN + shade;
         case WATER_LILY: return Colors.DARK_GREEN + shade;
         case CACTUS: return Colors.DARK_GREEN + shade;
@@ -488,7 +509,32 @@ public final class TerrainRenderer extends MapRenderer {
         case BEDROCK: return Colors.DARK_GRAY + shade;
         case TORCH: case GLOWSTONE: case REDSTONE_LAMP_ON: case JACK_O_LANTERN: case FIRE: return Colors.WOOL_YELLOW + 2;
         case SEA_LANTERN: return Colors.ROYAL_BLUE + 2;
-        default: return Colors.WOOL_BROWN + shade;
+        case BED_BLOCK:
+        default:
+            BlockState blockState = block.getState();
+            if (blockState instanceof Colorable) {
+                Colorable colorable = (Colorable)blockState;
+                switch (colorable.getColor()) {
+                case WHITE: return Colors.WOOL_WHITE + shade;
+                case ORANGE: return Colors.WOOL_ORANGE + shade;
+                case MAGENTA: return Colors.WOOL_MAGENTA + shade;
+                case LIGHT_BLUE: return Colors.WOOL_LIGHT_BLUE + shade;
+                case YELLOW: return Colors.WOOL_YELLOW + shade;
+                case LIME: return Colors.WOOL_LIME + shade;
+                case PINK: return Colors.WOOL_PINK + shade;
+                case GRAY: return Colors.WOOL_GRAY + shade;
+                case SILVER: return Colors.WOOL_SILVER + shade;
+                case CYAN: return Colors.WOOL_CYAN + shade;
+                case PURPLE: return Colors.WOOL_PURPLE + shade;
+                case BLUE: return Colors.WOOL_BLUE + shade;
+                case BROWN: return Colors.WOOL_BROWN + shade;
+                case GREEN: return Colors.WOOL_GREEN + shade;
+                case RED: return Colors.WOOL_RED + shade;
+                case BLACK: return Colors.WOOL_BLACK + shade;
+                default: break;
+                }
+            }
+            return Colors.WOOL_BROWN + shade;
         }
     }
 

@@ -15,7 +15,7 @@ public final class MiniMapTest {
         for (org.bukkit.DyeColor dye: org.bukkit.DyeColor.values()) {
             // org.bukkit.Color c = dye.getColor();
             // int result = MapPalette.matchColor(new java.awt.Color(c.getRed(), c.getGreen(), c.getBlue()));
-            System.out.println("case " + dye + "_GLAZED_TERRACOTTA: return Colors.WOOL_" + dye + " + shade;");
+            System.out.println("case " + dye + "_SHULKER_BOX: return Colors.WOOL_" + dye + " + shade;");
         }
         for (Field field: MapPalette.class.getDeclaredFields()) {
             if (field.getType() != byte.class) continue;
