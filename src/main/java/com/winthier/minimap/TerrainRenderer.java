@@ -428,6 +428,7 @@ public final class TerrainRenderer extends MapRenderer {
         case STAINED_GLASS:
         case CONCRETE:
         case CONCRETE_POWDER:
+        case CARPET:
             switch (block.getData()) {
             case 0: return Colors.WOOL_WHITE + shade;
             case 1: return Colors.WOOL_ORANGE + shade;
@@ -556,6 +557,7 @@ public final class TerrainRenderer extends MapRenderer {
             case TORCH:
             case FIRE:
             case SUGAR_CANE_BLOCK:
+            case CARPET:
                 break LOOP;
             default: break;
             }
