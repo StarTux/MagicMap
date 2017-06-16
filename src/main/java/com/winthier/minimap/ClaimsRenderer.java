@@ -1,7 +1,7 @@
 package com.winthier.minimap;
 
-import com.winthier.claim.Claim;
-import com.winthier.claim.ClaimPlugin;
+import com.winthier.claims.Claim;
+import com.winthier.claims.bukkit.BukkitClaimsPlugin;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -9,13 +9,13 @@ import java.util.List;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapCanvas;
 
-final class ClaimRenderer {
+final class ClaimsRenderer {
     private final Comparator<Claim> claimComparator = new Comparator<Claim>() {
             @Override
             public int compare(Claim a, Claim b) {
-                if (a.getSuperclaim() == null && b.getSuperclaim() != null) {
+                if (a.getSuperClaim() == null && b.getSuperClaim() != null) {
                     return 1;
-                } else if (a.getSuperclaim() != null && b.getSuperclaim() == null) {
+                } else if (a.getSuperClaim() != null && b.getSuperClaim() == null) {
                     return -1;
                 } else {
                     return 0;
@@ -24,14 +24,14 @@ final class ClaimRenderer {
         };
 
     void render(MiniMapPlugin plugin, MapCanvas canvas, Player player, int ax, int az) {
-        ClaimPlugin claimPlugin = (ClaimPlugin)plugin.getServer().getPluginManager().getPlugin("Claim");
-        if (claimPlugin == null) return;
+        BukkitClaimsPlugin claims = (BukkitClaimsPlugin)plugin.getServer().getPluginManager().getPlugin("Claims");
+        if (claims == null) return;
         int[] coords = new int[4];
-        List<Claim> claimList = new ArrayList<>(claimPlugin.getNearbyClaims(player.getLocation().getBlock(), 128));
+        List<Claim> claimList = new ArrayList<>(claims.findClaimsNear(player.getLocation(), 128));
         Collections.sort(claimList, claimComparator);
         for (Claim claim: claimList) {
             int colorA, colorB, fontA, fontB;
-            if (claim.getSuperclaim() == null) {
+            if (claim.getSuperClaim() == null) {
                 colorA = Colors.WHITE + 2;
                 colorB = Colors.WOOL_BLACK + 3;
                 fontA = Colors.WHITE + 2;
@@ -42,13 +42,13 @@ final class ClaimRenderer {
                 fontA = Colors.WHITE + 1;
                 fontB = Colors.DARK_GRAY + 3;
             }
-            coords[0] = claim.getRectangle().getWestBorder() - ax;
+            coords[0] = claim.getWestBorder() - ax;
             if (coords[0] > 127) continue;
-            coords[1] = claim.getRectangle().getNorthBorder() - az;
+            coords[1] = claim.getNorthBorder() - az;
             if (coords[1] > 127) continue;
-            coords[2] = claim.getRectangle().getEastBorder() - ax;
+            coords[2] = claim.getEastBorder() - ax;
             if (coords[2] < 0) continue;
-            coords[3] = claim.getRectangle().getSouthBorder() - az;
+            coords[3] = claim.getSouthBorder() - az;
             if (coords[3] < 5) continue;
             for (int i = 0; i < 4; i += 1) {
                 if (coords[i] < 0) coords[i] = 0;

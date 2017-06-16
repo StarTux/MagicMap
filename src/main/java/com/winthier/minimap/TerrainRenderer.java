@@ -25,6 +25,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 @Getter
 public final class TerrainRenderer extends MapRenderer {
     private final MiniMapPlugin plugin;
+    private ClaimsRenderer claimsRenderer;
     private ClaimRenderer claimRenderer;
 
     @Value static class XZ { private final int x, z; }
@@ -55,6 +56,9 @@ public final class TerrainRenderer extends MapRenderer {
         super(true);
         this.plugin = plugin;
         if (plugin.getServer().getPluginManager().getPlugin("Claims") != null) {
+            claimsRenderer = new ClaimsRenderer();
+        }
+        if (plugin.getServer().getPluginManager().getPlugin("Claim") != null) {
             claimRenderer = new ClaimRenderer();
         }
     }
@@ -139,6 +143,7 @@ public final class TerrainRenderer extends MapRenderer {
             String worldName = plugin.getWorldName(player.getWorld().getName());
             plugin.getFont4x4().print(worldName, 1, 0, (x, y, shadow) -> { if (y < 4) canvas.setPixel(x, y, !shadow ? (byte)(Colors.PALE_BLUE + 2) : (byte)shadowColor); });
             plugin.getFont4x4().print(renderMode.name(), 128 - plugin.getFont4x4().widthOf(renderMode.name()), 0, (x, y, shadow) -> { if (y < 4) canvas.setPixel(x, y, !shadow ? (byte)(Colors.RED + 2) : (byte)shadowColor); });
+            if (claimsRenderer != null) claimsRenderer.render(plugin, canvas, player, ax, az);
             if (claimRenderer != null) claimRenderer.render(plugin, canvas, player, ax, az);
             if (plugin.getCreativeRenderer() != null) plugin.getCreativeRenderer().render(canvas, player, ax, az);
             for (Marker marker: plugin.getMarkers()) {

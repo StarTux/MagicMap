@@ -46,6 +46,13 @@
       <version>0.1</version>
       <scope>provided</scope>
     </dependency>
+    <!-- Claim -->
+    <dependency>
+      <groupId>com.winthier.claim</groupId>
+      <artifactId>claim</artifactId>
+      <version>0.1</version>
+      <scope>provided</scope>
+    </dependency>
     <!-- Custom -->
     <dependency>
       <groupId>com.winthier.custom</groupId>
