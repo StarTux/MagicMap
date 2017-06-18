@@ -172,6 +172,8 @@ public final class TerrainRenderer extends MapRenderer {
                             if (nearby.equals(player)) continue;
                             if (nearby.getGameMode() == GameMode.SPECTATOR) continue;
                             cursors.addCursor(Util.makeCursor(MapCursor.Type.BLUE_POINTER, nearby.getLocation(), ax, az));
+                        } else if (e.getScoreboardTags().contains("ShowOnMiniMap")) {
+                            cursors.addCursor(Util.makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), ax, az));
                         } else if (e instanceof Tameable) {
                             if (player.equals(((Tameable)e).getOwner())) {
                                 cursors.addCursor(Util.makeCursor(MapCursor.Type.GREEN_POINTER, e.getLocation(), ax, az));
