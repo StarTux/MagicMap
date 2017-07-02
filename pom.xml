@@ -67,6 +67,13 @@
       <version>0.1</version>
       <scope>provided</scope>
     </dependency>
+    <!-- Hostile -->
+    <dependency>
+      <groupId>com.winthier.hostile</groupId>
+      <artifactId>hostile</artifactId>
+      <version>0.1</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

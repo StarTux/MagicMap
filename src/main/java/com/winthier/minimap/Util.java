@@ -1,6 +1,7 @@
 package com.winthier.minimap;
 
 import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.map.MapCursor;
 
 final class Util {
@@ -20,5 +21,15 @@ final class Util {
         if (x > 127) x = 127;
         if (y > 127) y = 127;
         return new MapCursor((byte)x, (byte)y, (byte)dir, cursorType.getValue(), true);
+    }
+
+    static MapCursor makeCursor(MapCursor.Type cursorType, Block block, int ax, int az) {
+        int x = (block.getX() - ax - 64) * 2;
+        int y = (block.getZ() - az - 64) * 2;
+        if (x < -127) x = -127;
+        if (y < -127) y = -127;
+        if (x > 127) x = 127;
+        if (y > 127) y = 127;
+        return new MapCursor((byte)x, (byte)y, (byte)8, cursorType.getValue(), true);
     }
 }

@@ -28,6 +28,7 @@ public final class TerrainRenderer extends MapRenderer {
     private ClaimRenderer claimRenderer;
     private DebugRenderer debugRenderer;
     private CreativeRenderer creativeRenderer;
+    private HostileRenderer hostileRenderer;
 
     @Value static class XZ { private final int x, z; }
 
@@ -64,6 +65,9 @@ public final class TerrainRenderer extends MapRenderer {
         }
         if (plugin.getServer().getPluginManager().getPlugin("Creative") != null) {
             creativeRenderer = new CreativeRenderer(plugin);
+        }
+        if (plugin.getServer().getPluginManager().getPlugin("Hostile") != null) {
+            hostileRenderer = new HostileRenderer(plugin);
         }
         debugRenderer = new DebugRenderer(plugin);
     }
@@ -183,6 +187,7 @@ public final class TerrainRenderer extends MapRenderer {
                 }
             }
         }
+        if (hostileRenderer != null) hostileRenderer.updateCursors(cursors, player, ax, az);
         canvas.setCursors(cursors);
         if (debugRenderer != null) debugRenderer.render(canvas, player, ax, az);
     }
