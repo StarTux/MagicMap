@@ -26,6 +26,8 @@ public final class TerrainRenderer extends MapRenderer {
     private final MiniMapPlugin plugin;
     private ClaimsRenderer claimsRenderer;
     private ClaimRenderer claimRenderer;
+    private DebugRenderer debugRenderer;
+    private CreativeRenderer creativeRenderer;
 
     @Value static class XZ { private final int x, z; }
 
@@ -60,6 +62,10 @@ public final class TerrainRenderer extends MapRenderer {
         if (plugin.getServer().getPluginManager().getPlugin("Claim") != null) {
             claimRenderer = new ClaimRenderer();
         }
+        if (plugin.getServer().getPluginManager().getPlugin("Creative") != null) {
+            creativeRenderer = new CreativeRenderer(plugin);
+        }
+        debugRenderer = new DebugRenderer(plugin);
     }
 
     private boolean isHoldingMap(Player player) {
@@ -139,7 +145,7 @@ public final class TerrainRenderer extends MapRenderer {
             plugin.getFont4x4().print(renderMode.name(), 128 - plugin.getFont4x4().widthOf(renderMode.name()), 0, (x, y, shadow) -> { if (y < 4) canvas.setPixel(x, y, !shadow ? (byte)(Colors.RED + 2) : (byte)shadowColor); });
             if (claimsRenderer != null) claimsRenderer.render(plugin, canvas, player, ax, az);
             if (claimRenderer != null) claimRenderer.render(plugin, canvas, player, ax, az);
-            if (plugin.getCreativeRenderer() != null) plugin.getCreativeRenderer().render(canvas, player, ax, az);
+            if (creativeRenderer != null) creativeRenderer.render(canvas, player, ax, az);
             for (Marker marker: plugin.getMarkers()) {
                 if (!marker.getWorld().equals(player.getWorld().getName())) continue;
                 int x = marker.getX() - ax;
@@ -178,6 +184,7 @@ public final class TerrainRenderer extends MapRenderer {
             }
         }
         canvas.setCursors(cursors);
+        if (debugRenderer != null) debugRenderer.render(canvas, player, ax, az);
     }
 
     private static int directionOf(Location location) {

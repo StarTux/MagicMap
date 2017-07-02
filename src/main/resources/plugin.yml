@@ -9,6 +9,10 @@ commands:
   minimap:
     description: Debug command
     permission: minimap.minimap
+    usage: |-
+      /minimap reload
+      /minimap setmarker <name> <text>
+      /minimap color <index>
 permissions:
   minimap.minimap:
     description: Use the /minimap command

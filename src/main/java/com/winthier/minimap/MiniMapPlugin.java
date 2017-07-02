@@ -39,8 +39,6 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
     private MiniMapItem miniMapItem;
     private MapView mapView;
     private Font4x4 font4x4;
-    // Plugins
-    private CreativeRenderer creativeRenderer;
 
     @Override
     public void onEnable() {
@@ -48,9 +46,6 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
         readConfiguration();
         getServer().getPluginManager().registerEvents(this, this);
         font4x4 = new Font4x4(this);
-        if (getServer().getPluginManager().getPlugin("Creative") != null) {
-            creativeRenderer = new CreativeRenderer(this);
-        }
     }
 
     @Override
@@ -98,6 +93,16 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
                                              MapPalette.getColor((byte)color).getRed(),
                                              MapPalette.getColor((byte)color).getGreen(),
                                              MapPalette.getColor((byte)color).getBlue()));
+        } else if ("debug".equals(cmd) && args.length == 1) {
+            if (player == null) return false;
+            Session session = getSession(player);
+            boolean v = !session.isDebug();
+            session.setDebug(v);
+            if (v) {
+                sender.sendMessage("Debug mode enabled");
+            } else {
+                sender.sendMessage("Debug mode disabled");
+            }
         } else {
             return false;
         }
@@ -125,7 +130,6 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
             mapView.removeRenderer(renderer);
         }
         mapView.addRenderer(new TerrainRenderer(this));
-        if (debug) mapView.addRenderer(new DebugRenderer(this));
         sessions.clear();
         worldNames.clear();
         ConfigurationSection section = getConfig().getConfigurationSection("WorldNames");

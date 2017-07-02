@@ -3,18 +3,15 @@ package com.winthier.minimap;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapCanvas;
-import org.bukkit.map.MapRenderer;
-import org.bukkit.map.MapView;
+import org.bukkit.map.MapCursor;
+import org.bukkit.map.MapCursorCollection;
 
 @RequiredArgsConstructor
-public class DebugRenderer extends MapRenderer {
+public class DebugRenderer {
     private final MiniMapPlugin plugin;
-    static class Flag { };
 
-    @Override
-    public void render(MapView view, MapCanvas canvas, Player player) {
-        if (plugin.getSession(player).fetch(Flag.class) != null) return;
-        plugin.getSession(player).store(new Flag());
+    public void render(MapCanvas canvas, Player player, int ax, int az) {
+        if (!plugin.getSession(player).isDebug()) return;
         for (int dz = 0; dz < 4; dz += 1) {
             for (int dx = 0; dx < 128; dx += 1) {
                 if (dz < 2) {
@@ -38,6 +35,13 @@ public class DebugRenderer extends MapRenderer {
             plugin.getFont4x4().print(canvas, "" + v, dx, 5, -1, -1, color, Colors.WOOL_BLACK);
             plugin.getFont4x4().print(canvas, "" + (v + 32), dx, 118, -1, -1, color, Colors.WOOL_BLACK);
         }
-        player.sendMessage("" + (int)player.getLocation().getYaw() + " " + (int)player.getLocation().getPitch());
+        MapCursorCollection cursors = canvas.getCursors();
+        int i = 0;
+        for (MapCursor.Type type: MapCursor.Type.values()) {
+            i += 1;
+            cursors.addCursor(new MapCursor((byte)-100, (byte)(-127 + i * 20 + 10), (byte)8, type.getValue(), true));
+            plugin.getFont4x4().print(canvas, type.name(), 20, i * 10 + 5, -1, -1, Colors.WOOL_BLACK, Colors.WHITE);
+        }
+        canvas.setCursors(cursors);
     }
 }
