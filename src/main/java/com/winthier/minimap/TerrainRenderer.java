@@ -128,7 +128,13 @@ public final class TerrainRenderer extends MapRenderer {
                     int color = colorOf(block, x, z, cache);
                     int shade;
                     if (block.isLiquid()) {
-                        shade = liquidShadeOf(block, x, z);
+                        int a = liquidShadeOf(block, x, z);
+                        int b = sunlightShadeOf(block, x, z, cache, renderMode);
+                        if (a == 3 || b == 3) {
+                            shade = 3;
+                        } else {
+                            shade = Math.min(a, b);
+                        }
                     } else {
                         shade = sunlightShadeOf(block, x, z, cache, renderMode);
                     }
@@ -304,7 +310,7 @@ public final class TerrainRenderer extends MapRenderer {
             default: return Colors.LIGHT_GRAY;
             }
         case COAL_ORE: case DIAMOND_ORE: case EMERALD_ORE: case GLOWING_REDSTONE_ORE: case GOLD_ORE: case IRON_ORE: case LAPIS_ORE: case REDSTONE_ORE: return Colors.LIGHT_GRAY;
-        case ICE: return Colors.ROYAL_BLUE;
+        case ICE: case FROSTED_ICE: return Colors.ROYAL_BLUE;
         case PACKED_ICE: return Colors.WOOL_LIGHT_BLUE;
         case SNOW: case SNOW_BLOCK: return Colors.WHITE;
         case PUMPKIN: return Colors.WOOL_ORANGE;
