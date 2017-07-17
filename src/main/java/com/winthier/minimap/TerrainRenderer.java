@@ -167,35 +167,39 @@ public final class TerrainRenderer extends MapRenderer {
             }
             session.setLastRender(System.currentTimeMillis());
         }
-        MapCursorCollection cursors = new MapCursorCollection();
-        cursors.addCursor(Util.makeCursor(MapCursor.Type.WHITE_POINTER, playerLocation, ax, az));
-        if (dist < 128) {
-            for (Entity e: player.getNearbyEntities(64, 64, 64)) {
-                if (e instanceof Player) {
-                    Player nearby = (Player)e;
-                    if (nearby.equals(player)) continue;
-                    if (nearby.getGameMode() == GameMode.SPECTATOR) continue;
-                    cursors.addCursor(Util.makeCursor(MapCursor.Type.BLUE_POINTER, nearby.getLocation(), ax, az));
-                } else if (e.getScoreboardTags().contains("ShowOnMiniMap")) {
-                    cursors.addCursor(Util.makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), ax, az));
-                } else if (e instanceof Tameable) {
-                    if (player.equals(((Tameable)e).getOwner())) {
-                        cursors.addCursor(Util.makeCursor(MapCursor.Type.GREEN_POINTER, e.getLocation(), ax, az));
-                    }
-                } else {
-                    switch (e.getType()) {
-                    case ENDER_DRAGON:
-                    case WITHER:
+        MapCursorCollection oldCursors = session.remove(MapCursorCollection.class);
+        if (oldCursors != null) canvas.setCursors(oldCursors);
+        if (debugRenderer != null) debugRenderer.render(canvas, player, ax, az);
+        if (dist >= 128) return;
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+                if (!player.isOnline()) return;
+                MapCursorCollection cursors = new MapCursorCollection();
+                cursors.addCursor(Util.makeCursor(MapCursor.Type.WHITE_POINTER, playerLocation, ax, az));
+                for (Entity e: player.getNearbyEntities(64, 64, 64)) {
+                    if (e instanceof Player) {
+                        Player nearby = (Player)e;
+                        if (nearby.equals(player)) continue;
+                        if (nearby.getGameMode() == GameMode.SPECTATOR) continue;
+                        cursors.addCursor(Util.makeCursor(MapCursor.Type.BLUE_POINTER, nearby.getLocation(), ax, az));
+                    } else if (e.getScoreboardTags().contains("ShowOnMiniMap")) {
                         cursors.addCursor(Util.makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), ax, az));
-                        break;
-                    default: break;
+                    } else if (e instanceof Tameable) {
+                        if (player.equals(((Tameable)e).getOwner())) {
+                            cursors.addCursor(Util.makeCursor(MapCursor.Type.GREEN_POINTER, e.getLocation(), ax, az));
+                        }
+                    } else {
+                        switch (e.getType()) {
+                        case ENDER_DRAGON:
+                        case WITHER:
+                            cursors.addCursor(Util.makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), ax, az));
+                            break;
+                        default: break;
+                        }
                     }
                 }
-            }
-        }
-        if (hostileRenderer != null) hostileRenderer.updateCursors(cursors, player, ax, az);
-        canvas.setCursors(cursors);
-        if (debugRenderer != null) debugRenderer.render(canvas, player, ax, az);
+                if (hostileRenderer != null) hostileRenderer.updateCursors(cursors, player, ax, az);
+                session.store(cursors);
+            });
     }
 
     private static int directionOf(Location location) {
