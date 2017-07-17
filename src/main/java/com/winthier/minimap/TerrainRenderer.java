@@ -1,6 +1,7 @@
 package com.winthier.minimap;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Value;
@@ -20,6 +21,7 @@ import org.bukkit.map.MapCursorCollection;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.material.Colorable;
+import org.bukkit.metadata.MetadataValue;
 
 @Getter
 public final class TerrainRenderer extends MapRenderer {
@@ -28,7 +30,6 @@ public final class TerrainRenderer extends MapRenderer {
     private ClaimRenderer claimRenderer;
     private DebugRenderer debugRenderer;
     private CreativeRenderer creativeRenderer;
-    private HostileRenderer hostileRenderer;
 
     @Value static class XZ { private final int x, z; }
 
@@ -65,9 +66,6 @@ public final class TerrainRenderer extends MapRenderer {
         }
         if (plugin.getServer().getPluginManager().getPlugin("Creative") != null) {
             creativeRenderer = new CreativeRenderer(plugin);
-        }
-        if (plugin.getServer().getPluginManager().getPlugin("Hostile") != null) {
-            hostileRenderer = new HostileRenderer(plugin);
         }
         debugRenderer = new DebugRenderer(plugin);
     }
@@ -197,7 +195,26 @@ public final class TerrainRenderer extends MapRenderer {
                         }
                     }
                 }
-                if (hostileRenderer != null) hostileRenderer.updateCursors(cursors, player, ax, az);
+                for (MetadataValue meta: player.getMetadata("MiniMapCursors")) {
+                    try {
+                        List list = (List)meta.value();
+                        for (Object o: list) {
+                            Map map = (Map)o;
+                            Location location = (Location)map.get("location");
+                            Block block = (Block)map.get("block");
+                            MapCursor.Type cursorType = (MapCursor.Type)map.get("type");
+                            if (cursorType == null) cursorType = MapCursor.Type.RED_POINTER;
+                            if (location != null) {
+                                cursors.addCursor(Util.makeCursor(cursorType, location, ax, az));
+                            } else if (block != null) {
+                                cursors.addCursor(Util.makeCursor(cursorType, block, ax, az));
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Parsing problem with MiniMapCursors metadata from " + meta.getOwningPlugin().getName());
+                        e.printStackTrace();
+                    }
+                }
                 session.store(cursors);
             });
     }
