@@ -17,7 +17,7 @@ final class Util {
         int x = (location.getBlockX() - ax - 64) * 2;
         int y = (location.getBlockZ() - az - 64) * 2;
         if (x < -127) x = -127;
-        if (y < -127) y = -127;
+        if (y < -119) y = -119;
         if (x > 127) x = 127;
         if (y > 127) y = 127;
         return new MapCursor((byte)x, (byte)y, (byte)dir, cursorType.getValue(), true);
@@ -27,7 +27,7 @@ final class Util {
         int x = (block.getX() - ax - 64) * 2;
         int y = (block.getZ() - az - 64) * 2;
         if (x < -127) x = -127;
-        if (y < -127) y = -127;
+        if (y < -119) y = -119;
         if (x > 127) x = 127;
         if (y > 127) y = 127;
         return new MapCursor((byte)x, (byte)y, (byte)8, cursorType.getValue(), true);
