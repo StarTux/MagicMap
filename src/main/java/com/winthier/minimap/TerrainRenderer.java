@@ -51,6 +51,10 @@ public final class TerrainRenderer extends MapRenderer {
         }
     }
 
+    static class Altitude {
+        private int y = -1;
+    }
+
     enum RenderMode {
         SURFACE, CAVE, END, NETHER;
     }
@@ -102,9 +106,10 @@ public final class TerrainRenderer extends MapRenderer {
         int cx = ax + 64;
         int cz = az + 64;
         int dist = Math.max(Math.abs(cx - playerBlock.getX()), Math.abs(cz - playerBlock.getZ()));
+        final int shadowColor = Colors.DARK_GRAY + 3;
+        RenderMode renderMode = session.fetch(RenderMode.class);
         if (needsRedraw && dist < 64) {
             World world = player.getWorld();
-            RenderMode renderMode;
             World.Environment environment = world.getEnvironment();
             if (environment == World.Environment.NETHER) {
                 renderMode = RenderMode.NETHER;
@@ -117,6 +122,7 @@ public final class TerrainRenderer extends MapRenderer {
             } else {
                 renderMode = RenderMode.SURFACE;
             }
+            session.store(renderMode);
             Map<XZ, Block> cache = new HashMap<>();
             for (int pz = 4; pz < 128; pz += 1) {
                 for (int px = 0; px < 128; px += 1) {
@@ -147,7 +153,6 @@ public final class TerrainRenderer extends MapRenderer {
             for (int x = 0; x < 128; x += 1) {
                 canvas.setPixel(x, 4, (byte)((canvas.getPixel(x, 4) & ~0x3) + 3));
             }
-            final int shadowColor = Colors.DARK_GRAY + 3;
             String worldName = plugin.getWorldName(player.getWorld().getName());
             plugin.getFont4x4().print(worldName, 1, 0, (x, y, shadow) -> { if (y < 4) canvas.setPixel(x, y, !shadow ? (byte)(Colors.PALE_BLUE + 2) : (byte)shadowColor); });
             plugin.getFont4x4().print(renderMode.name(), 128 - plugin.getFont4x4().widthOf(renderMode.name()), 0, (x, y, shadow) -> { if (y < 4) canvas.setPixel(x, y, !shadow ? (byte)(Colors.RED + 2) : (byte)shadowColor); });
@@ -164,6 +169,33 @@ public final class TerrainRenderer extends MapRenderer {
                 plugin.getFont4x4().print(marker.getMessage(), x, z, (mx, my, shadow) -> canvas.setPixel(mx, my, shadow ? (byte)((canvas.getPixel(mx, my) & ~0x3) + 3) : (byte)Colors.WHITE + 2));
             }
             session.setLastRender(System.currentTimeMillis());
+        }
+        if (renderMode == RenderMode.CAVE || renderMode == RenderMode.NETHER) {
+            Altitude alt = session.fetch(Altitude.class);
+            if (alt == null) {
+                alt = new Altitude();
+                session.store(alt);
+            }
+            if (needsRedraw || playerLocation.getBlockY() != alt.y) {
+                alt.y = playerLocation.getBlockY();
+                String str = "y:" + alt.y;
+                int width = plugin.getFont4x4().widthOf(str);
+                int x = 64 - width / 2;
+                for (int px = x; px < x + width; px += 1) {
+                    for (int py = 0; py < 4; py += 1) {
+                        canvas.setPixel(px, py, (byte)(Colors.WOOL_BLACK + 3));
+                    }
+                }
+                int color;
+                if (alt.y <= 14) {
+                    color = Colors.CYAN + 2;
+                } else if (alt.y <= 30) {
+                    color = Colors.WOOL_YELLOW + 2;
+                } else {
+                    color = Colors.WOOL_SILVER + 2;
+                }
+                plugin.getFont4x4().print(str, x, 0, (mx, my, shadow) -> { if (my < 4) canvas.setPixel(mx, my, !shadow ? (byte)color : (byte)shadowColor);});
+            }
         }
         MapCursorCollection oldCursors = session.remove(MapCursorCollection.class);
         if (oldCursors != null) canvas.setCursors(oldCursors);
