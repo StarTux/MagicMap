@@ -229,6 +229,7 @@ public final class TerrainRenderer extends MapRenderer {
                 }
                 for (MetadataValue meta: player.getMetadata("MiniMapCursors")) {
                     try {
+                        if (meta.getOwningPlugin() == null || !meta.getOwningPlugin().isEnabled()) continue;
                         List list = (List)meta.value();
                         for (Object o: list) {
                             Map map = (Map)o;
