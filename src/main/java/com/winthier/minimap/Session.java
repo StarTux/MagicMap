@@ -9,6 +9,8 @@ final class Session {
     private long lastRender;
     private final Map<Class<?>, Object> storage = new HashMap<>();
     private boolean debug;
+    private int altitude;
+    private boolean drawAltitude;
 
     void store(Object o) {
         storage.put(o.getClass(), o);

@@ -30,6 +30,7 @@ public final class TerrainRenderer extends MapRenderer {
     private ClaimRenderer claimRenderer;
     private DebugRenderer debugRenderer;
     private CreativeRenderer creativeRenderer;
+    private static final int SHADOW_COLOR = Colors.DARK_GRAY + 3;
 
     @Value static class XZ { private final int x, z; }
 
@@ -51,10 +52,6 @@ public final class TerrainRenderer extends MapRenderer {
         }
     }
 
-    static class Altitude {
-        private int y = -1;
-    }
-
     enum RenderMode {
         SURFACE, CAVE, END, NETHER;
     }
@@ -74,18 +71,45 @@ public final class TerrainRenderer extends MapRenderer {
         debugRenderer = new DebugRenderer(plugin);
     }
 
-    private boolean isHoldingMap(Player player) {
-        ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() == Material.MAP && item.getDurability() == plugin.getMapId()) return true;
-        item = player.getInventory().getItemInOffHand();
-        if (item.getType() == Material.MAP && item.getDurability() == plugin.getMapId()) return true;
-        return false;
-    }
-
     @Override
     public void render(MapView view, MapCanvas canvas, Player player) {
-        if (!isHoldingMap(player)) return;
         Session session = plugin.getSession(player);
+        MapCache mapCache = session.remove(MapCache.class);
+        if (mapCache != null) mapCache.paste(canvas);
+        MapCursorCollection mapCursorCollection = session.remove(MapCursorCollection.class);
+        if (mapCursorCollection != null) canvas.setCursors(mapCursorCollection);
+        plugin.getServer().getScheduler().runTask(plugin, () -> syncUpdateMap(player, session));
+        if (session.isDrawAltitude()) {
+            session.setDrawAltitude(false);
+            int altitude = session.getAltitude();
+            String str = "y:" + altitude;
+            int width = plugin.getFont4x4().widthOf(str);
+            int x = 64 - width / 2;
+            for (int px = x; px < x + width; px += 1) {
+                for (int py = 0; py < 4; py += 1) {
+                    canvas.setPixel(px, py, (byte)(Colors.WOOL_BLACK + 3));
+                }
+            }
+            int color;
+            if (altitude <= 14) {
+                color = Colors.CYAN + 2;
+            } else if (altitude <= 30) {
+                color = Colors.WOOL_YELLOW + 2;
+            } else {
+                color = Colors.WOOL_SILVER + 2;
+            }
+            plugin.getFont4x4().print(str, x, 0, (mx, my, shadow) -> { if (my < 4) canvas.setPixel(mx, my, (byte)(!shadow ? color : SHADOW_COLOR));});
+        }
+        if (session.isDebug() && debugRenderer != null) {
+            Storage storage = session.fetch(Storage.class);
+            if (storage != null) {
+                debugRenderer.render(canvas, player, storage.getX(), storage.getZ());
+            }
+        }
+    }
+
+    void syncUpdateMap(Player player, Session session) {
+        if (!player.isOnline()) return;
         Storage storage = session.fetch(Storage.class);
         Location playerLocation = player.getLocation();
         Block playerBlock = playerLocation.getBlock();
@@ -106,9 +130,9 @@ public final class TerrainRenderer extends MapRenderer {
         int cx = ax + 64;
         int cz = az + 64;
         int dist = Math.max(Math.abs(cx - playerBlock.getX()), Math.abs(cz - playerBlock.getZ()));
-        final int shadowColor = Colors.DARK_GRAY + 3;
         RenderMode renderMode = session.fetch(RenderMode.class);
         if (needsRedraw && dist < 64) {
+            MapCache mapCache = new MapCache();
             World world = player.getWorld();
             World.Environment environment = world.getEnvironment();
             if (environment == World.Environment.NETHER) {
@@ -142,23 +166,23 @@ public final class TerrainRenderer extends MapRenderer {
                     } else {
                         shade = sunlightShadeOf(block, x, z, cache, renderMode);
                     }
-                    canvas.setPixel(px, pz, (byte)(color + shade));
+                    mapCache.setPixel(px, pz, color + shade);
                 }
             }
             for (int y = 0; y < 4; y += 1) {
                 for (int x = 0; x < 128; x += 1) {
-                    canvas.setPixel(x, y, (byte)(Colors.WOOL_BLACK + 3));
+                    mapCache.setPixel(x, y, Colors.WOOL_BLACK + 3);
                 }
             }
             for (int x = 0; x < 128; x += 1) {
-                canvas.setPixel(x, 4, (byte)((canvas.getPixel(x, 4) & ~0x3) + 3));
+                mapCache.setPixel(x, 4, (mapCache.getPixel(x, 4) & ~0x3) + 3);
             }
             String worldName = plugin.getWorldName(player.getWorld().getName());
-            plugin.getFont4x4().print(worldName, 1, 0, (x, y, shadow) -> { if (y < 4) canvas.setPixel(x, y, !shadow ? (byte)(Colors.PALE_BLUE + 2) : (byte)shadowColor); });
-            plugin.getFont4x4().print(renderMode.name(), 128 - plugin.getFont4x4().widthOf(renderMode.name()), 0, (x, y, shadow) -> { if (y < 4) canvas.setPixel(x, y, !shadow ? (byte)(Colors.RED + 2) : (byte)shadowColor); });
-            if (claimsRenderer != null) claimsRenderer.render(plugin, canvas, player, ax, az);
-            if (claimRenderer != null) claimRenderer.render(plugin, canvas, player, ax, az);
-            if (creativeRenderer != null) creativeRenderer.render(canvas, player, ax, az);
+            plugin.getFont4x4().print(worldName, 1, 0, (x, y, shadow) -> { if (y < 4) mapCache.setPixel(x, y, !shadow ? Colors.PALE_BLUE + 2 : SHADOW_COLOR); });
+            plugin.getFont4x4().print(renderMode.name(), 128 - plugin.getFont4x4().widthOf(renderMode.name()), 0, (x, y, shadow) -> { if (y < 4) mapCache.setPixel(x, y, !shadow ? Colors.RED + 2 : SHADOW_COLOR); });
+            if (claimsRenderer != null) claimsRenderer.render(plugin, mapCache, player, ax, az);
+            if (claimRenderer != null) claimRenderer.render(plugin, mapCache, player, ax, az);
+            if (creativeRenderer != null) creativeRenderer.render(mapCache, player, ax, az);
             for (Marker marker: plugin.getMarkers()) {
                 if (!marker.getWorld().equals(player.getWorld().getName())) continue;
                 int x = marker.getX() - ax;
@@ -166,90 +190,66 @@ public final class TerrainRenderer extends MapRenderer {
                 if (x < 0 || x > 127) continue;
                 if (z < 5 || z > 127) continue;
                 x -= plugin.getFont4x4().widthOf(marker.getMessage()) / 2;
-                plugin.getFont4x4().print(marker.getMessage(), x, z, (mx, my, shadow) -> canvas.setPixel(mx, my, shadow ? (byte)((canvas.getPixel(mx, my) & ~0x3) + 3) : (byte)Colors.WHITE + 2));
+                plugin.getFont4x4().print(marker.getMessage(), x, z, (mx, my, shadow) -> mapCache.setPixel(mx, my, shadow ? (mapCache.getPixel(mx, my) & ~0x3) + 3 : Colors.WHITE + 2));
             }
             session.setLastRender(System.currentTimeMillis());
+            session.store(mapCache);
         }
-        if (renderMode == RenderMode.CAVE || renderMode == RenderMode.NETHER) {
-            Altitude alt = session.fetch(Altitude.class);
-            if (alt == null) {
-                alt = new Altitude();
-                session.store(alt);
+        if (renderMode == RenderMode.CAVE) {
+            if (needsRedraw || playerLocation.getBlockY() != session.getAltitude()) {
+                session.setAltitude(playerLocation.getBlockY());
+                session.setDrawAltitude(true);
             }
-            if (needsRedraw || playerLocation.getBlockY() != alt.y) {
-                alt.y = playerLocation.getBlockY();
-                String str = "y:" + alt.y;
-                int width = plugin.getFont4x4().widthOf(str);
-                int x = 64 - width / 2;
-                for (int px = x; px < x + width; px += 1) {
-                    for (int py = 0; py < 4; py += 1) {
-                        canvas.setPixel(px, py, (byte)(Colors.WOOL_BLACK + 3));
-                    }
-                }
-                int color;
-                if (alt.y <= 14) {
-                    color = Colors.CYAN + 2;
-                } else if (alt.y <= 30) {
-                    color = Colors.WOOL_YELLOW + 2;
-                } else {
-                    color = Colors.WOOL_SILVER + 2;
-                }
-                plugin.getFont4x4().print(str, x, 0, (mx, my, shadow) -> { if (my < 4) canvas.setPixel(mx, my, !shadow ? (byte)color : (byte)shadowColor);});
-            }
+        } else {
+            session.setAltitude(-1);
         }
-        MapCursorCollection oldCursors = session.remove(MapCursorCollection.class);
-        if (oldCursors != null) canvas.setCursors(oldCursors);
-        if (debugRenderer != null) debugRenderer.render(canvas, player, ax, az);
         if (dist >= 128) return;
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
-                if (!player.isOnline()) return;
-                MapCursorCollection cursors = new MapCursorCollection();
-                cursors.addCursor(Util.makeCursor(MapCursor.Type.WHITE_POINTER, playerLocation, ax, az));
-                for (Entity e: player.getNearbyEntities(64, 64, 64)) {
-                    if (e instanceof Player) {
-                        Player nearby = (Player)e;
-                        if (nearby.equals(player)) continue;
-                        if (nearby.getGameMode() == GameMode.SPECTATOR) continue;
-                        cursors.addCursor(Util.makeCursor(MapCursor.Type.BLUE_POINTER, nearby.getLocation(), ax, az));
-                    } else if (e.getScoreboardTags().contains("ShowOnMiniMap")) {
-                        cursors.addCursor(Util.makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), ax, az));
-                    } else if (e instanceof Tameable) {
-                        if (player.equals(((Tameable)e).getOwner())) {
-                            cursors.addCursor(Util.makeCursor(MapCursor.Type.GREEN_POINTER, e.getLocation(), ax, az));
-                        }
-                    } else {
-                        switch (e.getType()) {
-                        case ENDER_DRAGON:
-                        case WITHER:
-                            cursors.addCursor(Util.makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), ax, az));
-                            break;
-                        default: break;
-                        }
+        MapCursorCollection cursors = new MapCursorCollection();
+        cursors.addCursor(Util.makeCursor(MapCursor.Type.WHITE_POINTER, playerLocation, ax, az));
+        for (Entity e: player.getNearbyEntities(64, 64, 64)) {
+            if (e instanceof Player) {
+                Player nearby = (Player)e;
+                if (nearby.equals(player)) continue;
+                if (nearby.getGameMode() == GameMode.SPECTATOR) continue;
+                cursors.addCursor(Util.makeCursor(MapCursor.Type.BLUE_POINTER, nearby.getLocation(), ax, az));
+            } else if (e.getScoreboardTags().contains("ShowOnMiniMap")) {
+                cursors.addCursor(Util.makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), ax, az));
+            } else if (e instanceof Tameable) {
+                if (player.equals(((Tameable)e).getOwner())) {
+                    cursors.addCursor(Util.makeCursor(MapCursor.Type.GREEN_POINTER, e.getLocation(), ax, az));
+                }
+            } else {
+                switch (e.getType()) {
+                case ENDER_DRAGON:
+                case WITHER:
+                    cursors.addCursor(Util.makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), ax, az));
+                    break;
+                default: break;
+                }
+            }
+        }
+        for (MetadataValue meta: player.getMetadata("MiniMapCursors")) {
+            try {
+                if (meta.getOwningPlugin() == null || !meta.getOwningPlugin().isEnabled()) continue;
+                List list = (List)meta.value();
+                for (Object o: list) {
+                    Map map = (Map)o;
+                    Location location = (Location)map.get("location");
+                    Block block = (Block)map.get("block");
+                    MapCursor.Type cursorType = (MapCursor.Type)map.get("type");
+                    if (cursorType == null) cursorType = MapCursor.Type.RED_POINTER;
+                    if (location != null) {
+                        cursors.addCursor(Util.makeCursor(cursorType, location, ax, az));
+                    } else if (block != null) {
+                        cursors.addCursor(Util.makeCursor(cursorType, block, ax, az));
                     }
                 }
-                for (MetadataValue meta: player.getMetadata("MiniMapCursors")) {
-                    try {
-                        if (meta.getOwningPlugin() == null || !meta.getOwningPlugin().isEnabled()) continue;
-                        List list = (List)meta.value();
-                        for (Object o: list) {
-                            Map map = (Map)o;
-                            Location location = (Location)map.get("location");
-                            Block block = (Block)map.get("block");
-                            MapCursor.Type cursorType = (MapCursor.Type)map.get("type");
-                            if (cursorType == null) cursorType = MapCursor.Type.RED_POINTER;
-                            if (location != null) {
-                                cursors.addCursor(Util.makeCursor(cursorType, location, ax, az));
-                            } else if (block != null) {
-                                cursors.addCursor(Util.makeCursor(cursorType, block, ax, az));
-                            }
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Parsing problem with MiniMapCursors metadata from " + meta.getOwningPlugin().getName());
-                        e.printStackTrace();
-                    }
-                }
-                session.store(cursors);
-            });
+            } catch (Exception e) {
+                System.err.println("Parsing problem with MiniMapCursors metadata from " + meta.getOwningPlugin().getName());
+                e.printStackTrace();
+            }
+        }
+        session.store(cursors);
     }
 
     private static int directionOf(Location location) {

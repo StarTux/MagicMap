@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import org.bukkit.entity.Player;
-import org.bukkit.map.MapCanvas;
 
 final class ClaimRenderer {
     private final Comparator<Claim> claimComparator = new Comparator<Claim>() {
@@ -23,7 +22,7 @@ final class ClaimRenderer {
             }
         };
 
-    void render(MiniMapPlugin plugin, MapCanvas canvas, Player player, int ax, int az) {
+    void render(MiniMapPlugin plugin, MapCache mapCache, Player player, int ax, int az) {
         ClaimPlugin claimPlugin = (ClaimPlugin)plugin.getServer().getPluginManager().getPlugin("Claim");
         if (claimPlugin == null) return;
         int[] coords = new int[4];
@@ -56,12 +55,12 @@ final class ClaimRenderer {
             }
             if (coords[1] < 5) coords[1] = 5;
             for (int x = coords[0]; x <= coords[2]; x += 1) {
-                dottedLine(canvas, x, coords[1], colorA, colorB);
-                dottedLine(canvas, x, coords[3], colorA, colorB);
+                dottedLine(mapCache, x, coords[1], colorA, colorB);
+                dottedLine(mapCache, x, coords[3], colorA, colorB);
             }
             for (int z = coords[1]; z <= coords[3]; z += 1) {
-                dottedLine(canvas, coords[0], z, colorA, colorB);
-                dottedLine(canvas, coords[2], z, colorA, colorB);
+                dottedLine(mapCache, coords[0], z, colorA, colorB);
+                dottedLine(mapCache, coords[2], z, colorA, colorB);
             }
             String claimName;
             if (claim.isAdminClaim()) {
@@ -69,16 +68,16 @@ final class ClaimRenderer {
             } else {
                 claimName = claim.getOwnerName();
             }
-            plugin.getFont4x4().print(claimName, coords[0] + 2, coords[1] + 2, (x, y, shadow) -> { if (x < coords[2] - 1 && y < coords[3] - 1) canvas.setPixel(x, y, shadow ? (byte)((canvas.getPixel(x, y) & ~0x3) + 3) : (byte)Colors.WHITE + 2); });
+            plugin.getFont4x4().print(claimName, coords[0] + 2, coords[1] + 2, (x, y, shadow) -> { if (x < coords[2] - 1 && y < coords[3] - 1) mapCache.setPixel(x, y, shadow ? (mapCache.getPixel(x, y) & ~0x3) + 3 : Colors.WHITE + 2); });
         }
     }
 
-    private void dottedLine(MapCanvas canvas, int x, int y, int colorA, int colorB) {
-        int color = canvas.getPixel(x, y) & ~0x3;
+    private void dottedLine(MapCache mapCache, int x, int y, int colorA, int colorB) {
+        int color = mapCache.getPixel(x, y) & ~0x3;
         if ((x % 2 == 0) ^ (y % 2 == 0)) {
-            canvas.setPixel(x, y, (byte)(color + 3));
+            mapCache.setPixel(x, y, color + 3);
         } else {
-            canvas.setPixel(x, y, (byte)(Colors.WHITE + 2));
+            mapCache.setPixel(x, y, Colors.WHITE + 2);
         }
     }
 }

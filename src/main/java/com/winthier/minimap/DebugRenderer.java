@@ -11,7 +11,6 @@ public class DebugRenderer {
     private final MiniMapPlugin plugin;
 
     public void render(MapCanvas canvas, Player player, int ax, int az) {
-        if (!plugin.getSession(player).isDebug()) return;
         for (int dz = 0; dz < 4; dz += 1) {
             for (int dx = 0; dx < 128; dx += 1) {
                 if (dz < 2) {
@@ -32,15 +31,15 @@ public class DebugRenderer {
         for (int dx = 0; dx < 128; dx += 8) {
             int v = dx / 4;
             int color = (dx / 8) % 2 == 0 ? Colors.WHITE + 2 : Colors.LIGHT_GRAY + 2;
-            plugin.getFont4x4().print(canvas, "" + v, dx, 5, -1, -1, color, Colors.WOOL_BLACK);
-            plugin.getFont4x4().print(canvas, "" + (v + 32), dx, 118, -1, -1, color, Colors.WOOL_BLACK);
+            plugin.getFont4x4().print("" + v, dx, 5, (mx, my, mb) -> canvas.setPixel(mx, my, (byte)(!mb ? color : Colors.WOOL_BLACK)));
+            plugin.getFont4x4().print("" + (v + 32), dx, 118, (mx, my, mb) -> canvas.setPixel(mx, my, (byte)(!mb ? color : Colors.WOOL_BLACK)));
         }
         MapCursorCollection cursors = canvas.getCursors();
         int i = 0;
         for (MapCursor.Type type: MapCursor.Type.values()) {
             i += 1;
             cursors.addCursor(new MapCursor((byte)-100, (byte)(-127 + i * 20 + 10), (byte)8, type.getValue(), true));
-            plugin.getFont4x4().print(canvas, type.name(), 20, i * 10 + 5, -1, -1, Colors.WOOL_BLACK, Colors.WHITE);
+            plugin.getFont4x4().print(type.name(), 20, i * 10 + 5, (mx, my, mb) -> canvas.setPixel(mx, my, (byte)(!mb ? Colors.WOOL_BLACK : Colors.WHITE)));
         }
         canvas.setCursors(cursors);
     }

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import javax.imageio.ImageIO;
 import lombok.Value;
-import org.bukkit.map.MapCanvas;
 
 public final class Font4x4 {
     static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!\"?()[]+-*/=.,:;'_";
@@ -85,7 +84,6 @@ public final class Font4x4 {
         void draw(int x, int y, boolean shadow);
     }
 
-    // Return width in pixels
     public int print(String msg, int x, int y, Drawer drawer) {
         if (msg == null) return 0;
         msg = msg.toUpperCase();
@@ -99,32 +97,6 @@ public final class Font4x4 {
             }
             for (Pixel pixel: chr.shadowPixels) {
                 drawer.draw(length + x + pixel.x, y + pixel.y, true);
-            }
-            length += chr.width + 1;
-        }
-        return length;
-    }
-
-    // Return width in pixels
-    public int print(MapCanvas canvas, String msg, int x, int y, int width, int height, int color, int shadowColor) {
-        if (msg == null) return 0;
-        msg = msg.toUpperCase();
-        int length = 0;
-        for (int i = 0; i < msg.length(); i += 1) {
-            char c = msg.charAt(i);
-            Char chr = charMap.get(c);
-            if (chr == null) continue;
-            for (Pixel pixel: chr.pixels) {
-                if ((width < 0 || width >= length + pixel.x) && (height < 0 || height >= pixel.y)) {
-                    canvas.setPixel(length + x + pixel.x, y + pixel.y, (byte)color);
-                }
-            }
-            if (shadowColor >= 0) {
-                for (Pixel pixel: chr.shadowPixels) {
-                    if ((width < 0 || width >= length + pixel.x) && (height < 0 || height >= pixel.y)) {
-                        canvas.setPixel(length + x + pixel.x, y + pixel.y, (byte)shadowColor);
-                    }
-                }
             }
             length += chr.width + 1;
         }
