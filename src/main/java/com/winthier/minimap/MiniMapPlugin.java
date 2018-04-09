@@ -126,6 +126,10 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
         give = getConfig().getBoolean("Give");
         persist = getConfig().getBoolean("Persist");
         mapView = getServer().getMap((short)mapId);
+        while (mapView == null) {
+            mapView = getServer().createMap(getServer().getWorlds().get(0));
+            mapView = getServer().getMap((short)mapId);
+        }
         for (MapRenderer renderer: mapView.getRenderers()) {
             mapView.removeRenderer(renderer);
         }
