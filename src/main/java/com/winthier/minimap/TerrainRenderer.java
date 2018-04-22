@@ -1,13 +1,20 @@
 package com.winthier.minimap;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.imageio.ImageIO;
 import lombok.Getter;
 import lombok.Value;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -18,6 +25,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.map.MapCanvas;
 import org.bukkit.map.MapCursor;
 import org.bukkit.map.MapCursorCollection;
+import org.bukkit.map.MapPalette;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.material.Colorable;
@@ -31,6 +39,7 @@ public final class TerrainRenderer extends MapRenderer {
     private DebugRenderer debugRenderer;
     private CreativeRenderer creativeRenderer;
     private static final int SHADOW_COLOR = Colors.DARK_GRAY + 3;
+    private byte[] eventsImage = null;
 
     @Value static class XZ { private final int x, z; }
 
@@ -74,37 +83,46 @@ public final class TerrainRenderer extends MapRenderer {
     @Override
     public void render(MapView view, MapCanvas canvas, Player player) {
         Session session = plugin.getSession(player);
-        MapCache mapCache = session.remove(MapCache.class);
+        MapCache mapCache = session.removeDrawMap();
         if (mapCache != null) mapCache.paste(canvas);
         MapCursorCollection mapCursorCollection = session.remove(MapCursorCollection.class);
         if (mapCursorCollection != null) canvas.setCursors(mapCursorCollection);
-        plugin.getServer().getScheduler().runTask(plugin, () -> syncUpdateMap(player, session));
-        if (session.isDrawAltitude()) {
-            session.setDrawAltitude(false);
-            int altitude = session.getAltitude();
-            String str = "y:" + altitude;
-            int width = plugin.getFont4x4().widthOf(str);
-            int x = 64 - width / 2;
-            for (int px = x; px < x + width; px += 1) {
-                for (int py = 0; py < 4; py += 1) {
-                    canvas.setPixel(px, py, (byte)(Colors.WOOL_BLACK + 3));
+        switch (session.getMode()) {
+        case MAP:
+            plugin.getServer().getScheduler().runTask(plugin, () -> syncUpdateMap(player, session));
+            if (session.isDrawAltitude()) {
+                session.setDrawAltitude(false);
+                int altitude = session.getAltitude();
+                String str = "y:" + altitude;
+                int width = plugin.getFont4x4().widthOf(str);
+                int x = 64 - width / 2;
+                for (int px = x; px < x + width; px += 1) {
+                    for (int py = 0; py < 4; py += 1) {
+                        canvas.setPixel(px, py, (byte)(Colors.WOOL_BLACK + 3));
+                    }
+                }
+                int color;
+                if (altitude <= 14) {
+                    color = Colors.CYAN + 2;
+                } else if (altitude <= 30) {
+                    color = Colors.WOOL_YELLOW + 2;
+                } else {
+                    color = Colors.WOOL_SILVER + 2;
+                }
+                plugin.getFont4x4().print(str, x, 0, (mx, my, shadow) -> { if (my < 4) canvas.setPixel(mx, my, (byte)(!shadow ? color : SHADOW_COLOR));});
+            }
+            if (session.isDebug() && debugRenderer != null) {
+                Storage storage = session.fetch(Storage.class);
+                if (storage != null) {
+                    debugRenderer.render(canvas, player, storage.getX(), storage.getZ());
                 }
             }
-            int color;
-            if (altitude <= 14) {
-                color = Colors.CYAN + 2;
-            } else if (altitude <= 30) {
-                color = Colors.WOOL_YELLOW + 2;
-            } else {
-                color = Colors.WOOL_SILVER + 2;
-            }
-            plugin.getFont4x4().print(str, x, 0, (mx, my, shadow) -> { if (my < 4) canvas.setPixel(mx, my, (byte)(!shadow ? color : SHADOW_COLOR));});
-        }
-        if (session.isDebug() && debugRenderer != null) {
-            Storage storage = session.fetch(Storage.class);
-            if (storage != null) {
-                debugRenderer.render(canvas, player, storage.getX(), storage.getZ());
-            }
+            break;
+        case MENU:
+            plugin.getServer().getScheduler().runTask(plugin, () -> syncUpdateMenu(player, session));
+            break;
+        default:
+            break;
         }
     }
 
@@ -193,7 +211,8 @@ public final class TerrainRenderer extends MapRenderer {
                 plugin.getFont4x4().print(marker.getMessage(), x, z, (mx, my, shadow) -> mapCache.setPixel(mx, my, shadow ? (mapCache.getPixel(mx, my) & ~0x3) + 3 : Colors.WHITE + 2));
             }
             session.setLastRender(System.currentTimeMillis());
-            session.store(mapCache);
+            session.setDrawMap(mapCache);
+            session.setLastMap(mapCache);
         }
         if (renderMode == RenderMode.CAVE) {
             if (needsRedraw || playerLocation.getBlockY() != session.getAltitude()) {
@@ -250,6 +269,183 @@ public final class TerrainRenderer extends MapRenderer {
             }
         }
         session.store(cursors);
+    }
+
+    void syncUpdateMenu(Player player, Session session) {
+        if (!player.isOnline()) return;
+        MapCursorCollection mapCursors = new MapCursorCollection();
+        // Draw
+        if (session.isMenuNeedsUpdate()) {
+            MapCache mapCache = new MapCache();
+            session.getMenuRects().clear();
+            final Font4x4 font4 = plugin.getFont4x4();
+            switch (session.getMenuLocation()) {
+            case "events":
+                byte[] img = getEventsImage();
+                for (int i = 0; i < img.length; i += 1) {
+                    mapCache.setPixel(i % 128, i / 128, (int)img[i]);
+                }
+                break;
+            case "getting_started":
+                drawDarkenedMap(session, mapCache);
+                font4.print(mapCache, "Getting Started", 64 - font4.widthOf("Getting Started") / 2, 0, Colors.WOOL_LIME + 2, Colors.WOOL_BLACK);
+                TileSet.getInstance().paste(TileSet.Tile.ICON_BUILD, mapCache, 32 - 8, 8);
+                session.getMenuRects().add(new Session.Rect(32 - 8, 8, 16, 16, null, () -> player.performCommand("build")));
+                font4.print(mapCache, "Survival Build", 32 - font4.widthOf("Survival Build") / 2, 26, Colors.WOOL_WHITE + 2, Colors.WOOL_BLACK);
+                TileSet.getInstance().paste(TileSet.Tile.ICON_RESOURCE, mapCache, 96 - 8, 8);
+                session.getMenuRects().add(new Session.Rect(96 - 8, 8, 16, 16, null, () -> player.performCommand("resource random")));
+                font4.print(mapCache, "Resource", 96 - font4.widthOf("Resource") / 2, 26, Colors.WOOL_WHITE + 2, Colors.WOOL_BLACK);
+                TileSet.getInstance().paste(TileSet.Tile.ICON_SPAWN, mapCache, 32 - 8, 36);
+                session.getMenuRects().add(new Session.Rect(32 - 8, 36, 16, 16, null, () -> player.performCommand("spawn")));
+                font4.print(mapCache, "Spawn", 32 - font4.widthOf("Spawn") / 2, 54, Colors.WOOL_WHITE + 2, Colors.WOOL_BLACK);
+                TileSet.getInstance().paste(TileSet.Tile.ICON_MARKET, mapCache, 96 - 8, 36);
+                session.getMenuRects().add(new Session.Rect(96 - 8, 36, 16, 16, null, () -> player.performCommand("shop market")));
+                font4.print(mapCache, "Market", 96 - font4.widthOf("Market") / 2, 54, Colors.WOOL_WHITE + 2, Colors.WOOL_BLACK);
+                break;
+            case "settings":
+                drawDarkenedMap(session, mapCache);
+                plugin.getFont4x4().print(mapCache, "Settings", 64 - plugin.getFont4x4().widthOf("Settings") / 2, 0, Colors.WOOL_LIGHT_BLUE + 2, Colors.WOOL_BLACK);
+                List<Map> settingList = new ArrayList<>();
+                for (MetadataValue meta: player.getMetadata("MiniMapSettings")) {
+                    if (meta.value() instanceof List) {
+                        for (Object o: (List)meta.value()) {
+                            if (o instanceof Map) {
+                                Map map = (Map)o;
+                                settingList.add(map);
+                            }
+                        }
+                    }
+                }
+                Collections.sort(settingList, (Map a, Map b) -> {
+                        Integer ia = (Integer)a.get("Priority");
+                        Integer ib = (Integer)b.get("Priority");
+                        if (ia == null) ia = 0;
+                        if (ib == null) ib = 0;
+                        return Integer.compare((Integer)ib, (Integer)ia);
+                    });
+                int y = 10;
+                for (Map map: settingList) {
+                    try {
+                        if ("Boolean".equals(map.get("Type"))) {
+                            boolean v = map.get("Value") == Boolean.TRUE;
+                            if (v) {
+                                TileSet.getInstance().paste(TileSet.Tile.CHECKBOX_CHECK, mapCache, 1, y);
+                            } else {
+                                TileSet.getInstance().paste(TileSet.Tile.CHECKBOX_EMPTY, mapCache, 1, y);
+                            }
+                            String displayName = (String)map.get("DisplayName");
+                            if (v) {
+                                plugin.getFont4x4().print(mapCache, displayName, 12, y + 2, Colors.WOOL_YELLOW + 2, Colors.WOOL_BLACK);
+                            } else {
+                                plugin.getFont4x4().print(mapCache, displayName, 12, y + 2, Colors.WOOL_WHITE + 2, Colors.WOOL_BLACK);
+                            }
+                            Session.Rect rect = new Session.Rect(1, y, 8, 8, "settings");
+                            final Runnable onClick = (Runnable)map.get("OnUpdate");
+                            rect.onClick = () -> {
+                                map.put("Value", !v);
+                                if (onClick != null) onClick.run();
+                            };
+                            session.getMenuRects().add(rect);
+                        }
+                        y += 11;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                break;
+            case "main": default:
+                session.setMenuLocation("main");
+                drawDarkenedMap(session, mapCache);
+                java.util.Random rnd = new java.util.Random(System.currentTimeMillis());
+                TileSet.getInstance().paste(TileSet.Tile.BUTTON_EVENTS, mapCache, 8, 8);
+                session.getMenuRects().add(new Session.Rect(8, 8, 32, 32, "events"));
+                TileSet.getInstance().paste(TileSet.Tile.BUTTON_GETTING_STARTED, mapCache, 48, 8);
+                session.getMenuRects().add(new Session.Rect(48, 8, 32, 32, "getting_started"));
+                TileSet.getInstance().paste(TileSet.Tile.BUTTON_SETTINGS, mapCache, 88, 8);
+                session.getMenuRects().add(new Session.Rect(88, 8, 32, 32, "settings"));
+                TileSet.getInstance().paste(TileSet.Tile.BUTTON_COMING_SOON, mapCache, 8, 48);
+                TileSet.getInstance().paste(TileSet.Tile.BUTTON_COMING_SOON, mapCache, 48, 48);
+                TileSet.getInstance().paste(TileSet.Tile.BUTTON_COMING_SOON, mapCache, 88, 48);
+                TileSet.getInstance().paste(TileSet.Tile.BUTTON_COMING_SOON, mapCache, 8, 88);
+                TileSet.getInstance().paste(TileSet.Tile.BUTTON_COMING_SOON, mapCache, 48, 88);
+                TileSet.getInstance().paste(TileSet.Tile.BUTTON_COMING_SOON, mapCache, 88, 88);
+                session.setDrawMap(mapCache);
+            }
+            session.setDrawMap(mapCache);
+        }
+        session.setMenuNeedsUpdate(false);
+        // Mouse Cursor
+        Location loc = player.getLocation();
+        @Value class LookAt {
+            float pitch, yaw;
+        }
+        LookAt oldLookAt = session.remove(LookAt.class);
+        LookAt newLookAt = new LookAt(loc.getPitch(), loc.getYaw());
+        if (oldLookAt != null) {
+            float dy = newLookAt.pitch - oldLookAt.pitch;
+            if (plugin.getUserSettings(player.getUniqueId()).getBoolean("InvertMouseY")) dy = -dy;
+            float dx = newLookAt.yaw - oldLookAt.yaw;
+            if (dx > 180f) dx -= 360f;
+            if (dx < -180f) dx += 360f;
+            float mx = session.getMouseX() + dx * 2f;
+            float my = session.getMouseY() + dy * 2f;
+            if (mx < 0f) mx = 0f;
+            if (mx > 127f) mx = 127f;
+            if (my < 0f) my = 0f;
+            if (my > 127f) my = 127f;
+            session.setMouseX(mx);
+            session.setMouseY(my);
+        }
+        int mouseXi = (int)session.getMouseX();
+        int mouseYi = (int)session.getMouseY();
+        boolean mouseOverButton = false;
+        for (Session.Rect menuRect: session.getMenuRects()) {
+            if (menuRect.contains(mouseXi, mouseYi)) {
+                mouseOverButton = true;
+                break;
+            }
+        }
+        if (mouseOverButton) {
+            mapCursors.addCursor(Util.makeCursor(MapCursor.Type.WHITE_CROSS, mouseXi, mouseYi, 0));
+        } else {
+            mapCursors.addCursor(Util.makeCursor(MapCursor.Type.WHITE_CIRCLE, mouseXi, mouseYi, 0));
+        }
+        session.store(newLookAt);
+        session.store(mapCursors);
+    }
+
+    void drawDarkenedMap(Session session, MapCache mapCache) {
+        MapCache lastMap = session.getLastMap();
+        if (lastMap != null) {
+            for (int y = 0; y < 128; y += 1) {
+                for (int x = 0; x < 128; x += 1) {
+                    if (1 == (y & 1)) {
+                        mapCache.setPixel(x, y, Colors.WOOL_BLACK);
+                    } else {
+                        int pixel = lastMap.getPixel(x, y);
+                        pixel = pixel | 3;
+                        mapCache.setPixel(x, y, pixel);
+                    }
+                }
+            }
+        }
+    }
+
+    void onClickMenu(Player player, Session session, int x, int y) {
+        for (Session.Rect rect: session.getMenuRects()) {
+            if (rect.contains(x, y)) {
+                Runnable onClick = rect.getOnClick();
+                if (onClick != null) {
+                    onClick.run();
+                }
+                String target = rect.getTarget();
+                if (target != null) {
+                    session.setMenuLocation(target);
+                    session.setMenuNeedsUpdate(true);
+                }
+                player.playSound(player.getEyeLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
+            }
+        }
     }
 
     private static int directionOf(Location location) {
@@ -563,5 +759,21 @@ public final class TerrainRenderer extends MapRenderer {
         }
         cache.put(xz, block);
         return block;
+    }
+
+    void reload() {
+        eventsImage = null;
+    }
+
+    private byte[] getEventsImage() {
+        if (eventsImage == null) {
+            try {
+                BufferedImage image = ImageIO.read(new File(plugin.getDataFolder(), "events.png"));
+                eventsImage = MapPalette.imageToBytes(image);
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+        }
+        return eventsImage;
     }
 }

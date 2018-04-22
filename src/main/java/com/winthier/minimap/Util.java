@@ -32,4 +32,8 @@ final class Util {
         if (y > 127) y = 127;
         return new MapCursor((byte)x, (byte)y, (byte)8, cursorType.getValue(), true);
     }
+
+    static MapCursor makeCursor(MapCursor.Type cursorType, int x, int y, int rot) {
+        return new MapCursor((byte)((x - 64) * 2), (byte)((y - 64) * 2), (byte)rot, cursorType.getValue(), true);
+    }
 }

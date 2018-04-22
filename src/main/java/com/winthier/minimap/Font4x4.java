@@ -103,6 +103,10 @@ public final class Font4x4 {
         return length;
     }
 
+    public int print(MapCache mapCache, String msg, int x, int y, int color, int shadow) {
+        return print(msg, x, y, (px, py, s) -> mapCache.setPixel(px, py, s ? shadow : color));
+    }
+
     public int widthOf(String msg) {
         msg = msg.toUpperCase();
         int width = 0;

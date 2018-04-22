@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -25,11 +26,13 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.map.MapPalette;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 @Getter
 public final class MiniMapPlugin extends JavaPlugin implements Listener {
+    @Getter private static MiniMapPlugin instance = null;
     private final HashMap<UUID, Session> sessions = new HashMap<>();
     private final HashMap<String, String> worldNames = new HashMap<>();
     private List<Marker> markers;
@@ -39,13 +42,20 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
     private MiniMapItem miniMapItem;
     private MapView mapView;
     private Font4x4 font4x4;
+    private TerrainRenderer renderer = new TerrainRenderer(this);
+    private YamlConfiguration userSettings = null;
 
     @Override
     public void onEnable() {
+        instance = this;
         saveDefaultConfig();
+        saveResource("events.png", false);
         readConfiguration();
         getServer().getPluginManager().registerEvents(this, this);
         font4x4 = new Font4x4(this);
+        for (Player player: getServer().getOnlinePlayers()) {
+            storeSettings(player);
+        }
     }
 
     @Override
@@ -62,6 +72,8 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
             readConfiguration();
             sessions.clear();
             given = null;
+            userSettings = null;
+            renderer.reload();
             sender.sendMessage("MiniMap config reloaded");
         } else if ("setmarker".equals(cmd) && args.length >= 3) {
             if (player == null) return false;
@@ -125,15 +137,19 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
         debug = getConfig().getBoolean("Debug");
         give = getConfig().getBoolean("Give");
         persist = getConfig().getBoolean("Persist");
-        mapView = getServer().getMap((short)mapId);
-        while (mapView == null) {
-            mapView = getServer().createMap(getServer().getWorlds().get(0));
+        if (mapId >= 0 && mapId < 256) {
             mapView = getServer().getMap((short)mapId);
+            while (mapView == null) {
+                mapView = getServer().createMap(getServer().getWorlds().get(0));
+                mapView = getServer().getMap((short)mapId);
+            }
+            for (MapRenderer renderer: mapView.getRenderers()) {
+                mapView.removeRenderer(renderer);
+            }
+            mapView.addRenderer(renderer);
+        } else {
+            System.err.println("Invalid Map ID: " + mapId);
         }
-        for (MapRenderer renderer: mapView.getRenderers()) {
-            mapView.removeRenderer(renderer);
-        }
-        mapView.addRenderer(new TerrainRenderer(this));
         sessions.clear();
         worldNames.clear();
         ConfigurationSection section = getConfig().getConfigurationSection("WorldNames");
@@ -152,6 +168,29 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
             sessions.put(player.getUniqueId(), session);
         }
         return session;
+    }
+
+    private YamlConfiguration getUserSettings() {
+        if (userSettings == null) {
+            userSettings = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "user_settings.yml"));
+        }
+        return userSettings;
+    }
+
+    ConfigurationSection getUserSettings(UUID uuid) {
+        String key = uuid.toString();
+        ConfigurationSection config = getUserSettings().getConfigurationSection(key);
+        if (config == null) config = getUserSettings().createSection(key);
+        return config;
+    }
+
+    private void saveUserSettings() {
+        if (userSettings == null) return;
+        try {
+            userSettings.save(new File(getDataFolder(), "user_settings.yml"));
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
     }
 
     private HashSet<UUID> getGiven() {
@@ -184,6 +223,7 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        storeSettings(event.getPlayer());
         UUID uuid = event.getPlayer().getUniqueId();
         if (getGiven().contains(uuid)) return;
         for (ItemStack item: event.getPlayer().getInventory()) {
@@ -251,5 +291,23 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
+    }
+
+    void storeSettings(Player player) {
+        final UUID uuid = player.getUniqueId();
+        List settingList = new ArrayList<>();
+        Map map = new HashMap<>();
+        map.put("DisplayName", "Invert Mouse");
+        map.put("Type", "Boolean");
+        map.put("Value", getUserSettings(uuid).getBoolean("InvertMouseY"));
+        map.put("Priority", 10);
+        Runnable onUpdate = () -> {
+            boolean v = map.get("Value") == Boolean.TRUE;
+            getUserSettings(uuid).set("InvertMouseY", v);
+            saveUserSettings();
+        };
+        map.put("OnUpdate", onUpdate);
+        settingList.add(map);
+        player.setMetadata("MiniMapSettings", new FixedMetadataValue(this, settingList));
     }
 }

@@ -8,7 +8,9 @@ import com.winthier.custom.item.UncraftableItem;
 import com.winthier.custom.item.UpdatableItem;
 import lombok.Getter;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -47,16 +49,45 @@ public class MiniMapItem implements CustomItem, UncraftableItem, UpdatableItem {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event, ItemContext context) {
         if (event.getHand() != EquipmentSlot.HAND) return;
+        final Player player;
+        final Session session;
         switch (event.getAction()) {
         case RIGHT_CLICK_BLOCK:
         case RIGHT_CLICK_AIR:
+            player = event.getPlayer();
+            session = plugin.getSession(player);
+            if (session.getMode() == Session.Mode.MAP) {
+                player.playSound(player.getEyeLocation(), Sound.UI_TOAST_IN, 2.0f, 1.0f);
+                session.setMode(Session.Mode.MENU);
+                session.setMenuNeedsUpdate(true);
+                session.setMouseX(64f);
+                session.setMouseY(64f);
+            } else if (session.getMode() == Session.Mode.MENU) {
+                player.playSound(player.getEyeLocation(), Sound.UI_TOAST_OUT, 2.0f, 1.0f);
+                if ("main".equals(session.getMenuLocation())) {
+                    session.setMode(Session.Mode.MAP);
+                    session.setLastRender(0);
+                } else {
+                    session.setMenuLocation("main");
+                    session.setMenuNeedsUpdate(true);
+                    session.setMouseX(64f);
+                    session.setMouseY(64f);
+                }
+            }
             break;
+        case LEFT_CLICK_BLOCK:
+        case LEFT_CLICK_AIR:
+            player = event.getPlayer();
+            session = plugin.getSession(player);
+            if (session.getMode() == Session.Mode.MENU) {
+                MiniMapPlugin.getInstance().getRenderer().onClickMenu(player, session, (int)session.getMouseX(), (int)session.getMouseY());
+            }
         default:
             return;
         }
         event.setCancelled(true);
         // CustomPlugin.getInstance().getInventoryManager().openInventory(event.getPlayer(), new MiniMapInventory(plugin, event.getPlayer()));
-        event.getPlayer().performCommand("help");
+        // event.getPlayer().performCommand("help");
     }
 
     @Override
