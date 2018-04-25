@@ -62,6 +62,19 @@ public class MiniMapItem implements CustomItem, UncraftableItem, UpdatableItem {
                 session.setMenuNeedsUpdate(true);
                 session.setMouseX(64f);
                 session.setMouseY(64f);
+                if (player.getInventory().getItemInOffHand().getType() == Material.AIR
+                    && plugin.getUserSettings(player.getUniqueId()).getBoolean("FillOffHand", true)) {
+                    for (int i = 35; i >= 0; i -= 1) {
+                        if (i != player.getInventory().getHeldItemSlot()) {
+                            ItemStack item = player.getInventory().getItem(i);
+                            if (item != null && item.getType() != Material.AIR) {
+                                player.getInventory().setItem(i, null);
+                                player.getInventory().setItemInOffHand(item);
+                                break;
+                            }
+                        }
+                    }
+                }
             } else if (session.getMode() == Session.Mode.MENU) {
                 player.playSound(player.getEyeLocation(), Sound.UI_TOAST_OUT, 2.0f, 1.0f);
                 if ("main".equals(session.getMenuLocation())) {

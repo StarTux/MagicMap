@@ -62,6 +62,7 @@ final class TileSet {
         for (int y = 0; y < tdy; y += 1) {
             for (int x = 0; x < tdx; x += 1) {
                 int pixel = (int)pixels[tx + x + (ty + y) * width];
+                if (pixel == 0) continue;
                 cache.setPixel(sx + x, sy + y, pixel);
             }
         }
@@ -71,6 +72,7 @@ final class TileSet {
         for (int y = 0; y < tile.dy; y += 1) {
             for (int x = 0; x < tile.dx; x += 1) {
                 int pixel = (int)pixels[tile.x + x + (tile.y + y) * width];
+                if (pixel == 0) continue;
                 cache.setPixel(sx + x, sy + y, pixel);
             }
         }

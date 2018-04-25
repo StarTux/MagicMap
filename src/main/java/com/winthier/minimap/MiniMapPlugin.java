@@ -296,18 +296,36 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
     void storeSettings(Player player) {
         final UUID uuid = player.getUniqueId();
         List settingList = new ArrayList<>();
-        Map map = new HashMap<>();
-        map.put("DisplayName", "Invert Mouse");
-        map.put("Type", "Boolean");
-        map.put("Value", getUserSettings(uuid).getBoolean("InvertMouseY"));
-        map.put("Priority", 10);
-        Runnable onUpdate = () -> {
-            boolean v = map.get("Value") == Boolean.TRUE;
-            getUserSettings(uuid).set("InvertMouseY", v);
-            saveUserSettings();
-        };
-        map.put("OnUpdate", onUpdate);
-        settingList.add(map);
+        // Invert Mouse
+        {
+            Map<String, Object> map = new HashMap<>();
+            map.put("DisplayName", "Invert Mouse");
+            map.put("Type", "Boolean");
+            map.put("Value", getUserSettings(uuid).getBoolean("InvertMouseY"));
+            map.put("Priority", 10);
+            Runnable onUpdate = () -> {
+                boolean v = map.get("Value") == Boolean.TRUE;
+                getUserSettings(uuid).set("InvertMouseY", v);
+                saveUserSettings();
+            };
+            map.put("OnUpdate", onUpdate);
+            settingList.add(map);
+        }
+        // Fill Off-Hand
+        {
+            Map<String, Object> map = new HashMap<>();
+            map.put("DisplayName", "Fill off-hand in menu");
+            map.put("Type", "Boolean");
+            map.put("Value", getUserSettings(uuid).getBoolean("FillOffHand", true));
+            map.put("Priority", 9);
+            Runnable onUpdate = () -> {
+                boolean v = map.get("Value") == Boolean.TRUE;
+                getUserSettings(uuid).set("FillOffHand", v);
+                saveUserSettings();
+            };
+            map.put("OnUpdate", onUpdate);
+            settingList.add(map);
+        }
         player.setMetadata("MiniMapSettings", new FixedMetadataValue(this, settingList));
     }
 }

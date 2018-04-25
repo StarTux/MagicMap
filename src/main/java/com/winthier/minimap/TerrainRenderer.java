@@ -272,6 +272,12 @@ public final class TerrainRenderer extends MapRenderer {
     }
 
     void syncUpdateMenu(Player player, Session session) {
+        if (player.getInventory().getItemInMainHand().getType() != Material.MAP ||
+            player.getInventory().getItemInMainHand().getDurability() != plugin.getMapId()) {
+            session.setMode(Session.Mode.MAP);
+            session.remove(Storage.class); // Force update
+            return;
+        }
         if (!player.isOnline()) return;
         MapCursorCollection mapCursors = new MapCursorCollection();
         // Draw
@@ -357,12 +363,15 @@ public final class TerrainRenderer extends MapRenderer {
                 session.setMenuLocation("main");
                 drawDarkenedMap(session, mapCache);
                 java.util.Random rnd = new java.util.Random(System.currentTimeMillis());
-                TileSet.getInstance().paste(TileSet.Tile.BUTTON_EVENTS, mapCache, 8, 8);
-                session.getMenuRects().add(new Session.Rect(8, 8, 32, 32, "events"));
-                TileSet.getInstance().paste(TileSet.Tile.BUTTON_GETTING_STARTED, mapCache, 48, 8);
-                session.getMenuRects().add(new Session.Rect(48, 8, 32, 32, "getting_started"));
-                TileSet.getInstance().paste(TileSet.Tile.BUTTON_SETTINGS, mapCache, 88, 8);
-                session.getMenuRects().add(new Session.Rect(88, 8, 32, 32, "settings"));
+                int ti = 0;
+                TileSet.getInstance().paste(TileSet.Tile.BUTTON_GETTING_STARTED, mapCache, 8 + (ti % 3) * 40, 8 + (ti / 3) * 40);
+                session.getMenuRects().add(new Session.Rect(8 + (ti % 3) * 40, 8 + (ti / 3) * 40, 32, 32, "getting_started"));
+                ti += 1;
+                TileSet.getInstance().paste(TileSet.Tile.BUTTON_EVENTS, mapCache, 8 + (ti % 3) * 40, 8 + (ti / 3) * 40);
+                session.getMenuRects().add(new Session.Rect(8 + (ti % 3) * 40, 8 + (ti / 3) * 40, 32, 32, "events"));
+                ti += 1;
+                TileSet.getInstance().paste(TileSet.Tile.BUTTON_SETTINGS, mapCache, 8 + (ti % 3) * 40, 8 + (ti / 3) * 40);
+                session.getMenuRects().add(new Session.Rect(8 + (ti % 3) * 40, 8 + (ti / 3) * 40, 32, 32, "settings"));
                 TileSet.getInstance().paste(TileSet.Tile.BUTTON_COMING_SOON, mapCache, 8, 48);
                 TileSet.getInstance().paste(TileSet.Tile.BUTTON_COMING_SOON, mapCache, 48, 48);
                 TileSet.getInstance().paste(TileSet.Tile.BUTTON_COMING_SOON, mapCache, 88, 48);
