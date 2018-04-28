@@ -95,6 +95,7 @@ public class MiniMapItem implements CustomItem, UncraftableItem, UpdatableItem {
             if (session.getMode() == Session.Mode.MENU) {
                 MiniMapPlugin.getInstance().getRenderer().onClickMenu(player, session, (int)session.getMouseX(), (int)session.getMouseY());
             }
+            break;
         default:
             return;
         }

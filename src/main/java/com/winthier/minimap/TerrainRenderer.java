@@ -291,6 +291,21 @@ public final class TerrainRenderer extends MapRenderer {
                 for (int i = 0; i < img.length; i += 1) {
                     mapCache.setPixel(i % 128, i / 128, (int)img[i]);
                 }
+                for (int i = 0; i < 16; i += 1) {
+                    int x = i % 8;
+                    int y = i / 8;
+                    boolean hasCollectible = false;
+                    for (MetadataValue meta: player.getMetadata("Collectible" + i)) {
+                        if (meta.asBoolean()) hasCollectible = true;
+                    }
+                    if (hasCollectible) {
+                        TileSet.getInstance().paste(x * 16, y * 16 + 96, 16, 16, mapCache, x * 16, y * 16 + 32);
+                    } else {
+                        TileSet.getInstance().pasteMono(x * 16, y * 16 + 96, 16, 16, mapCache, x * 16 + 1, y * 16 + 33, Colors.LIGHT_BROWN + 2);
+                        TileSet.getInstance().pasteMono(x * 16, y * 16 + 96, 16, 16, mapCache, x * 16 - 1, y * 16 + 31, Colors.LIGHT_BROWN + 3);
+                        TileSet.getInstance().pasteMono(x * 16, y * 16 + 96, 16, 16, mapCache, x * 16, y * 16 + 32, Colors.LIGHT_BROWN);
+                    }
+                }
                 break;
             case "getting_started":
                 drawDarkenedMap(session, mapCache);
@@ -455,6 +470,7 @@ public final class TerrainRenderer extends MapRenderer {
                 player.playSound(player.getEyeLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.0f);
             }
         }
+        if ("events".equals(session.getMenuLocation())) session.setMenuNeedsUpdate(true);
     }
 
     private static int directionOf(Location location) {

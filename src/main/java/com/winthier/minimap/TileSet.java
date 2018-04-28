@@ -68,6 +68,16 @@ final class TileSet {
         }
     }
 
+    public void pasteMono(int tx, int ty, int tdx, int tdy, MapCache cache, int sx, int sy, int color) {
+        for (int y = 0; y < tdy; y += 1) {
+            for (int x = 0; x < tdx; x += 1) {
+                int pixel = (int)pixels[tx + x + (ty + y) * width];
+                if (pixel == 0) continue;
+                cache.setPixel(sx + x, sy + y, color);
+            }
+        }
+    }
+
     public void paste(Tile tile, MapCache cache, int sx, int sy) {
         for (int y = 0; y < tile.dy; y += 1) {
             for (int x = 0; x < tile.dx; x += 1) {
