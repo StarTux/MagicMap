@@ -6,7 +6,7 @@ final class MapCache {
     final int[] pixels = new int[128 * 128];
 
     void setPixel(int x, int y, int color) {
-        if (x < 0 || y >= 128) return;
+        if (x < 0 || x >= 128) return;
         if (y < 0 || y >= 128) return;
         pixels[y * 128 + x] = color;
     }
