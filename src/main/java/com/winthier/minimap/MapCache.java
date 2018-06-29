@@ -12,7 +12,7 @@ final class MapCache {
     }
 
     int getPixel(int x, int y) {
-        if (x < 0 || y >= 128) return 0;
+        if (x < 0 || x >= 128) return 0;
         if (y < 0 || y >= 128) return 0;
         return pixels[y * 128 + x];
     }
