@@ -6,7 +6,7 @@
   <packaging>jar</packaging>
   <version>0.1-SNAPSHOT</version>
   <name>MiniMap</name>
-  <url>http://www.winthier.com</url>
+  <url>http://cavetale.com</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -14,7 +14,7 @@
     <!-- Spigot Repo -->
     <repository>
       <id>spigot-repo</id>
-      <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
+      <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
     </repository>
   </repositories>
   <dependencies>
@@ -29,7 +29,7 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
-      <version>1.12.2-R0.1-SNAPSHOT</version>
+      <version>1.13-pre7-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <!-- Lombok -->
@@ -39,39 +39,18 @@
       <version>1.14.8</version>
       <scope>provided</scope>
     </dependency>
-    <!-- Claims -->
-    <dependency>
-      <groupId>com.winthier.claims</groupId>
-      <artifactId>claims</artifactId>
-      <version>0.1</version>
-      <scope>provided</scope>
-    </dependency>
-    <!-- Claim -->
-    <dependency>
-      <groupId>com.winthier.claim</groupId>
-      <artifactId>claim</artifactId>
-      <version>0.1</version>
-      <scope>provided</scope>
-    </dependency>
     <!-- Custom -->
     <dependency>
       <groupId>com.winthier.custom</groupId>
       <artifactId>custom</artifactId>
-      <version>0.1</version>
+      <version>0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <!-- Creative -->
     <dependency>
       <groupId>com.winthier.creative</groupId>
       <artifactId>creative</artifactId>
-      <version>0.1</version>
-      <scope>provided</scope>
-    </dependency>
-    <!-- Hostile -->
-    <dependency>
-      <groupId>com.winthier.hostile</groupId>
-      <artifactId>hostile</artifactId>
-      <version>0.1</version>
+      <version>0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>

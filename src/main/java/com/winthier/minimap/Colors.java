@@ -26,7 +26,7 @@ public final class Colors {
     public static final int WOOL_LIME = 76;
     public static final int WOOL_PINK = 80;
     public static final int WOOL_GRAY = 84;
-    public static final int WOOL_SILVER = 88;
+    public static final int WOOL_LIGHT_GRAY = 88;
     public static final int WOOL_CYAN = 92;
     public static final int WOOL_PURPLE = 96;
     public static final int WOOL_BLUE = 100;

@@ -2,9 +2,10 @@ name: MiniMap
 description: Dynamic map item
 author: StarTux
 version: 0.1
+website: https://cavetale.com
 main: com.winthier.minimap.MiniMapPlugin
 depend: [ Custom ]
-softdepend: [ Claims, Creative, Hostile ]
+softdepend: [ Creative, Hostile ]
 commands:
   minimap:
     description: Debug command

@@ -34,8 +34,6 @@ import org.bukkit.metadata.MetadataValue;
 @Getter
 public final class TerrainRenderer extends MapRenderer {
     private final MiniMapPlugin plugin;
-    private ClaimsRenderer claimsRenderer;
-    private ClaimRenderer claimRenderer;
     private DebugRenderer debugRenderer;
     private CreativeRenderer creativeRenderer;
     private static final int SHADOW_COLOR = Colors.DARK_GRAY + 3;
@@ -68,12 +66,6 @@ public final class TerrainRenderer extends MapRenderer {
     TerrainRenderer(MiniMapPlugin plugin) {
         super(true);
         this.plugin = plugin;
-        if (plugin.getServer().getPluginManager().getPlugin("Claims") != null) {
-            claimsRenderer = new ClaimsRenderer();
-        }
-        if (plugin.getServer().getPluginManager().getPlugin("Claim") != null) {
-            claimRenderer = new ClaimRenderer();
-        }
         if (plugin.getServer().getPluginManager().getPlugin("Creative") != null) {
             creativeRenderer = new CreativeRenderer(plugin);
         }
@@ -107,7 +99,7 @@ public final class TerrainRenderer extends MapRenderer {
                 } else if (altitude <= 30) {
                     color = Colors.WOOL_YELLOW + 2;
                 } else {
-                    color = Colors.WOOL_SILVER + 2;
+                    color = Colors.WOOL_LIGHT_GRAY + 2;
                 }
                 plugin.getFont4x4().print(str, x, 0, (mx, my, shadow) -> { if (my < 4) canvas.setPixel(mx, my, (byte)(!shadow ? color : SHADOW_COLOR));});
             }
@@ -198,8 +190,6 @@ public final class TerrainRenderer extends MapRenderer {
             String worldName = plugin.getWorldName(player.getWorld().getName());
             plugin.getFont4x4().print(worldName, 1, 0, (x, y, shadow) -> { if (y < 4) mapCache.setPixel(x, y, !shadow ? Colors.PALE_BLUE + 2 : SHADOW_COLOR); });
             plugin.getFont4x4().print(renderMode.name(), 128 - plugin.getFont4x4().widthOf(renderMode.name()), 0, (x, y, shadow) -> { if (y < 4) mapCache.setPixel(x, y, !shadow ? Colors.RED + 2 : SHADOW_COLOR); });
-            if (claimsRenderer != null) claimsRenderer.render(plugin, mapCache, player, ax, az);
-            if (claimRenderer != null) claimRenderer.render(plugin, mapCache, player, ax, az);
             if (creativeRenderer != null) creativeRenderer.render(mapCache, player, ax, az);
             for (Marker marker: plugin.getMarkers()) {
                 if (!marker.getWorld().equals(player.getWorld().getName())) continue;
@@ -488,7 +478,7 @@ public final class TerrainRenderer extends MapRenderer {
         case FIRE:
         case GLOWSTONE:
         case JACK_O_LANTERN:
-        case REDSTONE_LAMP_ON:
+        case REDSTONE_LAMP:
         case SEA_LANTERN:
         case TORCH:
             return 2;
@@ -559,199 +549,465 @@ public final class TerrainRenderer extends MapRenderer {
     private static int colorOf(Block block, int x, int y, Map<XZ, Block> cache) {
         if (block.getY() < 0) return Colors.WOOL_BLACK;
         switch (block.getType()) {
-        case WATER: case STATIONARY_WATER:
-            return Colors.BLUE;
-        case LAVA: case STATIONARY_LAVA: return Colors.RED;
+        case WATER: return Colors.BLUE;
+        case LAVA: return Colors.RED;
         case GRASS: return Colors.LIGHT_GREEN;
-        case LEAVES: case LEAVES_2: return Colors.DARK_GREEN;
-        case SAND:
-            switch (block.getData()) {
-            case 1: return Colors.WOOL_ORANGE;
-            default: return Colors.LIGHT_BROWN;
-            }
+        case SAND: return Colors.LIGHT_BROWN;
+        case RED_SAND: return Colors.WOOL_ORANGE;
         case GRASS_PATH: return Colors.BROWN;
-        case SANDSTONE: case SANDSTONE_STAIRS: return Colors.LIGHT_BROWN;
-        case RED_SANDSTONE: case RED_SANDSTONE_STAIRS: return Colors.WOOL_ORANGE;
-        case DIRT: case SOIL: case LOG: case LOG_2: return Colors.DARK_BROWN;
-        case COBBLESTONE: case COBBLE_WALL: case MOSSY_COBBLESTONE: case SMOOTH_BRICK: case SMOOTH_STAIRS: return Colors.LIGHT_GRAY;
-        case GRAVEL:
-            return ((x & 1) == 0) ^ ((y & 1) == 0) ? Colors.GRAY_1 : Colors.LIGHT_GRAY;
-        case STONE:
-            switch (block.getData() & 0x7) {
-            case 0: return Colors.LIGHT_GRAY; // Smoothstone
-            case 1: case 2: return Colors.BROWN; // Granite
-            case 3: case 4: return Colors.WHITE; // Diorite
-            case 5: case 6: return Colors.LIGHT_GRAY; // Andesite
-            default: return Colors.LIGHT_GRAY;
-            }
-        case COAL_ORE: case DIAMOND_ORE: case EMERALD_ORE: case GLOWING_REDSTONE_ORE: case GOLD_ORE: case IRON_ORE: case LAPIS_ORE: case REDSTONE_ORE: return Colors.LIGHT_GRAY;
-        case ICE: case FROSTED_ICE: return Colors.ROYAL_BLUE;
-        case PACKED_ICE: return Colors.WOOL_LIGHT_BLUE;
+        case DIRT: case FARMLAND: return Colors.DARK_BROWN;
+        case CHISELED_STONE_BRICKS:
+        case CRACKED_STONE_BRICKS:
+        case INFESTED_CHISELED_STONE_BRICKS:
+        case INFESTED_CRACKED_STONE_BRICKS:
+        case INFESTED_MOSSY_STONE_BRICKS:
+        case INFESTED_STONE_BRICKS:
+        case MOSSY_STONE_BRICKS:
+        case STONE_BRICKS:
+        case STONE_BRICK_SLAB:
+        case STONE_BRICK_STAIRS:
+            return Colors.LIGHT_GRAY;
+        case GRAVEL: return ((x & 1) == 0) ^ ((y & 1) == 0) ? Colors.GRAY_1 : Colors.LIGHT_GRAY;
+        case SMOOTH_STONE: return Colors.LIGHT_GRAY; // Smoothstone
+        case GRANITE: case POLISHED_GRANITE: return Colors.BROWN; // Granite
+        case DIORITE: case POLISHED_DIORITE: return Colors.WHITE; // Diorite
+        case ANDESITE: case POLISHED_ANDESITE: return Colors.LIGHT_GRAY; // Andesite
+        case COAL_ORE:
+        case DIAMOND_ORE:
+        case EMERALD_ORE:
+        case GOLD_ORE:
+        case IRON_ORE:
+        case LAPIS_ORE:
+        case REDSTONE_ORE:
+            return Colors.LIGHT_GRAY;
+        case BLUE_ICE:
+        case FROSTED_ICE:
+        case ICE:
+        case PACKED_ICE:
+            return Colors.ROYAL_BLUE;
         case SNOW: case SNOW_BLOCK: return Colors.WHITE;
         case PUMPKIN: return Colors.WOOL_ORANGE;
         case CLAY: return Colors.GRAY_1;
-        case HARD_CLAY: return Colors.WOOL_RED;
-        case BRICK: return Colors.WOOL_RED;
-        case QUARTZ_BLOCK: case QUARTZ_STAIRS: return Colors.WHITE;
-        case WOOD: case WOOD_STAIRS: case WOOD_STEP: case WOOD_DOUBLE_STEP: case TRAP_DOOR: return Colors.BROWN;
-        case STEP:
-        case DOUBLE_STEP:
-            switch (block.getData() & 0x7) {
-            case 0: return Colors.LIGHT_GRAY; // Stone
-            case 1: return Colors.LIGHT_BROWN; // Sandstone
-            case 2: return Colors.LIGHT_BROWN; // Wood
-            case 3: return Colors.LIGHT_GRAY; // Cobble
-            case 4: return Colors.WOOL_RED; // Brick
-            case 5: return Colors.LIGHT_GRAY; // Stone Brick
-            case 6: return Colors.MAROON; // Nether Brick
-            case 7: return Colors.WHITE; // Quartz
-            default: return 0;
-            }
-        case HUGE_MUSHROOM_1: return Colors.BROWN;
-        case HUGE_MUSHROOM_2: return Colors.RED;
+        case STONE_SLAB:
+            return Colors.LIGHT_GRAY; // Stone
+        case CHISELED_SANDSTONE:
+        case CUT_SANDSTONE:
+        case SANDSTONE:
+        case SANDSTONE_SLAB:
+        case SANDSTONE_STAIRS:
+        case SMOOTH_SANDSTONE:
+            return Colors.LIGHT_BROWN; // Sandstone
+        case OAK_BOAT:
+        case OAK_BUTTON:
+        case OAK_DOOR:
+        case OAK_FENCE:
+        case OAK_FENCE_GATE:
+        case OAK_LEAVES:
+        case OAK_LOG:
+        case OAK_PLANKS:
+        case OAK_PRESSURE_PLATE:
+        case OAK_SAPLING:
+        case OAK_SLAB:
+        case OAK_STAIRS:
+        case OAK_TRAPDOOR:
+        case OAK_WOOD:
+        case PETRIFIED_OAK_SLAB:
+        case POTTED_OAK_SAPLING:
+        case STRIPPED_OAK_LOG:
+        case STRIPPED_OAK_WOOD:
+            return Colors.LIGHT_BROWN; // Wood
+        case DARK_OAK_BOAT:
+        case DARK_OAK_BUTTON:
+        case DARK_OAK_DOOR:
+        case DARK_OAK_FENCE:
+        case DARK_OAK_FENCE_GATE:
+        case DARK_OAK_LEAVES:
+        case DARK_OAK_LOG:
+        case DARK_OAK_PLANKS:
+        case DARK_OAK_PRESSURE_PLATE:
+        case DARK_OAK_SAPLING:
+        case DARK_OAK_SLAB:
+        case DARK_OAK_STAIRS:
+        case DARK_OAK_TRAPDOOR:
+        case DARK_OAK_WOOD:
+        case POTTED_DARK_OAK_SAPLING:
+        case STRIPPED_DARK_OAK_LOG:
+        case STRIPPED_DARK_OAK_WOOD:
+            return Colors.DARK_BROWN; // Wood
+        case ACACIA_BOAT:
+        case ACACIA_BUTTON:
+        case ACACIA_DOOR:
+        case ACACIA_FENCE:
+        case ACACIA_FENCE_GATE:
+        case ACACIA_LEAVES:
+        case ACACIA_LOG:
+        case ACACIA_PLANKS:
+        case ACACIA_PRESSURE_PLATE:
+        case ACACIA_SAPLING:
+        case ACACIA_SLAB:
+        case ACACIA_STAIRS:
+        case ACACIA_TRAPDOOR:
+        case ACACIA_WOOD:
+        case POTTED_ACACIA_SAPLING:
+        case STRIPPED_ACACIA_LOG:
+        case STRIPPED_ACACIA_WOOD:
+            return Colors.WOOL_ORANGE;
+        case BIRCH_BOAT:
+        case BIRCH_BUTTON:
+        case BIRCH_DOOR:
+        case BIRCH_FENCE:
+        case BIRCH_FENCE_GATE:
+        case BIRCH_LEAVES:
+        case BIRCH_LOG:
+        case BIRCH_PLANKS:
+        case BIRCH_PRESSURE_PLATE:
+        case BIRCH_SAPLING:
+        case BIRCH_SLAB:
+        case BIRCH_STAIRS:
+        case BIRCH_TRAPDOOR:
+        case BIRCH_WOOD:
+        case POTTED_BIRCH_SAPLING:
+        case STRIPPED_BIRCH_LOG:
+        case STRIPPED_BIRCH_WOOD:
+            return Colors.WOOL_WHITE;
+        case JUNGLE_BOAT:
+        case JUNGLE_BUTTON:
+        case JUNGLE_DOOR:
+        case JUNGLE_FENCE:
+        case JUNGLE_FENCE_GATE:
+        case JUNGLE_LEAVES:
+        case JUNGLE_LOG:
+        case JUNGLE_PLANKS:
+        case JUNGLE_PRESSURE_PLATE:
+        case JUNGLE_SAPLING:
+        case JUNGLE_SLAB:
+        case JUNGLE_STAIRS:
+        case JUNGLE_TRAPDOOR:
+        case JUNGLE_WOOD:
+        case POTTED_JUNGLE_SAPLING:
+        case STRIPPED_JUNGLE_LOG:
+        case STRIPPED_JUNGLE_WOOD:
+            return Colors.BROWN;
+        case SPRUCE_BOAT:
+        case SPRUCE_BUTTON:
+        case SPRUCE_DOOR:
+        case SPRUCE_FENCE:
+        case SPRUCE_FENCE_GATE:
+        case SPRUCE_LEAVES:
+        case SPRUCE_LOG:
+        case SPRUCE_PLANKS:
+        case SPRUCE_PRESSURE_PLATE:
+        case SPRUCE_SAPLING:
+        case SPRUCE_SLAB:
+        case SPRUCE_STAIRS:
+        case SPRUCE_TRAPDOOR:
+        case SPRUCE_WOOD:
+        case STRIPPED_SPRUCE_LOG:
+        case STRIPPED_SPRUCE_WOOD:
+            return Colors.BROWN;
+        case COBBLESTONE:
+        case COBBLESTONE_SLAB:
+        case COBBLESTONE_STAIRS:
+        case COBBLESTONE_WALL:
+        case INFESTED_COBBLESTONE:
+        case MOSSY_COBBLESTONE:
+        case MOSSY_COBBLESTONE_WALL:
+            return Colors.LIGHT_GRAY; // Cobble
+        case BRICK:
+        case BRICKS:
+        case BRICK_SLAB:
+        case BRICK_STAIRS:
+            return Colors.WOOL_RED; // Brick
+        case NETHER_BRICK:
+        case NETHER_BRICKS:
+        case NETHER_BRICK_FENCE:
+        case NETHER_BRICK_SLAB:
+        case NETHER_BRICK_STAIRS:
+        case RED_NETHER_BRICKS:
+            return Colors.MAROON; // Nether Brick
+        case CHISELED_QUARTZ_BLOCK:
+        case NETHER_QUARTZ_ORE:
+        case QUARTZ:
+        case QUARTZ_BLOCK:
+        case QUARTZ_PILLAR:
+        case QUARTZ_SLAB:
+        case QUARTZ_STAIRS:
+        case SMOOTH_QUARTZ:
+            return Colors.WHITE; // Quartz
+        case BROWN_MUSHROOM_BLOCK: return Colors.BROWN;
+        case RED_MUSHROOM_BLOCK: return Colors.RED;
         case LAPIS_BLOCK: return Colors.BLUE;
         case EMERALD_BLOCK: return Colors.LIGHT_GREEN;
         case REDSTONE_BLOCK: return Colors.RED;
         case DIAMOND_BLOCK: return Colors.PALE_BLUE;
         case GOLD_BLOCK: return Colors.WOOL_YELLOW;
         case IRON_BLOCK: return Colors.WHITE;
-        case MYCEL: return Colors.WOOL_PURPLE;
+        case MYCELIUM: return Colors.WOOL_PURPLE;
         case OBSIDIAN: case ENDER_CHEST: return Colors.WOOL_BLACK;
-        case WOOL:
-        case STAINED_CLAY:
-        case STAINED_GLASS:
-        case CONCRETE:
-        case CONCRETE_POWDER:
-        case CARPET:
-            switch (block.getData()) {
-            case 0: return Colors.WOOL_WHITE;
-            case 1: return Colors.WOOL_ORANGE;
-            case 2: return Colors.WOOL_MAGENTA;
-            case 3: return Colors.WOOL_LIGHT_BLUE;
-            case 4: return Colors.WOOL_YELLOW;
-            case 5: return Colors.WOOL_LIME;
-            case 6: return Colors.WOOL_PINK;
-            case 7: return Colors.WOOL_GRAY;
-            case 8: return Colors.WOOL_SILVER;
-            case 9: return Colors.WOOL_CYAN;
-            case 10: return Colors.WOOL_PURPLE;
-            case 11: return Colors.WOOL_BLUE;
-            case 12: return Colors.WOOL_BROWN;
-            case 13: return Colors.WOOL_GREEN;
-            case 14: return Colors.WOOL_RED;
-            case 15: return Colors.WOOL_BLACK;
-            default: return 0;
-            }
-        // Terracotta
-        case WHITE_GLAZED_TERRACOTTA: return Colors.WOOL_WHITE;
-        case ORANGE_GLAZED_TERRACOTTA: return Colors.WOOL_ORANGE;
-        case MAGENTA_GLAZED_TERRACOTTA: return Colors.WOOL_MAGENTA;
-        case LIGHT_BLUE_GLAZED_TERRACOTTA: return Colors.WOOL_LIGHT_BLUE;
-        case YELLOW_GLAZED_TERRACOTTA: return Colors.WOOL_YELLOW;
-        case LIME_GLAZED_TERRACOTTA: return Colors.WOOL_LIME;
-        case PINK_GLAZED_TERRACOTTA: return Colors.WOOL_PINK;
-        case GRAY_GLAZED_TERRACOTTA: return Colors.WOOL_GRAY;
-        case SILVER_GLAZED_TERRACOTTA: return Colors.WOOL_SILVER;
-        case CYAN_GLAZED_TERRACOTTA: return Colors.WOOL_CYAN;
-        case PURPLE_GLAZED_TERRACOTTA: return Colors.WOOL_PURPLE;
-        case BLUE_GLAZED_TERRACOTTA: return Colors.WOOL_BLUE;
-        case BROWN_GLAZED_TERRACOTTA: return Colors.WOOL_BROWN;
-        case GREEN_GLAZED_TERRACOTTA: return Colors.WOOL_GREEN;
-        case RED_GLAZED_TERRACOTTA: return Colors.WOOL_RED;
-        case BLACK_GLAZED_TERRACOTTA: return Colors.WOOL_BLACK;
-        // Shulker
-        case WHITE_SHULKER_BOX: return Colors.WOOL_WHITE;
-        case ORANGE_SHULKER_BOX: return Colors.WOOL_ORANGE;
-        case MAGENTA_SHULKER_BOX: return Colors.WOOL_MAGENTA;
-        case LIGHT_BLUE_SHULKER_BOX: return Colors.WOOL_LIGHT_BLUE;
-        case YELLOW_SHULKER_BOX: return Colors.WOOL_YELLOW;
-        case LIME_SHULKER_BOX: return Colors.WOOL_LIME;
-        case PINK_SHULKER_BOX: return Colors.WOOL_PINK;
-        case GRAY_SHULKER_BOX: return Colors.WOOL_GRAY;
-        case SILVER_SHULKER_BOX: return Colors.WOOL_SILVER;
-        case CYAN_SHULKER_BOX: return Colors.WOOL_CYAN;
-        case PURPLE_SHULKER_BOX: return Colors.WOOL_PURPLE;
-        case BLUE_SHULKER_BOX: return Colors.WOOL_BLUE;
-        case BROWN_SHULKER_BOX: return Colors.WOOL_BROWN;
-        case GREEN_SHULKER_BOX: return Colors.WOOL_GREEN;
-        case RED_SHULKER_BOX: return Colors.WOOL_RED;
-        case BLACK_SHULKER_BOX: return Colors.WOOL_BLACK;
-        //
-        case SUGAR_CANE_BLOCK: return Colors.LIGHT_GREEN;
-        case WATER_LILY: return Colors.DARK_GREEN;
+        case SUGAR_CANE: return Colors.LIGHT_GREEN;
+        case LILY_PAD: return Colors.DARK_GREEN;
         case CACTUS: return Colors.DARK_GREEN;
-        case NETHERRACK: case QUARTZ_ORE: case SOUL_SAND: case NETHER_STALK: case NETHER_WART_BLOCK: return Colors.MAROON;
-        case CROPS: return Colors.LIGHT_BROWN;
+        case NETHERRACK:
+        case SOUL_SAND:
+        case NETHER_WART:
+        case NETHER_WART_BLOCK:
+            return Colors.MAROON;
+        case WHEAT: return Colors.LIGHT_BROWN;
         case POTATO: return Colors.LIGHT_BROWN;
         case CARROT: return Colors.WOOL_ORANGE;
-        case BEETROOT_BLOCK: return Colors.WOOL_PINK;
-        case ACACIA_DOOR: case ACACIA_FENCE: case ACACIA_FENCE_GATE: case ACACIA_STAIRS: return Colors.WOOL_ORANGE;
-        case BIRCH_DOOR: case BIRCH_FENCE: case BIRCH_WOOD_STAIRS: return Colors.LIGHT_BROWN;
-        case DARK_OAK_DOOR: case DARK_OAK_FENCE: case DARK_OAK_STAIRS: return Colors.DARK_BROWN;
-        case SPRUCE_DOOR: case SPRUCE_FENCE: case SPRUCE_WOOD_STAIRS: return Colors.DARK_BROWN;
-        case JUNGLE_DOOR: case JUNGLE_FENCE: case JUNGLE_WOOD_STAIRS: return Colors.BROWN;
-        case NETHER_FENCE: return Colors.MAROON;
-        case FENCE: case FENCE_GATE: return Colors.BROWN;
+        case BEETROOT: return Colors.WOOL_PINK;
         case IRON_DOOR: return Colors.WHITE;
-        case IRON_FENCE: return Colors.LIGHT_GRAY;
+        case IRON_BARS: return Colors.LIGHT_GRAY;
         case VINE: return Colors.DARK_GREEN;
-        case WEB: return Colors.WHITE;
-        case MELON_BLOCK: return Colors.DARK_GREEN;
-        case ENDER_STONE: case END_BRICKS: return Colors.LIGHT_BROWN;
+        case COBWEB: return Colors.WHITE;
+        case MELON: return Colors.DARK_GREEN;
+        case END_STONE:
+        case END_STONE_BRICKS:
+            return Colors.LIGHT_BROWN;
         case END_ROD: case BEACON: case END_CRYSTAL: return Colors.WHITE;
-        case PURPUR_BLOCK: case PURPUR_DOUBLE_SLAB: case PURPUR_PILLAR: case PURPUR_SLAB: case PURPUR_STAIRS: return Colors.WOOL_MAGENTA;
+        case PURPUR_BLOCK:
+        case PURPUR_PILLAR:
+        case PURPUR_SLAB:
+        case PURPUR_STAIRS:
+            return Colors.WOOL_MAGENTA;
         case PRISMARINE: return Colors.CYAN;
         case CHORUS_FLOWER: case CHORUS_FRUIT: case CHORUS_PLANT: return Colors.WOOL_PURPLE;
         case BEDROCK: return Colors.DARK_GRAY;
-        case TORCH: case GLOWSTONE: case REDSTONE_LAMP_ON: case JACK_O_LANTERN: case FIRE: return Colors.WOOL_YELLOW;
+        case TORCH: case GLOWSTONE: case JACK_O_LANTERN: case FIRE: return Colors.WOOL_YELLOW;
         case SEA_LANTERN: return Colors.ROYAL_BLUE;
-        case BED_BLOCK:
-        default:
-            BlockState blockState = block.getState();
-            if (blockState instanceof Colorable) {
-                Colorable colorable = (Colorable)blockState;
-                switch (colorable.getColor()) {
-                case WHITE: return Colors.WOOL_WHITE;
-                case ORANGE: return Colors.WOOL_ORANGE;
-                case MAGENTA: return Colors.WOOL_MAGENTA;
-                case LIGHT_BLUE: return Colors.WOOL_LIGHT_BLUE;
-                case YELLOW: return Colors.WOOL_YELLOW;
-                case LIME: return Colors.WOOL_LIME;
-                case PINK: return Colors.WOOL_PINK;
-                case GRAY: return Colors.WOOL_GRAY;
-                case SILVER: return Colors.WOOL_SILVER;
-                case CYAN: return Colors.WOOL_CYAN;
-                case PURPLE: return Colors.WOOL_PURPLE;
-                case BLUE: return Colors.WOOL_BLUE;
-                case BROWN: return Colors.WOOL_BROWN;
-                case GREEN: return Colors.WOOL_GREEN;
-                case RED: return Colors.WOOL_RED;
-                case BLACK: return Colors.WOOL_BLACK;
-                default: break;
-                }
-            }
+        case WHITE_BANNER:
+        case WHITE_BED:
+        case WHITE_CARPET:
+        case WHITE_CONCRETE:
+        case WHITE_CONCRETE_POWDER:
+        case WHITE_GLAZED_TERRACOTTA:
+        case WHITE_SHULKER_BOX:
+        case WHITE_STAINED_GLASS:
+        case WHITE_STAINED_GLASS_PANE:
+        case WHITE_TERRACOTTA:
+        case WHITE_TULIP:
+        case WHITE_WALL_BANNER:
+        case WHITE_WOOL:
+            return Colors.WOOL_WHITE;
+        case ORANGE_BANNER:
+        case ORANGE_BED:
+        case ORANGE_CARPET:
+        case ORANGE_CONCRETE:
+        case ORANGE_CONCRETE_POWDER:
+        case ORANGE_DYE:
+        case ORANGE_GLAZED_TERRACOTTA:
+        case ORANGE_SHULKER_BOX:
+        case ORANGE_STAINED_GLASS:
+        case ORANGE_STAINED_GLASS_PANE:
+        case ORANGE_TERRACOTTA:
+        case ORANGE_TULIP:
+        case ORANGE_WALL_BANNER:
+        case ORANGE_WOOL:
+            return Colors.WOOL_ORANGE;
+        case MAGENTA_BANNER:
+        case MAGENTA_BED:
+        case MAGENTA_CARPET:
+        case MAGENTA_CONCRETE:
+        case MAGENTA_CONCRETE_POWDER:
+        case MAGENTA_DYE:
+        case MAGENTA_GLAZED_TERRACOTTA:
+        case MAGENTA_SHULKER_BOX:
+        case MAGENTA_STAINED_GLASS:
+        case MAGENTA_STAINED_GLASS_PANE:
+        case MAGENTA_TERRACOTTA:
+        case MAGENTA_WALL_BANNER:
+        case MAGENTA_WOOL:
+            return Colors.WOOL_MAGENTA;
+        case LIGHT_BLUE_BANNER:
+        case LIGHT_BLUE_BED:
+        case LIGHT_BLUE_CARPET:
+        case LIGHT_BLUE_CONCRETE:
+        case LIGHT_BLUE_CONCRETE_POWDER:
+        case LIGHT_BLUE_DYE:
+        case LIGHT_BLUE_GLAZED_TERRACOTTA:
+        case LIGHT_BLUE_SHULKER_BOX:
+        case LIGHT_BLUE_STAINED_GLASS:
+        case LIGHT_BLUE_STAINED_GLASS_PANE:
+        case LIGHT_BLUE_TERRACOTTA:
+        case LIGHT_BLUE_WALL_BANNER:
+        case LIGHT_BLUE_WOOL:
+            return Colors.WOOL_LIGHT_BLUE;
+        case YELLOW_BANNER:
+        case YELLOW_BED:
+        case YELLOW_CARPET:
+        case YELLOW_CONCRETE:
+        case YELLOW_CONCRETE_POWDER:
+        case YELLOW_GLAZED_TERRACOTTA:
+        case YELLOW_SHULKER_BOX:
+        case YELLOW_STAINED_GLASS:
+        case YELLOW_STAINED_GLASS_PANE:
+        case YELLOW_TERRACOTTA:
+        case YELLOW_WALL_BANNER:
+        case YELLOW_WOOL:
+            return Colors.WOOL_YELLOW;
+        case LIME_BANNER:
+        case LIME_BED:
+        case LIME_CARPET:
+        case LIME_CONCRETE:
+        case LIME_CONCRETE_POWDER:
+        case LIME_DYE:
+        case LIME_GLAZED_TERRACOTTA:
+        case LIME_SHULKER_BOX:
+        case LIME_STAINED_GLASS:
+        case LIME_STAINED_GLASS_PANE:
+        case LIME_TERRACOTTA:
+        case LIME_WALL_BANNER:
+        case LIME_WOOL:
+            return Colors.WOOL_LIME;
+        case PINK_BANNER:
+        case PINK_BED:
+        case PINK_CARPET:
+        case PINK_CONCRETE:
+        case PINK_CONCRETE_POWDER:
+        case PINK_DYE:
+        case PINK_GLAZED_TERRACOTTA:
+        case PINK_SHULKER_BOX:
+        case PINK_STAINED_GLASS:
+        case PINK_STAINED_GLASS_PANE:
+        case PINK_TERRACOTTA:
+        case PINK_TULIP:
+        case PINK_WALL_BANNER:
+        case PINK_WOOL:
+            return Colors.WOOL_PINK;
+        case GRAY_BANNER:
+        case GRAY_BED:
+        case GRAY_CARPET:
+        case GRAY_CONCRETE:
+        case GRAY_CONCRETE_POWDER:
+        case GRAY_DYE:
+        case GRAY_GLAZED_TERRACOTTA:
+        case GRAY_SHULKER_BOX:
+        case GRAY_STAINED_GLASS:
+        case GRAY_STAINED_GLASS_PANE:
+        case GRAY_TERRACOTTA:
+        case GRAY_WALL_BANNER:
+        case GRAY_WOOL:
+            return Colors.WOOL_GRAY;
+        case LIGHT_GRAY_BANNER:
+        case LIGHT_GRAY_BED:
+        case LIGHT_GRAY_CARPET:
+        case LIGHT_GRAY_CONCRETE:
+        case LIGHT_GRAY_CONCRETE_POWDER:
+        case LIGHT_GRAY_DYE:
+        case LIGHT_GRAY_GLAZED_TERRACOTTA:
+        case LIGHT_GRAY_SHULKER_BOX:
+        case LIGHT_GRAY_STAINED_GLASS:
+        case LIGHT_GRAY_STAINED_GLASS_PANE:
+        case LIGHT_GRAY_TERRACOTTA:
+        case LIGHT_GRAY_WALL_BANNER:
+        case LIGHT_GRAY_WOOL:
+            return Colors.WOOL_LIGHT_GRAY;
+        case CYAN_BANNER:
+        case CYAN_BED:
+        case CYAN_CARPET:
+        case CYAN_CONCRETE:
+        case CYAN_CONCRETE_POWDER:
+        case CYAN_DYE:
+        case CYAN_GLAZED_TERRACOTTA:
+        case CYAN_SHULKER_BOX:
+        case CYAN_STAINED_GLASS:
+        case CYAN_STAINED_GLASS_PANE:
+        case CYAN_TERRACOTTA:
+        case CYAN_WALL_BANNER:
+        case CYAN_WOOL:
+            return Colors.WOOL_CYAN;
+        case PURPLE_BANNER:
+        case PURPLE_BED:
+        case PURPLE_CARPET:
+        case PURPLE_CONCRETE:
+        case PURPLE_CONCRETE_POWDER:
+        case PURPLE_DYE:
+        case PURPLE_GLAZED_TERRACOTTA:
+        case PURPLE_SHULKER_BOX:
+        case PURPLE_STAINED_GLASS:
+        case PURPLE_STAINED_GLASS_PANE:
+        case PURPLE_TERRACOTTA:
+        case PURPLE_WALL_BANNER:
+        case PURPLE_WOOL:
+            return Colors.WOOL_PURPLE;
+        case BLUE_BANNER:
+        case BLUE_BED:
+        case BLUE_CARPET:
+        case BLUE_CONCRETE:
+        case BLUE_CONCRETE_POWDER:
+        case BLUE_GLAZED_TERRACOTTA:
+        case BLUE_ORCHID:
+        case BLUE_SHULKER_BOX:
+        case BLUE_STAINED_GLASS:
+        case BLUE_STAINED_GLASS_PANE:
+        case BLUE_TERRACOTTA:
+        case BLUE_WALL_BANNER:
+        case BLUE_WOOL:
+            return Colors.WOOL_BLUE;
+        case BROWN_BANNER:
+        case BROWN_BED:
+        case BROWN_CARPET:
+        case BROWN_CONCRETE:
+        case BROWN_CONCRETE_POWDER:
+        case BROWN_GLAZED_TERRACOTTA:
+        case BROWN_MUSHROOM:
+        case BROWN_SHULKER_BOX:
+        case BROWN_STAINED_GLASS:
+        case BROWN_STAINED_GLASS_PANE:
+        case BROWN_TERRACOTTA:
+        case BROWN_WALL_BANNER:
+        case BROWN_WOOL:
             return Colors.WOOL_BROWN;
+        case GREEN_BANNER:
+        case GREEN_BED:
+        case GREEN_CARPET:
+        case GREEN_CONCRETE:
+        case GREEN_CONCRETE_POWDER:
+        case GREEN_GLAZED_TERRACOTTA:
+        case GREEN_SHULKER_BOX:
+        case GREEN_STAINED_GLASS:
+        case GREEN_STAINED_GLASS_PANE:
+        case GREEN_TERRACOTTA:
+        case GREEN_WALL_BANNER:
+        case GREEN_WOOL:
+            return Colors.WOOL_GREEN;
+        case RED_BANNER:
+        case RED_BED:
+        case RED_CARPET:
+        case RED_CONCRETE:
+        case RED_CONCRETE_POWDER:
+        case RED_GLAZED_TERRACOTTA:
+        case RED_MUSHROOM:
+        case RED_SANDSTONE:
+        case RED_SANDSTONE_SLAB:
+        case RED_SANDSTONE_STAIRS:
+        case RED_SHULKER_BOX:
+        case RED_STAINED_GLASS:
+        case RED_STAINED_GLASS_PANE:
+        case RED_TERRACOTTA:
+        case RED_TULIP:
+        case RED_WALL_BANNER:
+        case RED_WOOL:
+            return Colors.WOOL_RED;
+        case BLACK_BANNER:
+        case BLACK_BED:
+        case BLACK_CARPET:
+        case BLACK_CONCRETE:
+        case BLACK_CONCRETE_POWDER:
+        case BLACK_GLAZED_TERRACOTTA:
+        case BLACK_SHULKER_BOX:
+        case BLACK_STAINED_GLASS:
+        case BLACK_STAINED_GLASS_PANE:
+        case BLACK_TERRACOTTA:
+        case BLACK_WALL_BANNER:
+        case BLACK_WOOL:
+        default:
+            return Colors.WOOL_BLACK;
         }
     }
 
     private static Block lowerTransparent(Block block) {
-        while (block.getY() >= 0 && block.getType().isTransparent()) {
-            switch (block.getType()) {
-            case SNOW:
-            case WATER_LILY:
-            case CROPS:
-            case POTATO:
-            case CARROT:
-            case BEETROOT_BLOCK:
-            case TORCH:
-            case FIRE:
-            case SUGAR_CANE_BLOCK:
-            case CARPET:
-                return block;
-            default: break;
-            }
-            block = block.getRelative(0, -1, 0);
-        }
+        while (block.getY() >= 0 && block.getType() == Material.AIR) block = block.getRelative(0, -1, 0);
         return block;
     }
 
