@@ -2,6 +2,7 @@ name: MiniMap
 description: Dynamic map item
 author: StarTux
 version: 0.1
+api-version: 1.13
 website: https://cavetale.com
 main: com.winthier.minimap.MiniMapPlugin
 depend: [ Custom ]
