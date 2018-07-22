@@ -316,18 +316,18 @@ public final class TerrainRenderer extends MapRenderer {
             case "settings":
                 drawDarkenedMap(session, mapCache);
                 plugin.getFont4x4().print(mapCache, "Settings", 64 - plugin.getFont4x4().widthOf("Settings") / 2, 0, Colors.WOOL_LIGHT_BLUE + 2, Colors.WOOL_BLACK);
-                List<Map> settingList = new ArrayList<>();
+                List<Map<String, Object>> settingList = new ArrayList<>();
                 for (MetadataValue meta: player.getMetadata("MiniMapSettings")) {
                     if (meta.value() instanceof List) {
                         for (Object o: (List)meta.value()) {
                             if (o instanceof Map) {
-                                Map map = (Map)o;
+                                Map<String, Object> map = (Map<String, Object>)o;
                                 settingList.add(map);
                             }
                         }
                     }
                 }
-                Collections.sort(settingList, (Map a, Map b) -> {
+                Collections.sort(settingList, (Map<String, Object> a, Map<String, Object> b) -> {
                         Integer ia = (Integer)a.get("Priority");
                         Integer ib = (Integer)b.get("Priority");
                         if (ia == null) ia = 0;
@@ -335,7 +335,7 @@ public final class TerrainRenderer extends MapRenderer {
                         return Integer.compare((Integer)ib, (Integer)ia);
                     });
                 int y = 10;
-                for (Map map: settingList) {
+                for (Map<String, Object> map: settingList) {
                     try {
                         if ("Boolean".equals(map.get("Type"))) {
                             boolean v = map.get("Value") == Boolean.TRUE;
@@ -568,7 +568,7 @@ public final class TerrainRenderer extends MapRenderer {
         case STONE_BRICK_STAIRS:
             return Colors.LIGHT_GRAY;
         case GRAVEL: return ((x & 1) == 0) ^ ((y & 1) == 0) ? Colors.GRAY_1 : Colors.LIGHT_GRAY;
-        case SMOOTH_STONE: return Colors.LIGHT_GRAY; // Smoothstone
+        case STONE: case SMOOTH_STONE: return Colors.LIGHT_GRAY; // Smoothstone
         case GRANITE: case POLISHED_GRANITE: return Colors.BROWN; // Granite
         case DIORITE: case POLISHED_DIORITE: return Colors.WHITE; // Diorite
         case ANDESITE: case POLISHED_ANDESITE: return Colors.LIGHT_GRAY; // Andesite

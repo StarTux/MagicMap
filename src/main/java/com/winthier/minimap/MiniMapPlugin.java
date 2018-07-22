@@ -295,7 +295,7 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
 
     void storeSettings(Player player) {
         final UUID uuid = player.getUniqueId();
-        List settingList = new ArrayList<>();
+        List<Object> settingList = new ArrayList<>();
         // Invert Mouse
         {
             Map<String, Object> map = new HashMap<>();
