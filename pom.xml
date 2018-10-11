@@ -29,7 +29,7 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
-      <version>1.13-R0.1-SNAPSHOT</version>
+      <version>1.13.1-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <!-- Lombok -->
@@ -39,22 +39,9 @@
       <version>1.14.8</version>
       <scope>provided</scope>
     </dependency>
-    <!-- Custom -->
-    <dependency>
-      <groupId>com.winthier.custom</groupId>
-      <artifactId>custom</artifactId>
-      <version>0.1-SNAPSHOT</version>
-      <scope>provided</scope>
-    </dependency>
-    <!-- Creative -->
-    <dependency>
-      <groupId>com.winthier.creative</groupId>
-      <artifactId>creative</artifactId>
-      <version>0.1-SNAPSHOT</version>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
   <build>
+    <finalName>${project.name}</finalName>
     <plugins>
       <!-- Java 8 -->
       <plugin>

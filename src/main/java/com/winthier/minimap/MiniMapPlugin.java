@@ -1,7 +1,5 @@
 package com.winthier.minimap;
 
-import com.winthier.custom.CustomPlugin;
-import com.winthier.custom.event.CustomRegisterEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,7 +37,6 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
     private HashSet<UUID> given;
     private int mapId;
     private boolean debug, give, persist;
-    private MiniMapItem miniMapItem;
     private MapView mapView;
     private Font4x4 font4x4;
     private TerrainRenderer renderer = new TerrainRenderer(this);
@@ -49,13 +46,9 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
-        saveResource("events.png", false);
         readConfiguration();
         getServer().getPluginManager().registerEvents(this, this);
         font4x4 = new Font4x4(this);
-        for (Player player: getServer().getOnlinePlayers()) {
-            storeSettings(player);
-        }
     }
 
     @Override
@@ -73,7 +66,6 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
             sessions.clear();
             given = null;
             userSettings = null;
-            renderer.reload();
             sender.sendMessage("MiniMap config reloaded");
         } else if ("setmarker".equals(cmd) && args.length >= 3) {
             if (player == null) return false;
@@ -215,15 +207,7 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void onCustomRegister(CustomRegisterEvent event) {
-        readConfiguration();
-        miniMapItem = new MiniMapItem(this);
-        event.addItem(miniMapItem);
-    }
-
-    @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        storeSettings(event.getPlayer());
         UUID uuid = event.getPlayer().getUniqueId();
         if (getGiven().contains(uuid)) return;
         for (ItemStack item: event.getPlayer().getInventory()) {
@@ -233,11 +217,7 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
                 return;
             }
         }
-        if (event.getPlayer().getInventory().addItem(CustomPlugin.getInstance().getItemManager().spawnItemStack(MiniMapItem.CUSTOM_ID, 1)).isEmpty()) {
-            getLogger().info("Mini Map given to " + event.getPlayer().getName());
-            getGiven().add(uuid);
-            saveGiven();
-        }
+        // TODO: Give map
     }
 
     @EventHandler
@@ -291,41 +271,5 @@ public final class MiniMapPlugin extends JavaPlugin implements Listener {
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
-    }
-
-    void storeSettings(Player player) {
-        final UUID uuid = player.getUniqueId();
-        List<Object> settingList = new ArrayList<>();
-        // Invert Mouse
-        {
-            Map<String, Object> map = new HashMap<>();
-            map.put("DisplayName", "Invert Mouse");
-            map.put("Type", "Boolean");
-            map.put("Value", getUserSettings(uuid).getBoolean("InvertMouseY"));
-            map.put("Priority", 10);
-            Runnable onUpdate = () -> {
-                boolean v = map.get("Value") == Boolean.TRUE;
-                getUserSettings(uuid).set("InvertMouseY", v);
-                saveUserSettings();
-            };
-            map.put("OnUpdate", onUpdate);
-            settingList.add(map);
-        }
-        // Fill Off-Hand
-        {
-            Map<String, Object> map = new HashMap<>();
-            map.put("DisplayName", "Fill off-hand in menu");
-            map.put("Type", "Boolean");
-            map.put("Value", getUserSettings(uuid).getBoolean("FillOffHand", true));
-            map.put("Priority", 9);
-            Runnable onUpdate = () -> {
-                boolean v = map.get("Value") == Boolean.TRUE;
-                getUserSettings(uuid).set("FillOffHand", v);
-                saveUserSettings();
-            };
-            map.put("OnUpdate", onUpdate);
-            settingList.add(map);
-        }
-        player.setMetadata("MiniMapSettings", new FixedMetadataValue(this, settingList));
     }
 }
