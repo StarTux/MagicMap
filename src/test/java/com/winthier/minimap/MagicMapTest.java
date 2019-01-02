@@ -1,4 +1,4 @@
-package com.winthier.minimap;
+package com.cavetale.magicmap;
 
 // import java.awt.image.BufferedImage;
 // import java.io.File;
@@ -8,7 +8,7 @@ package com.winthier.minimap;
 // import org.bukkit.Material;
 import org.junit.Test;
 
-public final class MiniMapTest {
+public final class MagicMapTest {
     @Test
     public void main() throws Exception {
         // java.io.PrintStream out = new java.io.PrintStream(new File("target/colors.txt"));

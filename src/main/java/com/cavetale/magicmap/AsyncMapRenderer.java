@@ -1,4 +1,4 @@
-package com.winthier.minimap;
+package com.cavetale.magicmap;
 
 import java.util.HashMap;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ final class AsyncMapRenderer implements Runnable {
     public static final int BRIGHT = 2;
     public static final int DARK = 3;
     private static final int[] RAW_COLORS;
-    private final MiniMapPlugin plugin;
+    private final MagicMapPlugin plugin;
     private final Session session;
     private final Type type;
     private final String worldName;

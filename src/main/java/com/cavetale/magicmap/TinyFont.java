@@ -1,4 +1,4 @@
-package com.winthier.minimap;
+package com.cavetale.magicmap;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -29,7 +29,7 @@ public final class TinyFont {
         load(image);
     }
 
-    TinyFont(MiniMapPlugin plugin) {
+    TinyFont(MagicMapPlugin plugin) {
         try {
             load(ImageIO.read(plugin.getResource("TinyFont.png")));
         } catch (IOException ioe) {

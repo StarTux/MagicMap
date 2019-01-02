@@ -1,4 +1,4 @@
-package com.winthier.minimap;
+package com.cavetale.magicmap;
 
 import org.bukkit.map.MapCursorCollection;
 

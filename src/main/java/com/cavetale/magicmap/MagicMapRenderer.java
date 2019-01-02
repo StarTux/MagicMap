@@ -1,4 +1,4 @@
-package com.winthier.minimap;
+package com.cavetale.magicmap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -12,10 +12,10 @@ import org.bukkit.map.MapCursorCollection;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 
-final class MiniMapRenderer extends MapRenderer {
-    private final MiniMapPlugin plugin;
+final class MagicMapRenderer extends MapRenderer {
+    private final MagicMapPlugin plugin;
 
-    MiniMapRenderer(MiniMapPlugin plugin) {
+    MagicMapRenderer(MagicMapPlugin plugin) {
         super(true);
         this.plugin = plugin;
     }

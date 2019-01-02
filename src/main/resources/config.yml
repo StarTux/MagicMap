@@ -1,11 +1,11 @@
 debug: false
 map:
   color: 0
-  name: '&dMini Map'
+  name: '&dMagic Map'
 give:
   enabled: false
   persist: true
-  message: '&eYou received a MiniMap!'
+  message: '&eYou received a MagicMap!'
 WorldNames:
   default: cavetale.com
   world: Survival

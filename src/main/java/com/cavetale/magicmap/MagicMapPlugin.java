@@ -1,4 +1,4 @@
-package com.winthier.minimap;
+package com.cavetale.magicmap;
 
 import com.google.gson.Gson;
 import java.io.File;
@@ -22,7 +22,7 @@ import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
-public final class MiniMapPlugin extends JavaPlugin {
+public final class MagicMapPlugin extends JavaPlugin {
     // Map persistence
     private MapView mapView;
     // Configuration
@@ -32,9 +32,9 @@ public final class MiniMapPlugin extends JavaPlugin {
     private boolean debug, persist;
     // Tools
     private TinyFont tinyFont;
-    private MiniMapRenderer miniMapRenderer;
+    private MagicMapRenderer magicMapRenderer;
     private MapGiver mapGiver;
-    private MiniMapCommand miniMapCommand;
+    private MagicMapCommand magicMapCommand;
     private final Map<String, String> worldNames = new HashMap<>();
     private final Map<String, Boolean> enableCaveView = new HashMap<>();
 
@@ -42,15 +42,15 @@ public final class MiniMapPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        this.miniMapRenderer = new MiniMapRenderer(this);
+        saveDefaultConfig();
+        this.magicMapRenderer = new MagicMapRenderer(this);
         setupMap();
         getLogger().info("Using map #" + this.mapId + ".");
-        saveDefaultConfig();
         this.tinyFont = new TinyFont(this);
         this.mapGiver = new MapGiver(this);
         getServer().getPluginManager().registerEvents(this.mapGiver, this);
-        this.miniMapCommand = new MiniMapCommand(this);
-        getCommand("minimap").setExecutor(this.miniMapCommand);
+        this.magicMapCommand = new MagicMapCommand(this);
+        getCommand("magicmap").setExecutor(this.magicMapCommand);
         importConfig();
         if (this.mapGiver.isEnabled()) {
             for (Player player: this.getServer().getOnlinePlayers()) {
@@ -63,7 +63,7 @@ public final class MiniMapPlugin extends JavaPlugin {
     public void onDisable() {
         resetMapView();
         for (Player player: this.getServer().getOnlinePlayers()) {
-            player.removeMetadata("minimap.session", this);
+            player.removeMetadata("magicmap.session", this);
         }
     }
 
@@ -122,17 +122,17 @@ public final class MiniMapPlugin extends JavaPlugin {
         for (MapRenderer renderer: this.mapView.getRenderers()) {
             this.mapView.removeRenderer(renderer);
         }
-        this.mapView.addRenderer(this.miniMapRenderer);
+        this.mapView.addRenderer(this.magicMapRenderer);
     }
 
     // --- Utility
 
     Session getSession(Player player) {
-        for (MetadataValue v: player.getMetadata("minimap.session")) {
+        for (MetadataValue v: player.getMetadata("magicmap.session")) {
             if (v.getOwningPlugin().equals(this)) return (Session)v.value();
         }
         Session session = new Session();
-        player.setMetadata("minimap.session", new FixedMetadataValue(this, session));
+        player.setMetadata("magicmap.session", new FixedMetadataValue(this, session));
         return session;
     }
 
@@ -151,7 +151,7 @@ public final class MiniMapPlugin extends JavaPlugin {
         meta.setMapId(this.mapId);
         meta.setScaling(false);
         meta.setColor(Color.fromRGB(this.mapColor));
-        meta.setLocationName("MiniMap");
+        meta.setLocationName("MagicMap");
         meta.setDisplayName(this.mapName);
         item.setItemMeta(meta);
         return item;

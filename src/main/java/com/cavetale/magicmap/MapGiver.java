@@ -1,4 +1,4 @@
-package com.winthier.minimap;
+package com.cavetale.magicmap;
 
 import com.google.gson.Gson;
 import java.io.File;
@@ -21,7 +21,7 @@ import org.bukkit.inventory.meta.MapMeta;
 
 @Getter @RequiredArgsConstructor
 final class MapGiver implements Listener {
-    private final MiniMapPlugin plugin;
+    private final MagicMapPlugin plugin;
     private Persistence persistence;
     @Setter private boolean enabled;
     @Setter private boolean persist;
@@ -71,7 +71,7 @@ final class MapGiver implements Listener {
 
     void maybeGiveMap(Player player) {
         if (!player.isValid()) return;
-        if (!player.hasPermission("minimap.receive")) return;
+        if (!player.hasPermission("magicmap.receive")) return;
         UUID uuid = player.getUniqueId();
         if (this.getGiven().contains(uuid)) return;
         for (ItemStack item: player.getInventory()) {
@@ -87,7 +87,7 @@ final class MapGiver implements Listener {
         if (player.getInventory().addItem(newMap).isEmpty()) {
             this.getGiven().add(uuid);
             if (this.persist) saveGiven();
-            this.plugin.getLogger().info(player.getName() + " received a minimap.");
+            this.plugin.getLogger().info(player.getName() + " received a magicmap.");
             if (this.message != null && !this.message.isEmpty()) {
                 player.sendMessage(this.message);
             }

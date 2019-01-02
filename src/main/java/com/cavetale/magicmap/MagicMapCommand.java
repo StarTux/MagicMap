@@ -1,4 +1,4 @@
-package com.winthier.minimap;
+package com.cavetale.magicmap;
 
 import lombok.RequiredArgsConstructor;
 import org.bukkit.command.Command;
@@ -7,19 +7,19 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 @RequiredArgsConstructor
-final class MiniMapCommand implements CommandExecutor {
-    private final MiniMapPlugin plugin;
+final class MagicMapCommand implements CommandExecutor {
+    private final MagicMapPlugin plugin;
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
-        String cmd = args.length == 0 ? null : args[0].toLowerCase();
+        if (args.length == 0) return false;
         Player player = sender instanceof Player ? (Player)sender : null;
-        switch (cmd) {
+        switch (args[0]) {
         case "reload": {
             this.plugin.setupMap();
             this.plugin.importConfig();
             this.plugin.getMapGiver().reset();
-            sender.sendMessage("MiniMap config reloaded");
+            sender.sendMessage("MagicMap config reloaded");
             return true;
         }
         case "debug": {

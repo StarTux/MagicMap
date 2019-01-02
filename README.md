@@ -1,2 +1,2 @@
-# MiniMap
-Dynamic map item
+# Magic Map
+Dynamic Map Item

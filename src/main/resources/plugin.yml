@@ -1,23 +1,23 @@
-name: MiniMap
+name: MagicMap
 description: Dynamic map item
 author: StarTux
 version: 0.1
 api-version: 1.13
 website: https://cavetale.com
-main: com.winthier.minimap.MiniMapPlugin
+main: com.cavetale.magicmap.MagicMapPlugin
 depend: []
 softdepend: []
 commands:
-  minimap:
+  magicmap:
     description: Debug command
-    permission: minimap.minimap
+    permission: magicmap.magicmap
     usage: |-
-      /minimap reload - Reload config
-      /minimap debug - Debug stuff
+      /magicmap reload - Reload config
+      /magicmap debug - Debug stuff
 permissions:
-  minimap.minimap:
-    description: Use the /minimap command
+  magicmap.magicmap:
+    description: Use the /magicmap command
     default: op
-  minimap.receive:
-    description: Be eligible for a free MiniMap.
+  magicmap.receive:
+    description: Be eligible for a free MagicMap.
     default: false
