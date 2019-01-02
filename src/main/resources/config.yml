@@ -1,13 +1,16 @@
-Debug: false
-MapID: 0
-Give: true
-Persist: true
-item:
-  DisplayName: Mini Map
-  Category: Orientation
-  Description: This map centers on your player and follows as you move around the worlds of Winthier.  It displays claims and other useful information.
-  Usage: Right-click to open the help menu.
+debug: false
+map:
+  color: 0
+  name: '&dMini Map'
+give:
+  enabled: false
+  persist: true
+  message: '&eYou received a MiniMap!'
 WorldNames:
+  default: cavetale.com
   world: Survival
   world_nether: Nether
   world_the_end: End
+EnableCaveView:
+  default: true
+  world_the_end: false

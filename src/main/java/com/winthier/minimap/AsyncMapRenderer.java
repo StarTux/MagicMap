@@ -1,332 +1,192 @@
 package com.winthier.minimap;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.imageio.ImageIO;
-import lombok.Getter;
-import lombok.Value;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
+import lombok.RequiredArgsConstructor;
+import org.bukkit.Bukkit;
+import org.bukkit.ChunkSnapshot;
 import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Tameable;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.map.MapCanvas;
-import org.bukkit.map.MapCursor;
-import org.bukkit.map.MapCursorCollection;
-import org.bukkit.map.MapPalette;
-import org.bukkit.map.MapRenderer;
-import org.bukkit.map.MapView;
-import org.bukkit.material.Colorable;
-import org.bukkit.metadata.MetadataValue;
+import org.bukkit.plugin.IllegalPluginAccessException;
 
-@Getter
-public final class TerrainRenderer extends MapRenderer {
+@RequiredArgsConstructor
+final class AsyncMapRenderer implements Runnable {
+    public static final int NORMAL = 0;
+    public static final int LIGHT = 1;
+    public static final int BRIGHT = 2;
+    public static final int DARK = 3;
+    private static final int[] RAW_COLORS;
     private final MiniMapPlugin plugin;
-    private DebugRenderer debugRenderer;
-    private static final int SHADOW_COLOR = MapPalette.DARK_GRAY + 3;
-    private static final int BLACK = 29 * 4;
-    public static final int RED = 16;
-    public static final int WHITE = 32;
-    public static final int PALE_BLUE = 20;
+    private final Session session;
+    private final Type type;
+    private final String worldName;
+    private final int centerX, centerZ; // center coords
+    private final long dayTime;
+    //
+    private final MapCache mapCache = new MapCache();
+    final HashMap<Long, ChunkSnapshot> chunks = new HashMap<>();
+    // Side effect variables
+    private ChunkSnapshot chunkSnapshot;
+    private int innerX, innerZ;
 
-    @Value static class XZ { private final int x, z; }
-
-    @Value
-    static class Storage {
-        private final String world;
-        private final int x, z;
-        Storage(Block block) {
-            world = block.getWorld().getName();
-            x = block.getX() - 64;
-            z = block.getZ() - 64;
-        }
-        boolean isTooFar(Block block) {
-            if (!block.getWorld().getName().equals(world)) return true;
-            int dx = x + 64 - block.getX();
-            int dz = z + 64 - block.getZ();
-            final int threshold = 24;
-            return (Math.abs(dx) > threshold || Math.abs(dz) > threshold);
-        }
+    enum Type {
+        SURFACE, CAVE, NETHER;
     }
 
-    enum RenderMode {
-        SURFACE, CAVE, END, NETHER;
-    }
-
-    TerrainRenderer(MiniMapPlugin plugin) {
-        super(true);
-        this.plugin = plugin;
-        debugRenderer = new DebugRenderer(plugin);
+    static {
+        RAW_COLORS = new int[Material.values().length];
+        for (Material mat: Material.values()) {
+            RAW_COLORS[mat.ordinal()] = rippedColorOf(mat) << 2;
+        }
     }
 
     @Override
-    public void render(MapView view, MapCanvas canvas, Player player) {
-        Session session = plugin.getSession(player);
-        MapCache mapCache = session.removeDrawMap();
-        if (mapCache != null) mapCache.paste(canvas);
-        MapCursorCollection mapCursorCollection = session.remove(MapCursorCollection.class);
-        if (mapCursorCollection != null) canvas.setCursors(mapCursorCollection);
-        plugin.getServer().getScheduler().runTask(plugin, () -> syncUpdateMap(player, session));
-        if (session.isDebug() && debugRenderer != null) {
-            Storage storage = session.fetch(Storage.class);
-            if (storage != null) {
-                debugRenderer.render(canvas, player, storage.getX(), storage.getZ());
-            }
-        }
-    }
-
-    void syncUpdateMap(Player player, Session session) {
-        if (!player.isOnline()) return;
-        Storage storage = session.fetch(Storage.class);
-        Location playerLocation = player.getLocation();
-        Block playerBlock = playerLocation.getBlock();
-        boolean needsRedraw;
-        long now = System.currentTimeMillis();
-        long sinceLastRender = System.currentTimeMillis() - session.getLastRender();
-        if (storage == null || (sinceLastRender > 3000 && storage.isTooFar(playerBlock))) {
-            storage = new Storage(playerBlock);
-            session.store(storage);
-            needsRedraw = true;
-        } else if (sinceLastRender > 10000) {
-            needsRedraw = true;
-        } else {
-            needsRedraw = false;
-        }
-        int ax = storage.getX();
-        int az = storage.getZ();
-        int cx = ax + 64;
-        int cz = az + 64;
-        int dist = Math.max(Math.abs(cx - playerBlock.getX()), Math.abs(cz - playerBlock.getZ()));
-        RenderMode renderMode = session.fetch(RenderMode.class);
-        if (needsRedraw && dist < 64) {
-            MapCache mapCache = new MapCache();
-            World world = player.getWorld();
-            World.Environment environment = world.getEnvironment();
-            if (environment == World.Environment.NETHER) {
-                renderMode = RenderMode.NETHER;
-            } else if (environment == World.Environment.THE_END) {
-                renderMode = RenderMode.END;
-            } else if (playerBlock.getY() < world.getHighestBlockYAt(playerBlock.getX(), playerBlock.getZ()) - 4
-                && playerBlock.getLightFromSky() == 0
-                && playerBlock.getRelative(0, 1, 0).getLightFromSky() == 0) {
-                renderMode = RenderMode.CAVE;
-            } else {
-                renderMode = RenderMode.SURFACE;
-            }
-            session.store(renderMode);
-            Map<XZ, Block> cache = new HashMap<>();
-            for (int pz = 4; pz < 128; pz += 1) {
-                for (int px = 0; px < 128; px += 1) {
-                    int x = ax + px;
-                    int z = az + pz;
-                    Block block = getHighestBlockAt(world, x, z, cache, renderMode);
-                    int color;
-                    if (block.getY() <= 0) {
-                        color = BLACK;
-                    } else {
-                        color = rawColorOf(block.getType()) * 4;
+    public void run() {
+        // Top left world coords
+        int ax = this.centerX - 63;
+        int az = this.centerZ - 63;
+        // Bottom right world coords
+        int bx = this.centerX + 64;
+        int bz = this.centerZ + 64;
+        for (int canvasY = 0; canvasY < 128; canvasY += 1) {
+            for (int canvasX = 0; canvasX < 128; canvasX += 1) {
+                // x/z are world coords of the block to render
+                int x = canvasX + ax;
+                int z = canvasY + az;
+                int highest = highestBlockAt(x, z);
+                if (highest < 0) {
+                    this.mapCache.setPixel(canvasX, canvasY, (29 << 2) + 3);
+                    continue;
+                }
+                Material mat = this.chunkSnapshot.getBlockType(this.innerX, highest, this.innerZ);
+                int color = RAW_COLORS[mat.ordinal()];
+                if (color == 48) { // water
+                    int lbottom = highest - 1;
+                    while (lbottom > 0 && color == RAW_COLORS[this.chunkSnapshot.getBlockType(this.innerX, lbottom, this.innerZ).ordinal()]) {
+                        lbottom -= 1;
                     }
-                    int shade;
-                    if (block.isLiquid()) {
-                        int a = liquidShadeOf(block, x, z);
-                        int b = sunlightShadeOf(block, x, z, cache, renderMode);
-                        if (a == 3 || b == 3) {
-                            shade = 3;
+                    int depth = highest - lbottom;
+                    if (depth <= 2) {
+                        color += BRIGHT;
+                    } else if (depth <= 4) {
+                        color += (canvasX & 1) == (canvasY & 1) ? BRIGHT : LIGHT;
+                    } else if (depth <= 6) {
+                        color += LIGHT;
+                    } else if (depth <= 8) {
+                        color += (canvasX & 1) == (canvasY & 1) ? NORMAL : LIGHT;
+                    } else if (depth <= 12) {
+                        color += NORMAL;
+                    } else if (depth <= 16) {
+                        color += (canvasX & 1) == (canvasY & 1) ? NORMAL : DARK;
+                    } else {
+                        color += DARK;
+                    }
+                    this.mapCache.setPixel(canvasX, canvasY, color);
+                } else {
+                    // Neighbor block where the sunlight comes from.
+                    int lx, ly;
+                    if (this.dayTime < 1500) {
+                        lx = 1; ly = 0;
+                    } else if (this.dayTime < 4500) {
+                        lx = 1; ly = -1;
+                    } else if (this.dayTime < 7500) {
+                        lx = 0; ly = -1;
+                    } else if (this.dayTime < 10500) {
+                        lx = -1; ly = -1;
+                    } else if (this.dayTime < 13500) {
+                        lx = -1; ly = 0;
+                    } else if (this.dayTime < 16500) {
+                        lx = -1; ly = 1;
+                    } else if (this.dayTime < 19500) {
+                        lx = 0; ly = 1;
+                    } else if (this.dayTime < 22500) {
+                        lx = 1; ly = 1;
+                    } else {
+                        lx = 1; ly = 0;
+                    }
+                    int nx = x + lx;
+                    int nz = z + ly;
+                    // 1 == Bright
+                    // 2 == Super Bright
+                    // 3 == Dark
+                    int highestN = highestBlockAt(nx, nz);
+                    if (highestN >= 0) {
+                        if (highest > highestN) {
+                            color += BRIGHT;
+                        } else if (highest < highestN) {
+                            color += NORMAL;
                         } else {
-                            shade = Math.min(a, b);
+                            color += LIGHT;
                         }
-                    } else {
-                        shade = sunlightShadeOf(block, x, z, cache, renderMode);
                     }
-                    mapCache.setPixel(px, pz, color + shade);
-                }
-            }
-            for (int y = 0; y < 4; y += 1) {
-                for (int x = 0; x < 128; x += 1) {
-                    mapCache.setPixel(x, y, BLACK + 3);
-                }
-            }
-            for (int x = 0; x < 128; x += 1) {
-                mapCache.setPixel(x, 4, (mapCache.getPixel(x, 4) & ~0x3) + 3);
-            }
-            String worldName = plugin.getWorldName(player.getWorld().getName());
-            plugin.getFont4x4().print(worldName, 1, 0, (x, y, shadow) -> { if (y < 4) mapCache.setPixel(x, y, !shadow ? PALE_BLUE + 2 : SHADOW_COLOR); });
-            plugin.getFont4x4().print(renderMode.name(), 128 - plugin.getFont4x4().widthOf(renderMode.name()), 0, (x, y, shadow) -> { if (y < 4) mapCache.setPixel(x, y, !shadow ? RED + 2 : SHADOW_COLOR); });
-            for (Marker marker: plugin.getMarkers()) {
-                if (!marker.getWorld().equals(player.getWorld().getName())) continue;
-                int x = marker.getX() - ax;
-                int z = marker.getZ() - az - 2;
-                if (x < 0 || x > 127) continue;
-                if (z < 5 || z > 127) continue;
-                x -= plugin.getFont4x4().widthOf(marker.getMessage()) / 2;
-                plugin.getFont4x4().print(marker.getMessage(), x, z, (mx, my, shadow) -> mapCache.setPixel(mx, my, shadow ? (mapCache.getPixel(mx, my) & ~0x3) + 3 : WHITE + 2));
-            }
-            session.setLastRender(System.currentTimeMillis());
-            session.setDrawMap(mapCache);
-            session.setLastMap(mapCache);
-        }
-        if (dist >= 128) return;
-        MapCursorCollection cursors = new MapCursorCollection();
-        cursors.addCursor(Util.makeCursor(MapCursor.Type.WHITE_POINTER, playerLocation, ax, az));
-        for (Entity e: player.getNearbyEntities(64, 64, 64)) {
-            if (e instanceof Player) {
-                Player nearby = (Player)e;
-                if (nearby.equals(player)) continue;
-                if (nearby.getGameMode() == GameMode.SPECTATOR) continue;
-                cursors.addCursor(Util.makeCursor(MapCursor.Type.BLUE_POINTER, nearby.getLocation(), ax, az));
-            } else if (e.getScoreboardTags().contains("ShowOnMiniMap")) {
-                cursors.addCursor(Util.makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), ax, az));
-            } else if (e instanceof Tameable) {
-                if (player.equals(((Tameable)e).getOwner())) {
-                    cursors.addCursor(Util.makeCursor(MapCursor.Type.GREEN_POINTER, e.getLocation(), ax, az));
-                }
-            } else {
-                switch (e.getType()) {
-                case ENDER_DRAGON:
-                case WITHER:
-                    cursors.addCursor(Util.makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), ax, az));
-                    break;
-                default: break;
+                    this.mapCache.setPixel(canvasX, canvasY, color);
                 }
             }
         }
-        for (MetadataValue meta: player.getMetadata("MiniMapCursors")) {
-            try {
-                if (meta.getOwningPlugin() == null || !meta.getOwningPlugin().isEnabled()) continue;
-                List list = (List)meta.value();
-                for (Object o: list) {
-                    Map map = (Map)o;
-                    Location location = (Location)map.get("location");
-                    Block block = (Block)map.get("block");
-                    MapCursor.Type cursorType = (MapCursor.Type)map.get("type");
-                    if (cursorType == null) cursorType = MapCursor.Type.RED_POINTER;
-                    if (location != null) {
-                        cursors.addCursor(Util.makeCursor(cursorType, location, ax, az));
-                    } else if (block != null) {
-                        cursors.addCursor(Util.makeCursor(cursorType, block, ax, az));
-                    }
-                }
-            } catch (Exception e) {
-                System.err.println("Parsing problem with MiniMapCursors metadata from " + meta.getOwningPlugin().getName());
-                e.printStackTrace();
-            }
+        if (this.chunkSnapshot != null) {
+            if (this.worldName != null) this.plugin.getTinyFont().print(this.mapCache, this.worldName, 1, 1, 32 + BRIGHT, 116);
         }
-        session.store(cursors);
+        try {
+            Bukkit.getScheduler().runTask(this.plugin, () -> {
+                    this.session.pasteMap = this.mapCache;
+                    this.session.rendering = false;
+                    this.session.centerX = this.centerX;
+                    this.session.centerZ = this.centerZ;
+                });
+        } catch (IllegalPluginAccessException ipae) { }
     }
 
-    void drawDarkenedMap(Session session, MapCache mapCache) {
-        MapCache lastMap = session.getLastMap();
-        if (lastMap != null) {
-            for (int y = 0; y < 128; y += 1) {
-                for (int x = 0; x < 128; x += 1) {
-                    if (1 == (y & 1)) {
-                        mapCache.setPixel(x, y, BLACK);
-                    } else {
-                        int pixel = lastMap.getPixel(x, y);
-                        pixel = pixel | 3;
-                        mapCache.setPixel(x, y, pixel);
-                    }
-                }
-            }
+    /**
+     * Side effects: Sets the member following variables:
+     * - chunkSnapshot
+     * - innerX, innerZ
+     *
+     * @return the y-coordinate of the highest block if it exists and
+     * all member variables were set. -1 otherwise.
+     */
+    private int highestBlockAt(int x, int z) {
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
+        long chunkIndex = ((long)chunkZ << 32) + (long)chunkX;
+        ChunkSnapshot snap = this.chunks.get(chunkIndex);
+        if (snap == null) return -1;
+        // Inner coords
+        int ix = x % 16;
+        if (ix < 0) ix += 16;
+        int iz = z % 16;
+        if (iz < 0) iz += 16;
+        this.chunkSnapshot = snap;
+        this.innerX = ix;
+        this.innerZ = iz;
+        return highest(this.chunkSnapshot, ix, iz);
+    }
+
+    private int highest(ChunkSnapshot snap, int x, int z) {
+        switch (this.type) {
+        case NETHER: {
+            int y = 127;
+            while (y >= 0 && !snap.getBlockType(x, y, z).isEmpty()) y -= 1; // skip blocks
+            while (y >= 0 && snap.getBlockType(x, y, z).isEmpty()) y -= 1; // skip air
+            while (y >= 0 && RAW_COLORS[snap.getBlockType(x, y, z).ordinal()] == 0) y -= 1; // skip transparent
+            return y;
+        }
+        case CAVE: {
+            int y = 255;
+            while (y >= 0 && snap.getBlockType(x, y, z).isEmpty()) y -= 1; // skip air
+            while (y >= 0 && !snap.getBlockType(x, y, z).isEmpty()) y -= 1; // skip blocks
+            while (y >= 0 && snap.getBlockType(x, y, z).isEmpty()) y -= 1; // skip air
+            while (y >= 0 && RAW_COLORS[snap.getBlockType(x, y, z).ordinal()] == 0) y -= 1; // skip transparent
+            return y;
+        }
+        case SURFACE:
+        default: {
+            int y = 255;
+            while (y >= 0 && snap.getBlockType(x, y, z).isEmpty()) y -= 1; // skip air
+            while (y >= 0 && RAW_COLORS[snap.getBlockType(x, y, z).ordinal()] == 0) y -= 1; // skip transparent
+            return y;
+        }
         }
     }
 
-    private static int directionOf(Location location) {
-        int dir = (int)(location.getYaw() + 11.25f);
-        while (dir < 0) dir += 360;
-        while (dir > 360) dir -= 360;
-        dir = dir * 2 / 45;
-        if (dir < 0) dir = 0;
-        if (dir > 15) dir = 15;
-        return dir;
-    }
-
-    private static int sunlightShadeOf(Block block, int x, int y, Map<XZ, Block> cache, RenderMode mode) {
-        switch (block.getType()) {
-        case FIRE:
-        case GLOWSTONE:
-        case JACK_O_LANTERN:
-        case REDSTONE_LAMP:
-        case SEA_LANTERN:
-        case TORCH:
-            return 2;
-        }
-        int lx, ly;
-        switch (mode) {
-        case NETHER: case CAVE: case END:
-            lx = 1; ly = 1;
-            break;
-        default:
-            long time = block.getWorld().getTime();
-            if (time < 1500) {
-                lx = 1; ly = 0;
-            } else if (time < 4500) {
-                lx = 1; ly = -1;
-            } else if (time < 7500) {
-                lx = 0; ly = -1;
-            } else if (time < 10500) {
-                lx = -1; ly = -1;
-            } else if (time < 13500) {
-                lx = -1; ly = 0;
-            } else if (time < 16500) {
-                lx = -1; ly = 1;
-            } else if (time < 19500) {
-                lx = 0; ly = 1;
-            } else if (time < 22500) {
-                lx = 1; ly = 1;
-            } else {
-                lx = 1; ly = 0;
-            }
-        }
-        int heightDiff = block.getY() - getHighestBlockAt(block.getWorld(), block.getX() + lx, block.getZ() + ly, cache, mode).getY();
-        if (heightDiff == 0) {
-            return 1;
-        } else if (heightDiff > 0) {
-            return 2;
-        } else if (heightDiff < -3) {
-            return 3;
-        } else {
-            return 0;
-        }
-    }
-
-    private static int liquidShadeOf(Block block, int x, int y) {
-        int depth = 1;
-        while (block.getRelative(0, -depth, 0).isLiquid()) depth += 1;
-        if (depth <= 2) {
-            return 2;
-        } else if (depth <= 4) {
-            if (((x & 1) == 0) ^ ((y & 1) == 0)) {
-                return 2;
-            } else {
-                return 1;
-            }
-        } else if (depth <= 6) {
-            return 1;
-        } else if (depth <= 8) {
-            if (((x & 1) == 0) ^ ((y & 1) == 0)) {
-                return 1;
-            } else {
-                return 0;
-            }
-        } else {
-            return 0;
-        }
-    }
-
-    private static int rawColorOf(Material mat) {
+    private static int rippedColorOf(Material mat) {
         switch (mat) {
         case AIR: return 0;
         case STONE: return 11;
@@ -928,41 +788,5 @@ public final class TerrainRenderer extends MapRenderer {
         case STRUCTURE_BLOCK: return 22;
         default: return 0;
         }
-    }
-
-    private static Block lowerTransparent(Block block) {
-        while (block.getY() >= 0 && block.isEmpty()) block = block.getRelative(0, -1, 0);
-        return block;
-    }
-
-    private static Block getHighestBlockAt(World world, int x, int z, Map<XZ, Block> cache, RenderMode mode) {
-        XZ xz = new XZ(x, z);
-        Block block = cache.get(xz);
-        if (block != null) return block;
-        switch (mode) {
-        case SURFACE:
-        case END:
-            block = world.getHighestBlockAt(x, z);
-            block = lowerTransparent(block);
-            break;
-        case CAVE:
-            block = world.getHighestBlockAt(x, z);
-            while (block.getY() >= 0 && (!block.isEmpty() || block.getLightFromSky() > 0)) {
-                block = block.getRelative(0, -1, 0);
-            }
-            block = lowerTransparent(block);
-            break;
-        case NETHER:
-            block = world.getBlockAt(x, 127, z);
-            while (block.getY() >= 0 && !block.isEmpty()) {
-                block = block.getRelative(0, -1, 0);
-            }
-            block = lowerTransparent(block);
-            break;
-        default:
-            block = world.getBlockAt(x, 0, z);
-        }
-        cache.put(xz, block);
-        return block;
     }
 }

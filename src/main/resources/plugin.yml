@@ -5,17 +5,19 @@ version: 0.1
 api-version: 1.13
 website: https://cavetale.com
 main: com.winthier.minimap.MiniMapPlugin
-depend: [ ]
-softdepend: [ ]
+depend: []
+softdepend: []
 commands:
   minimap:
     description: Debug command
     permission: minimap.minimap
     usage: |-
-      /minimap reload
-      /minimap setmarker <name> <text>
-      /minimap color <index>
+      /minimap reload - Reload config
+      /minimap debug - Debug stuff
 permissions:
   minimap.minimap:
     description: Use the /minimap command
     default: op
+  minimap.receive:
+    description: Be eligible for a free MiniMap.
+    default: false

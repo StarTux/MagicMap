@@ -9,7 +9,7 @@ import java.util.Map;
 import javax.imageio.ImageIO;
 import lombok.Value;
 
-public final class Font4x4 {
+public final class TinyFont {
     static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!\"?()[]+-*/=.,:;'_";
     private final Map<Character, Char> charMap = new HashMap<>();
 
@@ -25,13 +25,13 @@ public final class Font4x4 {
         private final List<Pixel> shadowPixels;
     }
 
-    Font4x4(BufferedImage image) {
+    TinyFont(BufferedImage image) {
         load(image);
     }
 
-    Font4x4(MiniMapPlugin plugin) {
+    TinyFont(MiniMapPlugin plugin) {
         try {
-            load(ImageIO.read(plugin.getResource("Font4x4.png")));
+            load(ImageIO.read(plugin.getResource("TinyFont.png")));
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
@@ -81,10 +81,10 @@ public final class Font4x4 {
     }
 
     public interface Drawer {
-        void draw(int x, int y, boolean shadow);
+        void draw(int x, int y);
     }
 
-    public int print(String msg, int x, int y, Drawer drawer) {
+    public int print(String msg, int x, int y, Drawer drawer, Drawer shadowDrawer) {
         if (msg == null) return 0;
         msg = msg.toUpperCase();
         int length = 0;
@@ -93,10 +93,10 @@ public final class Font4x4 {
             Char chr = charMap.get(c);
             if (chr == null) continue;
             for (Pixel pixel: chr.pixels) {
-                drawer.draw(length + x + pixel.x, y + pixel.y, false);
+                drawer.draw(length + x + pixel.x, y + pixel.y);
             }
             for (Pixel pixel: chr.shadowPixels) {
-                drawer.draw(length + x + pixel.x, y + pixel.y, true);
+                shadowDrawer.draw(length + x + pixel.x, y + pixel.y);
             }
             length += chr.width + 1;
         }
@@ -104,7 +104,9 @@ public final class Font4x4 {
     }
 
     public int print(MapCache mapCache, String msg, int x, int y, int color, int shadow) {
-        return print(msg, x, y, (px, py, s) -> mapCache.setPixel(px, py, s ? shadow : color));
+        return print(msg, x, y,
+                     (px, py) -> mapCache.setPixel(px, py, color),
+                     (px, py) -> mapCache.setPixel(px, py, shadow));
     }
 
     public int widthOf(String msg) {
