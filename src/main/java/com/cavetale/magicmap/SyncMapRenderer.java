@@ -19,6 +19,7 @@ final class SyncMapRenderer implements Runnable {
     private final int centerX, centerZ; // center coords
     private final long dayTime;
     private final MapCache mapCache = new MapCache();
+    private boolean partial = false;
 
     @Override
     public void run() {
@@ -108,11 +109,15 @@ final class SyncMapRenderer implements Runnable {
         this.session.rendering = false;
         this.session.centerX = this.centerX;
         this.session.centerZ = this.centerZ;
+        this.session.world = this.world.getName();
+        this.session.partial = this.partial;
     }
 
     private int highest(int x, int z) {
-        if (!this.world.isChunkLoaded(x >> 4, z >> 4)) return -1;
-        if (!this.world.isChunkInUse(x >> 4, z >> 4)) return -1;
+        if (!this.world.isChunkLoaded(x >> 4, z >> 4)) {
+            this.partial = true;
+            return -1;
+        }
         switch (this.type) {
         case NETHER: {
             int y = 127;

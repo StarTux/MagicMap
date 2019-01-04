@@ -40,9 +40,16 @@ final class MagicMapRenderer extends MapRenderer {
         if (!session.rendering) {
             long now = System.currentTimeMillis();
             if (now - session.lastRender > 3000L) {
-                session.rendering = true;
-                session.lastRender = now;
-                Bukkit.getScheduler().runTask(this.plugin, () -> newRender(player, session));
+                Location loc = player.getLocation();
+                if (session.partial
+                    || !loc.getWorld().getName().equals(session.world)
+                    || Math.abs(loc.getBlockX() - session.centerX) >= 48
+                    || Math.abs(loc.getBlockZ() - session.centerZ) >= 48) {
+                    session.partial = false;
+                    session.rendering = true;
+                    session.lastRender = now;
+                    Bukkit.getScheduler().runTask(this.plugin, () -> newRender(player, session));
+                }
             }
         }
         if (!session.cursoring) {
@@ -87,7 +94,7 @@ final class MagicMapRenderer extends MapRenderer {
         }
         String worldDisplayName = this.plugin.getWorldNames().get(worldName);
         if (worldDisplayName == null) worldDisplayName = this.plugin.getWorldNames().get("default");
-        if (false) {
+        if (this.plugin.isRenderAsync()) {
             AsyncMapRenderer renderer = new AsyncMapRenderer(this.plugin, session, type, worldDisplayName, centerX, centerZ, loc.getWorld().getTime());
             int ax = (centerX - 63) >> 4;
             int az = (centerZ - 63) >> 4;
@@ -118,23 +125,27 @@ final class MagicMapRenderer extends MapRenderer {
         final int pz = loc.getBlockZ();
         MapCursorCollection cursors = new MapCursorCollection();
         cursors.addCursor(makeCursor(MapCursor.Type.WHITE_POINTER, loc, session.centerX, session.centerZ));
-        for (Player o: player.getWorld().getPlayers()) {
-            if (player.equals(o)) continue;
-            if (!player.canSee(o)) continue;
-            if (o.getGameMode() == GameMode.SPECTATOR) continue;
-            Location ol = o.getLocation();
-            if (Math.abs(ol.getBlockX() - px) > 80) continue;
-            if (Math.abs(ol.getBlockZ() - pz) > 80) continue;
-            cursors.addCursor(makeCursor(MapCursor.Type.BLUE_POINTER, ol, session.centerX, session.centerZ));
+        if (this.plugin.isRenderPlayers()) {
+            for (Player o: player.getWorld().getPlayers()) {
+                if (player.equals(o)) continue;
+                if (!player.canSee(o)) continue;
+                if (o.getGameMode() == GameMode.SPECTATOR) continue;
+                Location ol = o.getLocation();
+                if (Math.abs(ol.getBlockX() - px) > 80) continue;
+                if (Math.abs(ol.getBlockZ() - pz) > 80) continue;
+                cursors.addCursor(makeCursor(MapCursor.Type.BLUE_POINTER, ol, session.centerX, session.centerZ));
+            }
         }
-        // for (Entity e: player.getNearbyEntities(32, 16, 32)) {
-        //     if (e instanceof Player) continue;
-        //     if (e instanceof org.bukkit.entity.Monster) {
-        //         cursors.addCursor(makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), session.centerX, session.centerZ));
-        //     } else if (e instanceof org.bukkit.entity.Creature) {
-        //         cursors.addCursor(makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, e.getLocation(), session.centerX, session.centerZ));
-        //     }
-        // }
+        if (this.plugin.isRenderEntities()) {
+            for (Entity e: player.getNearbyEntities(32, 16, 32)) {
+                if (e instanceof Player) continue;
+                if (e instanceof org.bukkit.entity.Monster) {
+                    cursors.addCursor(makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), session.centerX, session.centerZ));
+                } else if (e instanceof org.bukkit.entity.Creature) {
+                    cursors.addCursor(makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, e.getLocation(), session.centerX, session.centerZ));
+                }
+            }
+        }
         session.pasteCursors = cursors;
         session.cursoring = false;
     }

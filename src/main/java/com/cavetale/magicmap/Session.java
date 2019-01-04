@@ -7,7 +7,9 @@ final class Session {
     boolean rendering;
     boolean cursoring;
     boolean debug;
+    String world = "";
     int centerX, centerZ;
+    boolean partial;
     // Results
     MapCache pasteMap;
     MapCursorCollection pasteCursors;

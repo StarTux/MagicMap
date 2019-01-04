@@ -30,6 +30,7 @@ public final class MagicMapPlugin extends JavaPlugin {
     private int mapColor;
     private String mapName;
     private boolean debug, persist;
+    private boolean renderAsync, renderPlayers, renderEntities;
     // Tools
     private TinyFont tinyFont;
     private MagicMapRenderer magicMapRenderer;
@@ -77,6 +78,9 @@ public final class MagicMapPlugin extends JavaPlugin {
         this.mapGiver.setMessage(ChatColor.translateAlternateColorCodes('&', getConfig().getString("give.message")));
         this.mapColor = getConfig().getInt("map.color");
         this.mapName = ChatColor.translateAlternateColorCodes('&', getConfig().getString("map.name"));
+        this.renderPlayers = getConfig().getBoolean("render.players");
+        this.renderEntities = getConfig().getBoolean("render.entities");
+        this.renderAsync = getConfig().getBoolean("render.async");
         this.worldNames.clear();
         ConfigurationSection section = getConfig().getConfigurationSection("WorldNames");
         if (section != null) {

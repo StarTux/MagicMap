@@ -2,6 +2,10 @@ debug: false
 map:
   color: 0
   name: '&dMagic Map'
+render:
+  players: true
+  entities: false
+  async: false
 give:
   enabled: false
   persist: true

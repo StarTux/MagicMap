@@ -16,9 +16,10 @@ final class AsyncMapRenderer implements Runnable {
     private final MagicMapPlugin plugin;
     private final Session session;
     private final RenderType type;
-    private final String worldName;
+    private final String worldDisplayName;
     private final int centerX, centerZ; // center coords
     private final long dayTime;
+    private boolean partial = false;
     //
     private final MapCache mapCache = new MapCache();
     final HashMap<Long, ChunkSnapshot> chunks = new HashMap<>();
@@ -109,13 +110,15 @@ final class AsyncMapRenderer implements Runnable {
                 }
             }
         }
-        if (this.worldName != null) this.plugin.getTinyFont().print(this.mapCache, this.worldName, 1, 1, 32 + BRIGHT, 116);
+        if (this.worldDisplayName != null) this.plugin.getTinyFont().print(this.mapCache, this.worldDisplayName, 1, 1, 32 + BRIGHT, 116);
         try {
             Bukkit.getScheduler().runTask(this.plugin, () -> {
                     this.session.pasteMap = this.mapCache;
                     this.session.rendering = false;
                     this.session.centerX = this.centerX;
                     this.session.centerZ = this.centerZ;
+                    if (this.chunkSnapshot != null) this.session.world = this.chunkSnapshot.getWorldName();
+                    this.session.partial = this.partial;
                 });
         } catch (IllegalPluginAccessException ipae) { }
     }
@@ -133,7 +136,10 @@ final class AsyncMapRenderer implements Runnable {
         int chunkZ = z >> 4;
         long chunkIndex = ((long)chunkZ << 32) + (long)chunkX;
         ChunkSnapshot snap = this.chunks.get(chunkIndex);
-        if (snap == null) return -1;
+        if (snap == null) {
+            this.partial = true;
+            return -1;
+        }
         // Inner coords
         int ix = x % 16;
         if (ix < 0) ix += 16;
