@@ -37,14 +37,15 @@ final class MagicMapRenderer extends MapRenderer {
             session.pasteCursors = null;
         }
         // Schedule new
+        Location loc = player.getLocation();
+        String world = loc.getWorld().getName();
         if (!session.rendering) {
             long now = System.currentTimeMillis();
             if (now - session.lastRender > 3000L) {
-                Location loc = player.getLocation();
                 if (session.partial
-                    || !loc.getWorld().getName().equals(session.world)
-                    || Math.abs(loc.getBlockX() - session.centerX) >= 48
-                    || Math.abs(loc.getBlockZ() - session.centerZ) >= 48) {
+                    || !world.equals(session.world)
+                    || Math.abs(loc.getBlockX() - session.centerX) >= 24
+                    || Math.abs(loc.getBlockZ() - session.centerZ) >= 24) {
                     session.partial = false;
                     session.rendering = true;
                     session.lastRender = now;
@@ -52,7 +53,7 @@ final class MagicMapRenderer extends MapRenderer {
                 }
             }
         }
-        if (!session.cursoring) {
+        if (!session.cursoring && world.equals(session.world)) {
             session.cursoring = true;
             Bukkit.getScheduler().runTask(this.plugin, () -> newCursor(player, session));
         }
@@ -111,7 +112,7 @@ final class MagicMapRenderer extends MapRenderer {
             Bukkit.getScheduler().runTaskAsynchronously(this.plugin, renderer);
         } else {
             SyncMapRenderer renderer = new SyncMapRenderer(this.plugin, loc.getWorld(), session, type, worldDisplayName, centerX, centerZ, loc.getWorld().getTime());
-            renderer.run();
+            this.plugin.getMainQueue().add(renderer);
         }
     }
 

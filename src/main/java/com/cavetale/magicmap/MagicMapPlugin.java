@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import org.bukkit.ChatColor;
@@ -38,6 +40,8 @@ public final class MagicMapPlugin extends JavaPlugin {
     private MagicMapCommand magicMapCommand;
     private final Map<String, String> worldNames = new HashMap<>();
     private final Map<String, Boolean> enableCaveView = new HashMap<>();
+    // Queues
+    private List<SyncMapRenderer> mainQueue = new ArrayList<>();
 
     // --- Plugin
 
@@ -58,6 +62,7 @@ public final class MagicMapPlugin extends JavaPlugin {
                 this.mapGiver.maybeGiveMap(player);
             }
         }
+        getServer().getScheduler().runTaskTimer(this, () -> this.onTick(), 1L, 1L);
     }
 
     @Override
@@ -129,6 +134,20 @@ public final class MagicMapPlugin extends JavaPlugin {
         this.mapView.addRenderer(this.magicMapRenderer);
     }
 
+    void onTick() {
+        if (!this.mainQueue.isEmpty()) {
+            SyncMapRenderer task = this.mainQueue.get(0);
+            boolean ret;
+            try {
+                ret = task.run();
+            } catch (Exception e) {
+                e.printStackTrace();
+                ret = false;
+            }
+            if (!ret) this.mainQueue.remove(0);
+        }
+    }
+
     // --- Utility
 
     Session getSession(Player player) {
@@ -143,7 +162,7 @@ public final class MagicMapPlugin extends JavaPlugin {
     private void resetMapView() {
         if (this.mapView != null) {
             for (MapRenderer renderer: this.mapView.getRenderers()) {
-                mapView.removeRenderer(renderer);
+                    mapView.removeRenderer(renderer);
             }
             this.mapView = null;
         }
