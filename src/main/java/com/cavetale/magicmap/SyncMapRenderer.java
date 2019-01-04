@@ -123,6 +123,7 @@ final class SyncMapRenderer implements Runnable {
         }
         case CAVE: {
             int y = 255;
+            while (y >= 0 && this.world.getBlockAt(x, y, z).isEmpty()) y -= 1; // skip air
             while (y >= 0) { // skip sunlit blocks
                 Block block = this.world.getBlockAt(x, y, z);
                 if (!block.isEmpty() || block.getLightFromSky() > 0) {
