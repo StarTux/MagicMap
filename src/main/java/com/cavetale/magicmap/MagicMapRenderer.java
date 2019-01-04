@@ -1,6 +1,7 @@
 package com.cavetale.magicmap;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -38,7 +39,7 @@ final class MagicMapRenderer extends MapRenderer {
         // Schedule new
         if (!session.rendering) {
             long now = System.currentTimeMillis();
-            if (now - session.lastRender > 1000L) {
+            if (now - session.lastRender > 3000L) {
                 session.rendering = true;
                 session.lastRender = now;
                 Bukkit.getScheduler().runTask(this.plugin, () -> newRender(player, session));
@@ -106,19 +107,20 @@ final class MagicMapRenderer extends MapRenderer {
         for (Player o: player.getWorld().getPlayers()) {
             if (player.equals(o)) continue;
             if (!player.canSee(o)) continue;
+            if (o.getGameMode() == GameMode.SPECTATOR) continue;
             Location ol = o.getLocation();
             if (Math.abs(ol.getBlockX() - px) > 80) continue;
             if (Math.abs(ol.getBlockZ() - pz) > 80) continue;
             cursors.addCursor(makeCursor(MapCursor.Type.BLUE_POINTER, ol, session.centerX, session.centerZ));
         }
-        for (Entity e: player.getNearbyEntities(32, 16, 32)) {
-            if (e instanceof Player) continue;
-            if (e instanceof org.bukkit.entity.Monster) {
-                cursors.addCursor(makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), session.centerX, session.centerZ));
-            } else if (e instanceof org.bukkit.entity.Creature) {
-                cursors.addCursor(makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, e.getLocation(), session.centerX, session.centerZ));
-            }
-        }
+        // for (Entity e: player.getNearbyEntities(32, 16, 32)) {
+        //     if (e instanceof Player) continue;
+        //     if (e instanceof org.bukkit.entity.Monster) {
+        //         cursors.addCursor(makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), session.centerX, session.centerZ));
+        //     } else if (e instanceof org.bukkit.entity.Creature) {
+        //         cursors.addCursor(makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, e.getLocation(), session.centerX, session.centerZ));
+        //     }
+        // }
         session.pasteCursors = cursors;
         session.cursoring = false;
     }
