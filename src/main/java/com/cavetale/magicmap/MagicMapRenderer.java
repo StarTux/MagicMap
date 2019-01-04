@@ -61,37 +61,51 @@ final class MagicMapRenderer extends MapRenderer {
         Location loc = player.getLocation();
         int centerX = loc.getBlockX();
         int centerZ = loc.getBlockZ();
-        AsyncMapRenderer.Type type;
+        RenderType type;
         String worldName = loc.getWorld().getName();
         if (loc.getWorld().getEnvironment() == World.Environment.NETHER) {
-            type = AsyncMapRenderer.Type.NETHER;
-        } else if (loc.getBlock().getLightFromSky() == 0) {
+            type = RenderType.NETHER;
+        } else if (loc.getWorld().getEnvironment() == World.Environment.THE_END) {
+            type = RenderType.SURFACE;
+        } else {
             Boolean enableCaveView = this.plugin.getEnableCaveView().get(worldName);
             if (enableCaveView == null) enableCaveView = this.plugin.getEnableCaveView().get("default");
             if (enableCaveView == null || enableCaveView == Boolean.TRUE) {
-                type = AsyncMapRenderer.Type.CAVE;
+                Block block = loc.getBlock();
+                boolean sunlight = false;
+                for (int i = 0; i < 5; i += 1) {
+                    if (block.getLightFromSky() > 0) {
+                        sunlight = true;
+                        break;
+                    }
+                    block = block.getRelative(0, 1, 0);
+                }
+                type = sunlight ? RenderType.SURFACE : RenderType.CAVE;
             } else {
-                type = AsyncMapRenderer.Type.SURFACE;
+                type = RenderType.SURFACE;
             }
-        } else {
-            type = AsyncMapRenderer.Type.SURFACE;
         }
         String worldDisplayName = this.plugin.getWorldNames().get(worldName);
         if (worldDisplayName == null) worldDisplayName = this.plugin.getWorldNames().get("default");
-        AsyncMapRenderer renderer = new AsyncMapRenderer(this.plugin, session, type, worldDisplayName, centerX, centerZ, loc.getWorld().getTime());
-        int ax = (centerX - 63) >> 4;
-        int az = (centerZ - 63) >> 4;
-        int bx = (centerX + 64) >> 4;
-        int bz = (centerZ + 64) >> 4;
-        for (int z = az; z <= bz; z += 1) {
-            for (int x = ax; x <= bx; x += 1) {
-                if (loc.getWorld().isChunkLoaded(x, z)) {
-                    long chunkIndex = ((long)z << 32) + (long)x;
-                    renderer.chunks.put(chunkIndex, loc.getWorld().getChunkAt(x, z).getChunkSnapshot());
+        if (false) {
+            AsyncMapRenderer renderer = new AsyncMapRenderer(this.plugin, session, type, worldDisplayName, centerX, centerZ, loc.getWorld().getTime());
+            int ax = (centerX - 63) >> 4;
+            int az = (centerZ - 63) >> 4;
+            int bx = (centerX + 64) >> 4;
+            int bz = (centerZ + 64) >> 4;
+            for (int z = az; z <= bz; z += 1) {
+                for (int x = ax; x <= bx; x += 1) {
+                    if (loc.getWorld().isChunkLoaded(x, z)) {
+                        long chunkIndex = ((long)z << 32) + (long)x;
+                        renderer.chunks.put(chunkIndex, loc.getWorld().getChunkAt(x, z).getChunkSnapshot(false, false, false));
+                    }
                 }
             }
+            Bukkit.getScheduler().runTaskAsynchronously(this.plugin, renderer);
+        } else {
+            SyncMapRenderer renderer = new SyncMapRenderer(this.plugin, loc.getWorld(), session, type, worldDisplayName, centerX, centerZ, loc.getWorld().getTime());
+            renderer.run();
         }
-        Bukkit.getScheduler().runTaskAsynchronously(this.plugin, renderer);
     }
 
     /**
