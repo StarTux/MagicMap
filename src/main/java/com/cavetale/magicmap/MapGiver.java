@@ -73,20 +73,24 @@ final class MapGiver implements Listener {
         if (!player.isValid()) return;
         if (!player.hasPermission("magicmap.receive")) return;
         UUID uuid = player.getUniqueId();
-        if (this.getGiven().contains(uuid)) return;
+        if (this.persist && this.getGiven().contains(uuid)) return;
         for (ItemStack item: player.getInventory()) {
-            if (item == null || item.getType() != Material.MAP || !item.hasItemMeta()) continue;
+            if (item == null || item.getType() != Material.FILLED_MAP || !item.hasItemMeta()) continue;
             MapMeta meta = (MapMeta)item.getItemMeta();
             if (meta.getMapId() == this.plugin.getMapId()) {
-                this.getGiven().add(uuid);
-                if (this.persist) saveGiven();
+                if (this.persist) {
+                    this.getGiven().add(uuid);
+                    saveGiven();
+                }
                 return;
             }
         }
         ItemStack newMap = this.plugin.createMapItem();
         if (player.getInventory().addItem(newMap).isEmpty()) {
-            this.getGiven().add(uuid);
-            if (this.persist) saveGiven();
+            if (this.persist) {
+                this.getGiven().add(uuid);
+                saveGiven();
+            }
             this.plugin.getLogger().info(player.getName() + " received a MagicMap.");
             if (this.message != null && !this.message.isEmpty()) {
                 player.sendMessage(this.message);
