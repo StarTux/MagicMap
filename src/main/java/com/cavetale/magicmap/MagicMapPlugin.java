@@ -15,6 +15,9 @@ import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapRenderer;
@@ -24,7 +27,7 @@ import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
-public final class MagicMapPlugin extends JavaPlugin {
+public final class MagicMapPlugin extends JavaPlugin implements Listener {
     // Map persistence
     private MapView mapView;
     // Configuration
@@ -63,6 +66,7 @@ public final class MagicMapPlugin extends JavaPlugin {
             }
         }
         getServer().getScheduler().runTaskTimer(this, () -> this.onTick(), 1L, 1L);
+        getServer().getPluginManager().registerEvents(this, this);
     }
 
     @Override
@@ -178,5 +182,12 @@ public final class MagicMapPlugin extends JavaPlugin {
         meta.setDisplayName(this.mapName);
         item.setItemMeta(meta);
         return item;
+    }
+
+    // --- Event Handling
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        event.getPlayer().removeMetadata("magicmap.session", this);
     }
 }
