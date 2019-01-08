@@ -59,8 +59,6 @@ final class MagicMapRenderer extends MapRenderer {
         }
     }
 
-
-
     /**
      * {@link render(MapView, MapCanvas, Player)} will Schedule this
      * for exec in the main thread.
