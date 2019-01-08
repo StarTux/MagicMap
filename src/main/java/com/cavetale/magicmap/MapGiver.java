@@ -87,7 +87,7 @@ final class MapGiver implements Listener {
         if (player.getInventory().addItem(newMap).isEmpty()) {
             this.getGiven().add(uuid);
             if (this.persist) saveGiven();
-            this.plugin.getLogger().info(player.getName() + " received a magicmap.");
+            this.plugin.getLogger().info(player.getName() + " received a MagicMap.");
             if (this.message != null && !this.message.isEmpty()) {
                 player.sendMessage(this.message);
             }
