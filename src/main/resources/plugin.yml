@@ -14,6 +14,7 @@ commands:
     usage: |-
       /magicmap reload - Reload config
       /magicmap debug - Debug stuff
+      /magicmap give [player] - Spawn map for player
 permissions:
   magicmap.magicmap:
     description: Use the /magicmap command
