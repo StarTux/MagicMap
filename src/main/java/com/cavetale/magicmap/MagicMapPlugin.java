@@ -28,6 +28,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
 public final class MagicMapPlugin extends JavaPlugin implements Listener {
+    private static MagicMapPlugin instance;
     // Map persistence
     private MapView mapView;
     // Configuration
@@ -50,6 +51,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        instance = this;
         saveDefaultConfig();
         this.magicMapRenderer = new MagicMapRenderer(this);
         setupMap();
@@ -158,7 +160,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         for (MetadataValue v: player.getMetadata("magicmap.session")) {
             if (v.getOwningPlugin().equals(this)) return (Session)v.value();
         }
-        Session session = new Session();
+        Session session = new Session(player.getUniqueId());
         player.setMetadata("magicmap.session", new FixedMetadataValue(this, session));
         return session;
     }
@@ -189,5 +191,20 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         event.getPlayer().removeMetadata("magicmap.session", this);
+    }
+
+    // --- Event calling
+
+    void callPostEvent(Session session) {
+        Player player = getServer().getPlayer(session.player);
+        if (player == null) return;
+        MagicMapPostRenderEvent event = new MagicMapPostRenderEvent(player, session);
+        getServer().getPluginManager().callEvent(event);
+    }
+
+    public static void triggerRerender(Player player) {
+        if (instance == null) throw new IllegalStateException("MagicMapPlugin.instance is null!");
+        if (player == null) throw new NullPointerException("Player cannot be null!");
+        instance.getSession(player).forceUpdate = true;
     }
 }

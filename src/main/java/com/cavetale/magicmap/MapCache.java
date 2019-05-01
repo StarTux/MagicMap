@@ -2,16 +2,16 @@ package com.cavetale.magicmap;
 
 import org.bukkit.map.MapCanvas;
 
-final class MapCache {
+public final class MapCache {
     final int[] pixels = new int[128 * 128];
 
-    void setPixel(int x, int y, int color) {
+    public void setPixel(int x, int y, int color) {
         if (x < 0 || x >= 128) return;
         if (y < 0 || y >= 128) return;
         pixels[y * 128 + x] = color;
     }
 
-    int getPixel(int x, int y) {
+    public int getPixel(int x, int y) {
         if (x < 0 || x >= 128) return 0;
         if (y < 0 || y >= 128) return 0;
         return pixels[y * 128 + x];

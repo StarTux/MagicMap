@@ -41,11 +41,13 @@ final class MagicMapRenderer extends MapRenderer {
         String world = loc.getWorld().getName();
         if (!session.rendering) {
             long now = System.currentTimeMillis();
-            if (now - session.lastRender > 3000L) {
-                if (session.partial
+            if (session.forceUpdate || now - session.lastRender > 3000L) {
+                if (session.forceUpdate
+                    || session.partial
                     || !world.equals(session.world)
                     || Math.abs(loc.getBlockX() - session.centerX) >= 24
                     || Math.abs(loc.getBlockZ() - session.centerZ) >= 24) {
+                    session.forceUpdate = false;
                     session.partial = false;
                     session.rendering = true;
                     session.lastRender = now;

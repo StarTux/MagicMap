@@ -15,6 +15,7 @@ commands:
       /magicmap reload - Reload config
       /magicmap debug - Debug stuff
       /magicmap give [player] - Spawn map for player
+      /magicmap rerender - Trigger map rerender
 permissions:
   magicmap.magicmap:
     description: Use the /magicmap command

@@ -58,6 +58,15 @@ final class MagicMapCommand implements CommandExecutor {
             }
             return true;
         }
+        case "rerender": {
+            if (player == null) {
+                sender.sendMessage("Player expected.");
+                return true;
+            }
+            this.plugin.triggerRerender(player);
+            sender.sendMessage("Rerender triggered.");
+            return true;
+        }
         default: return false;
         }
     }

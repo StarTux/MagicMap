@@ -119,6 +119,7 @@ final class AsyncMapRenderer implements Runnable {
                     this.session.centerZ = this.centerZ;
                     if (this.chunkSnapshot != null) this.session.world = this.chunkSnapshot.getWorldName();
                     this.session.partial = this.partial;
+                    this.plugin.callPostEvent(this.session);
                 });
         } catch (IllegalPluginAccessException ipae) { }
     }

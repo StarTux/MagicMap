@@ -36,6 +36,7 @@ final class SyncMapRenderer {
                 this.session.centerZ = this.centerZ;
                 this.session.world = this.world.getName();
                 this.session.partial = this.partial;
+                this.plugin.callPostEvent(this.session);
                 return false;
             }
             final int canvasX = this.iterX;
