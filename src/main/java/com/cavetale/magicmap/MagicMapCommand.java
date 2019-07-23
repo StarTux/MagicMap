@@ -67,6 +67,17 @@ final class MagicMapCommand implements CommandExecutor {
             sender.sendMessage("Rerender triggered.");
             return true;
         }
+        case "grab": {
+            try {
+                Object file = ColorGrabber.grab(plugin);
+                sender.sendMessage("Colors grabbed, see console or "
+                                   + file + ".");
+            } catch (Exception e) {
+                sender.sendMessage("An error occured. See console.");
+                e.printStackTrace();
+            }
+            return true;
+        }
         default: return false;
         }
     }

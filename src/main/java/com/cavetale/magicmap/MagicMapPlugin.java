@@ -129,7 +129,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
             } catch (IOException ioe) {
                 throw new IllegalStateException("Could not read " + file, ioe);
             }
-            this.mapView = getServer().getMap((short)this.mapId);
+            this.mapView = getServer().getMap(this.mapId);
             if (this.mapView == null) {
                 throw new IllegalStateException("Could not fetch map #" + this.mapId);
             }
