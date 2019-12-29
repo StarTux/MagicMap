@@ -16,8 +16,11 @@ final class SyncMapRenderer {
     private final Session session;
     private final RenderType type;
     private final String worldName;
-    private final int centerX, centerZ; // center coords
-    private int iterX, iterY;
+    // center coords
+    private final int centerX;
+    private final int centerZ;
+    private int iterX;
+    private int iterY;
     private final long dayTime;
     private final MapCache mapCache = new MapCache();
     private boolean partial = false;
@@ -27,38 +30,41 @@ final class SyncMapRenderer {
      */
     public boolean run() {
         for (int i = 0; i < 1024; i += 1) {
-            if (this.iterY >= 128) {
+            if (iterY >= 128) {
                 // Finis
-                if (this.worldName != null) this.plugin.getTinyFont().print(this.mapCache, this.worldName, 1, 1, 32 + BRIGHT, 116);
-                this.session.pasteMap = this.mapCache;
-                this.session.rendering = false;
-                this.session.centerX = this.centerX;
-                this.session.centerZ = this.centerZ;
-                this.session.world = this.world.getName();
-                this.session.partial = this.partial;
-                this.plugin.callPostEvent(this.session);
+                if (worldName != null) {
+                    plugin.getTinyFont().print(mapCache, worldName, 1, 1, 32 + BRIGHT, 116);
+                }
+                session.pasteMap = mapCache;
+                session.rendering = false;
+                session.centerX = centerX;
+                session.centerZ = centerZ;
+                session.world = world.getName();
+                session.partial = partial;
+                plugin.callPostEvent(session);
                 return false;
             }
-            final int canvasX = this.iterX;
-            final int canvasY = this.iterY;
-            this.iterX += 1;
+            final int canvasX = iterX;
+            final int canvasY = iterY;
+            iterX += 1;
             if (iterX >= 128) {
-                this.iterX = 0;
-                this.iterY += 1;
+                iterX = 0;
+                iterY += 1;
             }
             // x/z are world coords of the block to render
-            int x = canvasX + this.centerX - 63;
-            int z = canvasY + this.centerZ - 63;
+            int x = canvasX + centerX - 63;
+            int z = canvasY + centerZ - 63;
             int highest = highest(x, z);
             if (highest < 0) {
-                this.mapCache.setPixel(canvasX, canvasY, (29 << 2) + 3);
+                mapCache.setPixel(canvasX, canvasY, (29 << 2) + 3);
                 continue;
             }
-            Material mat = this.world.getBlockAt(x, highest, z).getType();
+            Material mat = world.getBlockAt(x, highest, z).getType();
             int color = MapColor.of(mat);
             if (color == 48) { // water
                 int lbottom = highest - 1;
-                while (lbottom > 0 && color == MapColor.of(this.world.getBlockAt(x, lbottom, z).getType())) {
+                while (lbottom > 0 && color == MapColor.of(world.getBlockAt(x, lbottom, z)
+                                                           .getType())) {
                     lbottom -= 1;
                 }
                 int depth = highest - lbottom;
@@ -77,25 +83,26 @@ final class SyncMapRenderer {
                 } else {
                     color += DARK;
                 }
-                this.mapCache.setPixel(canvasX, canvasY, color);
+                mapCache.setPixel(canvasX, canvasY, color);
             } else {
                 // Neighbor block where the sunlight comes from.
-                int lx, ly;
-                if (this.dayTime < 1500) {
+                int lx;
+                int ly;
+                if (dayTime < 1500) {
                     lx = 1; ly = 0;
-                } else if (this.dayTime < 4500) {
+                } else if (dayTime < 4500) {
                     lx = 1; ly = -1;
-                } else if (this.dayTime < 7500) {
+                } else if (dayTime < 7500) {
                     lx = 0; ly = -1;
-                } else if (this.dayTime < 10500) {
+                } else if (dayTime < 10500) {
                     lx = -1; ly = -1;
-                } else if (this.dayTime < 13500) {
+                } else if (dayTime < 13500) {
                     lx = -1; ly = 0;
-                } else if (this.dayTime < 16500) {
+                } else if (dayTime < 16500) {
                     lx = -1; ly = 1;
-                } else if (this.dayTime < 19500) {
+                } else if (dayTime < 19500) {
                     lx = 0; ly = 1;
-                } else if (this.dayTime < 22500) {
+                } else if (dayTime < 22500) {
                     lx = 1; ly = 1;
                 } else {
                     lx = 1; ly = 0;
@@ -115,45 +122,53 @@ final class SyncMapRenderer {
                         color += LIGHT;
                     }
                 }
-                this.mapCache.setPixel(canvasX, canvasY, color);
+                mapCache.setPixel(canvasX, canvasY, color);
             }
         }
         return true;
     }
 
     private int highest(int x, int z) {
-        if (!this.world.isChunkLoaded(x >> 4, z >> 4)) {
-            this.partial = true;
+        if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+            partial = true;
             return -1;
         }
-        switch (this.type) {
+        switch (type) {
         case NETHER: {
             int y = 127;
-            while (y >= 0 && !this.world.getBlockAt(x, y, z).isEmpty()) y -= 1; // skip blocks
-            while (y >= 0 && this.world.getBlockAt(x, y, z).isEmpty()) y -= 1; // skip air
-            while (y >= 0 && MapColor.of(this.world.getBlockAt(x, y, z).getType()) == 0) y -= 1; // skip transparent
+            // skip blocks
+            while (y >= 0 && !world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+            // skip air
+            while (y >= 0 && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+            // skip transparent
+            while (y >= 0 && MapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
             return y;
         }
         case CAVE: {
             int y = 255;
-            while (y >= 0 && this.world.getBlockAt(x, y, z).isEmpty()) y -= 1; // skip air
+            // skip air
+            while (y >= 0 && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             while (y >= 0) { // skip sunlit blocks
-                Block block = this.world.getBlockAt(x, y, z);
+                Block block = world.getBlockAt(x, y, z);
                 if (!block.isEmpty() || block.getLightFromSky() > 0) {
                     y -= 1;
                 } else {
                     break;
                 }
             }
-            while (y >= 0 && this.world.getBlockAt(x, y, z).isEmpty()) y -= 1; // skip air
-            while (y >= 0 && MapColor.of(this.world.getBlockAt(x, y, z).getType()) == 0) y -= 1; // skip transparent
+            // skip air
+            while (y >= 0 && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+            // skip transparent
+            while (y >= 0 && MapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
             return y;
         }
         case SURFACE:
         default: {
             int y = 255;
-            while (y >= 0 && this.world.getBlockAt(x, y, z).isEmpty()) y -= 1; // skip air
-            while (y >= 0 && MapColor.of(this.world.getBlockAt(x, y, z).getType()) == 0) y -= 1; // skip transparent
+            // skip air
+            while (y >= 0 && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+            // skip transparent
+            while (y >= 0 && MapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
             return y;
         }
         }

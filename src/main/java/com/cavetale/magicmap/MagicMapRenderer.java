@@ -16,7 +16,7 @@ import org.bukkit.map.MapView;
 final class MagicMapRenderer extends MapRenderer {
     private final MagicMapPlugin plugin;
 
-    MagicMapRenderer(MagicMapPlugin plugin) {
+    MagicMapRenderer(final MagicMapPlugin plugin) {
         super(true);
         this.plugin = plugin;
     }
@@ -51,13 +51,13 @@ final class MagicMapRenderer extends MapRenderer {
                     session.partial = false;
                     session.rendering = true;
                     session.lastRender = now;
-                    Bukkit.getScheduler().runTask(this.plugin, () -> newRender(player, session));
+                    Bukkit.getScheduler().runTask(plugin, () -> newRender(player, session));
                 }
             }
         }
         if (!session.cursoring && world.equals(session.world)) {
             session.cursoring = true;
-            Bukkit.getScheduler().runTask(this.plugin, () -> newCursor(player, session));
+            Bukkit.getScheduler().runTask(plugin, () -> newCursor(player, session));
         }
     }
 
@@ -76,8 +76,8 @@ final class MagicMapRenderer extends MapRenderer {
         } else if (loc.getWorld().getEnvironment() == World.Environment.THE_END) {
             type = RenderType.SURFACE;
         } else {
-            Boolean enableCaveView = this.plugin.getEnableCaveView().get(worldName);
-            if (enableCaveView == null) enableCaveView = this.plugin.getEnableCaveView().get("default");
+            Boolean enableCaveView = plugin.getEnableCaveView().get(worldName);
+            if (enableCaveView == null) enableCaveView = plugin.getEnableCaveView().get("default");
             if (enableCaveView == null || enableCaveView == Boolean.TRUE) {
                 Block block = loc.getBlock();
                 boolean sunlight = false;
@@ -93,10 +93,12 @@ final class MagicMapRenderer extends MapRenderer {
                 type = RenderType.SURFACE;
             }
         }
-        String worldDisplayName = this.plugin.getWorldNames().get(worldName);
-        if (worldDisplayName == null) worldDisplayName = this.plugin.getWorldNames().get("default");
-        if (this.plugin.isRenderAsync()) {
-            AsyncMapRenderer renderer = new AsyncMapRenderer(this.plugin, session, type, worldDisplayName, centerX, centerZ, loc.getWorld().getTime());
+        String worldDisplayName = plugin.getWorldNames().get(worldName);
+        if (worldDisplayName == null) worldDisplayName = plugin.getWorldNames().get("default");
+        if (plugin.isRenderAsync()) {
+            AsyncMapRenderer renderer = new AsyncMapRenderer(plugin, session, type,
+                                                             worldDisplayName, centerX, centerZ,
+                                                             loc.getWorld().getTime());
             int ax = (centerX - 63) >> 4;
             int az = (centerZ - 63) >> 4;
             int bx = (centerX + 64) >> 4;
@@ -104,15 +106,18 @@ final class MagicMapRenderer extends MapRenderer {
             for (int z = az; z <= bz; z += 1) {
                 for (int x = ax; x <= bx; x += 1) {
                     if (loc.getWorld().isChunkLoaded(x, z)) {
-                        long chunkIndex = ((long)z << 32) + (long)x;
-                        renderer.chunks.put(chunkIndex, loc.getWorld().getChunkAt(x, z).getChunkSnapshot(false, false, false));
+                        long chunkIndex = ((long) z << 32) + (long) x;
+                        renderer.chunks.put(chunkIndex, loc.getWorld().getChunkAt(x, z)
+                                            .getChunkSnapshot(false, false, false));
                     }
                 }
             }
-            Bukkit.getScheduler().runTaskAsynchronously(this.plugin, renderer);
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, renderer);
         } else {
-            SyncMapRenderer renderer = new SyncMapRenderer(this.plugin, loc.getWorld(), session, type, worldDisplayName, centerX, centerZ, loc.getWorld().getTime());
-            this.plugin.getMainQueue().add(renderer);
+            SyncMapRenderer renderer = new SyncMapRenderer(plugin, loc.getWorld(), session, type,
+                                                           worldDisplayName, centerX, centerZ,
+                                                           loc.getWorld().getTime());
+            plugin.getMainQueue().add(renderer);
         }
     }
 
@@ -125,8 +130,9 @@ final class MagicMapRenderer extends MapRenderer {
         final int px = loc.getBlockX();
         final int pz = loc.getBlockZ();
         MapCursorCollection cursors = new MapCursorCollection();
-        cursors.addCursor(makeCursor(MapCursor.Type.WHITE_POINTER, loc, session.centerX, session.centerZ));
-        if (this.plugin.isRenderPlayers()) {
+        cursors.addCursor(makeCursor(MapCursor.Type.WHITE_POINTER, loc,
+                                     session.centerX, session.centerZ));
+        if (plugin.isRenderPlayers()) {
             for (Player o: player.getWorld().getPlayers()) {
                 if (player.equals(o)) continue;
                 if (!player.canSee(o)) continue;
@@ -134,16 +140,19 @@ final class MagicMapRenderer extends MapRenderer {
                 Location ol = o.getLocation();
                 if (Math.abs(ol.getBlockX() - px) > 80) continue;
                 if (Math.abs(ol.getBlockZ() - pz) > 80) continue;
-                cursors.addCursor(makeCursor(MapCursor.Type.BLUE_POINTER, ol, session.centerX, session.centerZ));
+                cursors.addCursor(makeCursor(MapCursor.Type.BLUE_POINTER, ol,
+                                             session.centerX, session.centerZ));
             }
         }
-        if (this.plugin.isRenderEntities()) {
+        if (plugin.isRenderEntities()) {
             for (Entity e: player.getNearbyEntities(32, 16, 32)) {
                 if (e instanceof Player) continue;
                 if (e instanceof org.bukkit.entity.Monster) {
-                    cursors.addCursor(makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(), session.centerX, session.centerZ));
+                    cursors.addCursor(makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(),
+                                                 session.centerX, session.centerZ));
                 } else if (e instanceof org.bukkit.entity.Creature) {
-                    cursors.addCursor(makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, e.getLocation(), session.centerX, session.centerZ));
+                    cursors.addCursor(makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, e.getLocation(),
+                                                 session.centerX, session.centerZ));
                 }
             }
         }
@@ -151,8 +160,9 @@ final class MagicMapRenderer extends MapRenderer {
         session.cursoring = false;
     }
 
-    static MapCursor makeCursor(MapCursor.Type cursorType, Location location, int centerX, int centerZ) {
-        int dir = (int)(location.getYaw() + 11.25f);
+    static MapCursor makeCursor(MapCursor.Type cursorType, Location location,
+                                int centerX, int centerZ) {
+        int dir = (int) (location.getYaw() + 11.25f);
         while (dir < 0) dir += 360;
         while (dir > 360) dir -= 360;
         dir = dir * 2 / 45;
@@ -164,7 +174,7 @@ final class MagicMapRenderer extends MapRenderer {
         if (y < -119) y = -119;
         if (x > 127) x = 127;
         if (y > 127) y = 127;
-        return new MapCursor((byte)x, (byte)y, (byte)dir, cursorType.getValue(), true);
+        return new MapCursor((byte) x, (byte) y, (byte) dir, cursorType.getValue(), true);
     }
 
     static MapCursor makeCursor(MapCursor.Type cursorType, Block block, int centerX, int centerZ) {
@@ -174,10 +184,11 @@ final class MagicMapRenderer extends MapRenderer {
         if (y < -119) y = -119;
         if (x > 127) x = 127;
         if (y > 127) y = 127;
-        return new MapCursor((byte)x, (byte)y, (byte)8, cursorType.getValue(), true);
+        return new MapCursor((byte) x, (byte) y, (byte) 8, cursorType.getValue(), true);
     }
 
     static MapCursor makeCursor(MapCursor.Type cursorType, int x, int y, int rot) {
-        return new MapCursor((byte)((x - 64) * 2), (byte)((y - 64) * 2), (byte)rot, cursorType.getValue(), true);
+        return new MapCursor((byte) ((x - 64) * 2), (byte) ((y - 64) * 2), (byte) rot,
+                             cursorType.getValue(), true);
     }
 }

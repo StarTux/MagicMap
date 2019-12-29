@@ -22,4 +22,4 @@ permissions:
     default: op
   magicmap.receive:
     description: Be eligible for a free MagicMap.
-    default: false
+    default: op

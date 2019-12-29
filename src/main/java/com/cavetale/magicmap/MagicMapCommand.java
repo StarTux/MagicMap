@@ -15,21 +15,21 @@ final class MagicMapCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 0) return false;
-        Player player = sender instanceof Player ? (Player)sender : null;
+        Player player = sender instanceof Player ? (Player) sender : null;
         switch (args[0]) {
         case "reload": {
-            this.plugin.setupMap();
-            this.plugin.importConfig();
-            this.plugin.getMapGiver().reset();
-            for (Player target: this.plugin.getServer().getOnlinePlayers()) {
-                target.removeMetadata("magicmap.session", this.plugin);
+            plugin.setupMap();
+            plugin.importConfig();
+            plugin.getMapGiver().reset();
+            for (Player target: plugin.getServer().getOnlinePlayers()) {
+                target.removeMetadata("magicmap.session", plugin);
             }
             sender.sendMessage("MagicMap config reloaded");
             return true;
         }
         case "debug": {
             if (player == null) return false;
-            Session session = this.plugin.getSession(player);
+            Session session = plugin.getSession(player);
             session.debug = !session.debug;
             if (session.debug) {
                 sender.sendMessage("Debug mode enabled");
@@ -51,10 +51,11 @@ final class MagicMapCommand implements CommandExecutor {
             } else {
                 target = player;
             }
-            if (target.getInventory().addItem(this.plugin.createMapItem()).isEmpty()) {
+            if (target.getInventory().addItem(plugin.createMapItem()).isEmpty()) {
                 sender.sendMessage("MagicMap given to " + target.getName() + ".");
             } else {
-                sender.sendMessage("Could not give MagicMap to " + target.getName() + ". Inventory is full.");
+                sender.sendMessage("Could not give MagicMap to " + target.getName()
+                                   + ". Inventory is full.");
             }
             return true;
         }
@@ -63,7 +64,7 @@ final class MagicMapCommand implements CommandExecutor {
                 sender.sendMessage("Player expected.");
                 return true;
             }
-            this.plugin.triggerRerender(player);
+            plugin.triggerRerender(player);
             sender.sendMessage("Rerender triggered.");
             return true;
         }

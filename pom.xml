@@ -14,7 +14,7 @@
   </properties>
   <repositories>
 
-    <!-- Spigot Repo -->
+    <!-- Paper Repo -->
     <repository>
       <id>paper-repo</id>
       <url>https://cavetale.com/jenkins/plugin/repository/everything/</url>
@@ -34,8 +34,8 @@
     <!-- Paper -->
     <dependency>
       <groupId>com.destroystokyo.paper</groupId>
-      <artifactId>paper-api</artifactId>
-      <version>1.14.4-R0.1-SNAPSHOT</version>
+      <artifactId>paper</artifactId>
+      <version>1.15-R0.1-SNAPSHOT</version>
       <optional>true</optional>
     </dependency>
 

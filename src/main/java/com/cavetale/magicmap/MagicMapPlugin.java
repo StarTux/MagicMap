@@ -1,10 +1,5 @@
 package com.cavetale.magicmap;
 
-import com.google.gson.Gson;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,8 +30,11 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     private int mapId;
     private int mapColor;
     private String mapName;
-    private boolean debug, persist;
-    private boolean renderAsync, renderPlayers, renderEntities;
+    private boolean debug;
+    private boolean persist;
+    private boolean renderAsync;
+    private boolean renderPlayers;
+    private boolean renderEntities;
     // Tools
     private TinyFont tinyFont;
     private MagicMapRenderer magicMapRenderer;
@@ -44,6 +42,8 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     private MagicMapCommand magicMapCommand;
     private final Map<String, String> worldNames = new HashMap<>();
     private final Map<String, Boolean> enableCaveView = new HashMap<>();
+    static final String MAP_ID_PATH = "mapid.json";
+    Json json = new Json(this);
     // Queues
     private List<SyncMapRenderer> mainQueue = new ArrayList<>();
 
@@ -53,96 +53,83 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
-        this.magicMapRenderer = new MagicMapRenderer(this);
+        magicMapRenderer = new MagicMapRenderer(this);
         setupMap();
-        getLogger().info("Using map #" + this.mapId + ".");
-        this.tinyFont = new TinyFont(this);
-        this.mapGiver = new MapGiver(this);
-        getServer().getPluginManager().registerEvents(this.mapGiver, this);
-        this.magicMapCommand = new MagicMapCommand(this);
-        getCommand("magicmap").setExecutor(this.magicMapCommand);
+        getLogger().info("Using map #" + mapId + ".");
+        tinyFont = new TinyFont(this);
+        mapGiver = new MapGiver(this);
+        getServer().getPluginManager().registerEvents(mapGiver, this);
+        magicMapCommand = new MagicMapCommand(this);
+        getCommand("magicmap").setExecutor(magicMapCommand);
         importConfig();
-        if (this.mapGiver.isEnabled()) {
-            for (Player player: this.getServer().getOnlinePlayers()) {
-                this.mapGiver.maybeGiveMap(player);
+        if (mapGiver.isEnabled()) {
+            for (Player player: getServer().getOnlinePlayers()) {
+                mapGiver.maybeGiveMap(player);
             }
         }
-        getServer().getScheduler().runTaskTimer(this, () -> this.onTick(), 1L, 1L);
+        getServer().getScheduler().runTaskTimer(this, () -> onTick(), 1L, 1L);
         getServer().getPluginManager().registerEvents(this, this);
     }
 
     @Override
     public void onDisable() {
         resetMapView();
-        for (Player player: this.getServer().getOnlinePlayers()) {
+        for (Player player: getServer().getOnlinePlayers()) {
             player.removeMetadata("magicmap.session", this);
         }
     }
 
     // --- Configuration
 
+    String colorize(String msg) {
+        return ChatColor.translateAlternateColorCodes('&', msg);
+    }
+
     void importConfig() {
         reloadConfig();
-        this.debug = getConfig().getBoolean("debug");
-        this.mapGiver.setEnabled(getConfig().getBoolean("give.enabled"));
-        this.mapGiver.setPersist(getConfig().getBoolean("give.persist"));
-        this.mapGiver.setMessage(ChatColor.translateAlternateColorCodes('&', getConfig().getString("give.message")));
-        this.mapColor = getConfig().getInt("map.color");
-        this.mapName = ChatColor.translateAlternateColorCodes('&', getConfig().getString("map.name"));
-        this.renderPlayers = getConfig().getBoolean("render.players");
-        this.renderEntities = getConfig().getBoolean("render.entities");
-        this.renderAsync = getConfig().getBoolean("render.async");
-        this.worldNames.clear();
+        debug = getConfig().getBoolean("debug");
+        mapGiver.setEnabled(getConfig().getBoolean("give.enabled"));
+        mapGiver.setPersist(getConfig().getBoolean("give.persist"));
+        mapGiver.setMessage(colorize(getConfig().getString("give.message")));
+        mapColor = getConfig().getInt("map.color");
+        mapName = colorize(getConfig().getString("map.name"));
+        renderPlayers = getConfig().getBoolean("render.players");
+        renderEntities = getConfig().getBoolean("render.entities");
+        renderAsync = getConfig().getBoolean("render.async");
+        worldNames.clear();
         ConfigurationSection section = getConfig().getConfigurationSection("WorldNames");
         if (section != null) {
             for (String key: section.getKeys(false)) {
-                this.worldNames.put(key, section.getString(key));
+                worldNames.put(key, section.getString(key));
             }
         }
-        this.enableCaveView.clear();
+        enableCaveView.clear();
         section = getConfig().getConfigurationSection("EnableCaveView");
         if (section != null) {
             for (String key: section.getKeys(false)) {
-                this.enableCaveView.put(key, section.getBoolean(key));
+                enableCaveView.put(key, section.getBoolean(key));
             }
         }
     }
 
     void setupMap() {
         resetMapView();
-        Gson gson = new Gson();
-        File file = new File(getDataFolder(), "mapid.json");
-        if (!file.exists()) {
-            this.mapView = getServer().createMap(getServer().getWorlds().get(0));
-            if (this.mapView == null) {
-                throw new IllegalStateException("Could not create new map.");
-            }
-            this.mapId = (int)mapView.getId();
-            try (FileWriter writer = new FileWriter(file)) {
-                gson.toJson(this.mapId, writer);
-            } catch (IOException ioe) {
-                throw new IllegalStateException("Could not write " + file, ioe);
-            }
-        } else {
-            try (FileReader reader = new FileReader(file)) {
-                this.mapId = gson.fromJson(reader, Integer.class);
-            } catch (IOException ioe) {
-                throw new IllegalStateException("Could not read " + file, ioe);
-            }
-            this.mapView = getServer().getMap(this.mapId);
-            if (this.mapView == null) {
-                throw new IllegalStateException("Could not fetch map #" + this.mapId);
-            }
+        mapId = json.load(MAP_ID_PATH, Integer.class, () -> {
+                MapView tmpView = getServer().createMap(getServer().getWorlds().get(0));
+                int tmpId = tmpView.getId();
+                json.save(MAP_ID_PATH, tmpId);
+                return tmpId;
+            });
+        mapView = getServer().getMap(mapId);
+        for (MapRenderer renderer: mapView.getRenderers()) {
+            mapView.removeRenderer(renderer);
         }
-        for (MapRenderer renderer: this.mapView.getRenderers()) {
-            this.mapView.removeRenderer(renderer);
-        }
-        this.mapView.addRenderer(this.magicMapRenderer);
+        mapView.addRenderer(magicMapRenderer);
     }
 
     void onTick() {
-        if (!this.mainQueue.isEmpty()) {
-            SyncMapRenderer task = this.mainQueue.get(0);
+        if (!mainQueue.isEmpty()) {
+            SyncMapRenderer task = mainQueue.get(0);
             boolean ret;
             try {
                 ret = task.run();
@@ -150,7 +137,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
                 e.printStackTrace();
                 ret = false;
             }
-            if (!ret) this.mainQueue.remove(0);
+            if (!ret) mainQueue.remove(0);
         }
     }
 
@@ -158,7 +145,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
 
     Session getSession(Player player) {
         for (MetadataValue v: player.getMetadata("magicmap.session")) {
-            if (v.getOwningPlugin().equals(this)) return (Session)v.value();
+            if (v.getOwningPlugin().equals(this)) return (Session) v.value();
         }
         Session session = new Session(player.getUniqueId());
         player.setMetadata("magicmap.session", new FixedMetadataValue(this, session));
@@ -166,22 +153,22 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     }
 
     private void resetMapView() {
-        if (this.mapView != null) {
-            for (MapRenderer renderer: this.mapView.getRenderers()) {
+        if (mapView != null) {
+            for (MapRenderer renderer: mapView.getRenderers()) {
                     mapView.removeRenderer(renderer);
             }
-            this.mapView = null;
+            mapView = null;
         }
     }
 
     public ItemStack createMapItem() {
         ItemStack item = new ItemStack(Material.FILLED_MAP);
-        MapMeta meta = (MapMeta)item.getItemMeta();
-        meta.setMapId(this.mapId);
+        MapMeta meta = (MapMeta) item.getItemMeta();
+        meta.setMapId(mapId);
         meta.setScaling(false);
-        meta.setColor(Color.fromRGB(this.mapColor));
+        meta.setColor(Color.fromRGB(mapColor));
         meta.setLocationName("MagicMap");
-        meta.setDisplayName(this.mapName);
+        meta.setDisplayName(mapName);
         item.setItemMeta(meta);
         return item;
     }

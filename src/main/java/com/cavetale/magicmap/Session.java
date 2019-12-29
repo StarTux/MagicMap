@@ -13,7 +13,8 @@ final class Session {
     boolean cursoring;
     boolean debug;
     String world = "";
-    int centerX, centerZ;
+    int centerX;
+    int centerZ;
     boolean partial;
     // Results
     MapCache pasteMap;

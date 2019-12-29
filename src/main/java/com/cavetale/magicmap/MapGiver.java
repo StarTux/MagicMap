@@ -1,10 +1,5 @@
 package com.cavetale.magicmap;
 
-import com.google.gson.Gson;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.UUID;
 import lombok.Getter;
@@ -26,79 +21,62 @@ final class MapGiver implements Listener {
     @Setter private boolean enabled;
     @Setter private boolean persist;
     @Setter private String message;
+    static final String GIVEN_PATH = "given.json";
 
     static final class Persistence {
         private HashSet<UUID> given = new HashSet<>();
     }
 
     private HashSet<UUID> getGiven() {
-        if (this.persistence == null) {
-            if (this.persist) {
-                File file = new File(this.plugin.getDataFolder(), "given.json");
-                if (!file.exists()) {
-                    this.persistence = new Persistence();
-                } else {
-                    try (FileReader reader = new FileReader(file)) {
-                        Gson gson = new Gson();
-                        this.persistence = gson.fromJson(reader, Persistence.class);
-                    } catch (IOException ioe) {
-                        ioe.printStackTrace();
-                        this.persistence = new Persistence();
-                    }
-                }
-            } else {
-                this.persistence = new Persistence();
-            }
+        if (persistence == null) {
+            persistence = plugin.json.load(GIVEN_PATH, Persistence.class, Persistence::new);
         }
-        return this.persistence.given;
+        return persistence.given;
     }
 
     void saveGiven() {
-        if (!this.persist || this.persistence == null) return;
-        File file = new File(this.plugin.getDataFolder(), "given.json");
-        try (FileWriter writer = new FileWriter(file)) {
-            new Gson().toJson(this.persistence, writer);
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
+        if (!persist || persistence == null) return;
+        plugin.json.save(GIVEN_PATH, persistence, true);
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         if (!enabled) return;
-        Bukkit.getScheduler().runTaskLater(this.plugin, () -> maybeGiveMap(event.getPlayer()), 100L);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> maybeGiveMap(event.getPlayer()), 100L);
     }
 
     void maybeGiveMap(Player player) {
         if (!player.isValid()) return;
         if (!player.hasPermission("magicmap.receive")) return;
         UUID uuid = player.getUniqueId();
-        if (this.persist && this.getGiven().contains(uuid)) return;
+        if (persist && getGiven().contains(uuid)) return;
         for (ItemStack item: player.getInventory()) {
-            if (item == null || item.getType() != Material.FILLED_MAP || !item.hasItemMeta()) continue;
-            MapMeta meta = (MapMeta)item.getItemMeta();
-            if (meta.getMapId() == this.plugin.getMapId()) {
-                if (this.persist) {
-                    this.getGiven().add(uuid);
+            if (item == null || item.getType() != Material.FILLED_MAP || !item.hasItemMeta()) {
+                continue;
+            }
+            MapMeta meta = (MapMeta) item.getItemMeta();
+            if (meta.getMapId() == plugin.getMapId()) {
+                if (persist) {
+                    getGiven().add(uuid);
                     saveGiven();
                 }
                 return;
             }
         }
-        ItemStack newMap = this.plugin.createMapItem();
+        ItemStack newMap = plugin.createMapItem();
         if (player.getInventory().addItem(newMap).isEmpty()) {
-            if (this.persist) {
-                this.getGiven().add(uuid);
+            if (persist) {
+                getGiven().add(uuid);
                 saveGiven();
             }
-            this.plugin.getLogger().info(player.getName() + " received a MagicMap.");
-            if (this.message != null && !this.message.isEmpty()) {
-                player.sendMessage(this.message);
+            plugin.getLogger().info(player.getName() + " received a MagicMap.");
+            if (message != null && !message.isEmpty()) {
+                player.sendMessage(message);
             }
         }
     }
 
     void reset() {
-        this.persistence = null;
+        persistence = null;
     }
 }

@@ -15,21 +15,23 @@ public final class TinyFont {
 
     @Value
     static class Pixel {
-        private final int x, y;
+        private final int x;
+        private final int y;
     }
 
     @Value
     static class Char {
-        private final int width, height;
+        private final int width;
+        private final int height;
         private final List<Pixel> pixels;
         private final List<Pixel> shadowPixels;
     }
 
-    TinyFont(BufferedImage image) {
+    TinyFont(final BufferedImage image) {
         load(image);
     }
 
-    TinyFont(MagicMapPlugin plugin) {
+    TinyFont(final MagicMapPlugin plugin) {
         try {
             load(ImageIO.read(plugin.getResource("TinyFont.png")));
         } catch (IOException ioe) {
@@ -67,13 +69,21 @@ public final class TinyFont {
             for (Pixel pixel: pixels) {
                 Pixel shadowPixel;
                 shadowPixel = new Pixel(pixel.x + 1, pixel.y);
-                if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) shadowPixels.add(shadowPixel);
+                if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) {
+                    shadowPixels.add(shadowPixel);
+                }
                 shadowPixel = new Pixel(pixel.x, pixel.y + 1);
-                if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) shadowPixels.add(shadowPixel);
+                if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) {
+                    shadowPixels.add(shadowPixel);
+                }
                 shadowPixel = new Pixel(pixel.x - 1, pixel.y);
-                if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) shadowPixels.add(shadowPixel);
+                if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) {
+                    shadowPixels.add(shadowPixel);
+                }
                 shadowPixel = new Pixel(pixel.x, pixel.y - 1);
-                if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) shadowPixels.add(shadowPixel);
+                if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) {
+                    shadowPixels.add(shadowPixel);
+                }
             }
             charMap.put(c, new Char(width, height, pixels, shadowPixels));
         }

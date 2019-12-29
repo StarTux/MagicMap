@@ -12,19 +12,20 @@ public final class MagicMapPostRenderEvent extends Event {
     private static final HandlerList HANDLERS = new HandlerList();
     private final Player player;
     private final String worldName;
-    private final int centerX, centerZ;
+    private final int centerX;
+    private final int centerZ;
     private final MapCache mapCache;
 
-    MagicMapPostRenderEvent(Player player, Session session) {
+    MagicMapPostRenderEvent(final Player player, final Session session) {
         this.player = player;
-        this.worldName = session.world;
-        this.mapCache = session.pasteMap;
-        this.centerX = session.centerX;
-        this.centerZ = session.centerZ;
+        worldName = session.world;
+        mapCache = session.pasteMap;
+        centerX = session.centerX;
+        centerZ = session.centerZ;
     }
 
     World getWorld() {
-        return Bukkit.getWorld(this.worldName);
+        return Bukkit.getWorld(worldName);
     }
 
     // Necessary event methods

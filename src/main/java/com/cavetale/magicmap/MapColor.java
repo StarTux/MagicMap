@@ -687,6 +687,10 @@ public final class MapColor {
         case STRUCTURE_BLOCK: return 22;
         case JIGSAW: return 22;
         case COMPOSTER: return 13;
+        case BEE_NEST: return 13;
+        case BEEHIVE: return 13;
+        case HONEY_BLOCK: return 15;
+        case HONEYCOMB_BLOCK: return 15;
         default: return 0;
         }
     }
