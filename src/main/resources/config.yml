@@ -4,6 +4,7 @@ map:
   name: '&dMagic Map'
 render:
   players: true
+  playerNames: true
   entities: false
   async: false
 give:

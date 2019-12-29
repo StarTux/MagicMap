@@ -32,9 +32,10 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     private String mapName;
     private boolean debug;
     private boolean persist;
-    private boolean renderAsync;
-    private boolean renderPlayers;
-    private boolean renderEntities;
+    boolean renderAsync;
+    boolean renderPlayers;
+    boolean renderPlayerNames;
+    boolean renderEntities;
     // Tools
     private TinyFont tinyFont;
     private MagicMapRenderer magicMapRenderer;
@@ -94,6 +95,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         mapColor = getConfig().getInt("map.color");
         mapName = colorize(getConfig().getString("map.name"));
         renderPlayers = getConfig().getBoolean("render.players");
+        renderPlayerNames = getConfig().getBoolean("render.playerNames");
         renderEntities = getConfig().getBoolean("render.entities");
         renderAsync = getConfig().getBoolean("render.async");
         worldNames.clear();

@@ -95,7 +95,7 @@ final class MagicMapRenderer extends MapRenderer {
         }
         String worldDisplayName = plugin.getWorldNames().get(worldName);
         if (worldDisplayName == null) worldDisplayName = plugin.getWorldNames().get("default");
-        if (plugin.isRenderAsync()) {
+        if (plugin.renderAsync) {
             AsyncMapRenderer renderer = new AsyncMapRenderer(plugin, session, type,
                                                              worldDisplayName, centerX, centerZ,
                                                              loc.getWorld().getTime());
@@ -130,9 +130,7 @@ final class MagicMapRenderer extends MapRenderer {
         final int px = loc.getBlockX();
         final int pz = loc.getBlockZ();
         MapCursorCollection cursors = new MapCursorCollection();
-        cursors.addCursor(makeCursor(MapCursor.Type.WHITE_POINTER, loc,
-                                     session.centerX, session.centerZ));
-        if (plugin.isRenderPlayers()) {
+        if (plugin.renderPlayers) {
             for (Player o: player.getWorld().getPlayers()) {
                 if (player.equals(o)) continue;
                 if (!player.canSee(o)) continue;
@@ -140,11 +138,15 @@ final class MagicMapRenderer extends MapRenderer {
                 Location ol = o.getLocation();
                 if (Math.abs(ol.getBlockX() - px) > 80) continue;
                 if (Math.abs(ol.getBlockZ() - pz) > 80) continue;
-                cursors.addCursor(makeCursor(MapCursor.Type.BLUE_POINTER, ol,
-                                             session.centerX, session.centerZ));
+                MapCursor cur = makeCursor(MapCursor.Type.BLUE_POINTER, ol,
+                                           session.centerX, session.centerZ);
+                if (plugin.renderPlayerNames) {
+                    cur.setCaption(o.getDisplayName());
+                }
+                cursors.addCursor(cur);
             }
         }
-        if (plugin.isRenderEntities()) {
+        if (plugin.renderEntities) {
             for (Entity e: player.getNearbyEntities(32, 16, 32)) {
                 if (e instanceof Player) continue;
                 if (e instanceof org.bukkit.entity.Monster) {
@@ -156,6 +158,12 @@ final class MagicMapRenderer extends MapRenderer {
                 }
             }
         }
+        MapCursor pcur = makeCursor(MapCursor.Type.WHITE_POINTER, loc,
+                                    session.centerX, session.centerZ);
+        if (plugin.renderPlayerNames) {
+            pcur.setCaption(player.getDisplayName());
+        }
+        cursors.addCursor(pcur);
         session.pasteCursors = cursors;
         session.cursoring = false;
     }
