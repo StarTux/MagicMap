@@ -5,6 +5,7 @@ map:
 render:
   players: true
   playerNames: true
+  markerArmorStands: true
   entities: false
   async: false
 give:

@@ -5,7 +5,10 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Mob;
+import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapCanvas;
 import org.bukkit.map.MapCursor;
@@ -146,15 +149,27 @@ final class MagicMapRenderer extends MapRenderer {
                 cursors.addCursor(cur);
             }
         }
-        if (plugin.renderEntities) {
+        if (plugin.renderEntities || plugin.renderMarkerArmorStands) {
             for (Entity e: player.getNearbyEntities(32, 16, 32)) {
                 if (e instanceof Player) continue;
-                if (e instanceof org.bukkit.entity.Monster) {
+                if (e instanceof Monster) {
+                    if (!plugin.renderEntities) continue;
                     cursors.addCursor(makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(),
                                                  session.centerX, session.centerZ));
-                } else if (e instanceof org.bukkit.entity.Creature) {
+                } else if (e instanceof Mob) {
+                    if (!plugin.renderEntities) continue;
                     cursors.addCursor(makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, e.getLocation(),
                                                  session.centerX, session.centerZ));
+                } else if (e instanceof ArmorStand) {
+                    if (!plugin.renderMarkerArmorStands) continue;
+                    ArmorStand stand = (ArmorStand) e;
+                    if (!stand.isMarker()) continue;
+                    String name = stand.getCustomName();
+                    if (name == null || name.isEmpty()) continue;
+                    MapCursor cur = makeCursor(MapCursor.Type.WHITE_CROSS, stand.getLocation(),
+                                               session.centerX, session.centerZ);
+                    cur.setCaption(name);
+                    cursors.addCursor(cur);
                 }
             }
         }

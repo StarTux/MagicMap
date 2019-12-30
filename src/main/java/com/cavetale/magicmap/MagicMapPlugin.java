@@ -36,6 +36,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     boolean renderPlayers;
     boolean renderPlayerNames;
     boolean renderEntities;
+    boolean renderMarkerArmorStands;
     // Tools
     private TinyFont tinyFont;
     private MagicMapRenderer magicMapRenderer;
@@ -97,6 +98,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         renderPlayers = getConfig().getBoolean("render.players");
         renderPlayerNames = getConfig().getBoolean("render.playerNames");
         renderEntities = getConfig().getBoolean("render.entities");
+        renderMarkerArmorStands = getConfig().getBoolean("render.markerArmorStands");
         renderAsync = getConfig().getBoolean("render.async");
         worldNames.clear();
         ConfigurationSection section = getConfig().getConfigurationSection("WorldNames");
