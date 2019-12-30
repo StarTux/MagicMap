@@ -150,7 +150,7 @@ final class MagicMapRenderer extends MapRenderer {
             }
         }
         if (plugin.renderEntities || plugin.renderMarkerArmorStands) {
-            for (Entity e: player.getNearbyEntities(32, 16, 32)) {
+            for (Entity e: player.getNearbyEntities(64, 24, 64)) {
                 if (e instanceof Player) continue;
                 if (e instanceof Monster) {
                     if (!plugin.renderEntities) continue;
