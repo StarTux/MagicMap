@@ -1,6 +1,7 @@
 package com.cavetale.magicmap;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -175,9 +176,11 @@ final class MagicMapRenderer extends MapRenderer {
         }
         MapCursor pcur = makeCursor(MapCursor.Type.WHITE_POINTER, loc,
                                     session.centerX, session.centerZ);
-        if (plugin.renderPlayerNames) {
-            pcur.setCaption(player.getDisplayName());
-        }
+        ChatColor d = ChatColor.WHITE;
+        String c = ChatColor.GRAY + ",";
+        pcur.setCaption("" + d + loc.getBlockX()
+                        + c + d + loc.getBlockY()
+                        + c + d + loc.getBlockZ());
         cursors.addCursor(pcur);
         session.pasteCursors = cursors;
         session.cursoring = false;
