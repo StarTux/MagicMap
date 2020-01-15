@@ -16,7 +16,6 @@ final class AsyncMapRenderer implements Runnable {
     private final MagicMapPlugin plugin;
     private final Session session;
     private final RenderType type;
-    private final String worldDisplayName;
     // center coords
     private final int centerX;
     private final int centerZ;
@@ -124,9 +123,6 @@ final class AsyncMapRenderer implements Runnable {
                     mapCache.setPixel(canvasX, canvasY, color);
                 }
             }
-        }
-        if (worldDisplayName != null) {
-            plugin.getTinyFont().print(mapCache, worldDisplayName, 1, 1, 32 + BRIGHT, 116);
         }
         try {
             Bukkit.getScheduler().runTask(plugin, () -> {

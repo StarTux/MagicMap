@@ -15,7 +15,6 @@ final class SyncMapRenderer {
     private final World world;
     private final Session session;
     private final RenderType type;
-    private final String worldName;
     // center coords
     private final int centerX;
     private final int centerZ;
@@ -31,10 +30,6 @@ final class SyncMapRenderer {
     public boolean run() {
         for (int i = 0; i < 1024; i += 1) {
             if (iterY >= 128) {
-                // Finis
-                if (worldName != null) {
-                    plugin.getTinyFont().print(mapCache, worldName, 1, 1, 32 + BRIGHT, 116);
-                }
                 session.pasteMap = mapCache;
                 session.rendering = false;
                 session.centerX = centerX;

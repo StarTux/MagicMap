@@ -66,7 +66,7 @@ final class MagicMapRenderer extends MapRenderer {
     }
 
     /**
-     * {@link render(MapView, MapCanvas, Player)} will Schedule this
+     * {@link render(MapView, MapCanvas, Player)} will schedule this
      * for exec in the main thread.
      */
     void newRender(Player player, Session session) {
@@ -97,11 +97,9 @@ final class MagicMapRenderer extends MapRenderer {
                 type = RenderType.SURFACE;
             }
         }
-        String worldDisplayName = plugin.getWorldNames().get(worldName);
-        if (worldDisplayName == null) worldDisplayName = plugin.getWorldNames().get("default");
         if (plugin.renderAsync) {
             AsyncMapRenderer renderer = new AsyncMapRenderer(plugin, session, type,
-                                                             worldDisplayName, centerX, centerZ,
+                                                             centerX, centerZ,
                                                              loc.getWorld().getTime());
             int ax = (centerX - 63) >> 4;
             int az = (centerZ - 63) >> 4;
@@ -119,7 +117,7 @@ final class MagicMapRenderer extends MapRenderer {
             Bukkit.getScheduler().runTaskAsynchronously(plugin, renderer);
         } else {
             SyncMapRenderer renderer = new SyncMapRenderer(plugin, loc.getWorld(), session, type,
-                                                           worldDisplayName, centerX, centerZ,
+                                                           centerX, centerZ,
                                                            loc.getWorld().getTime());
             plugin.getMainQueue().add(renderer);
         }
@@ -178,10 +176,29 @@ final class MagicMapRenderer extends MapRenderer {
                                     session.centerX, session.centerZ);
         ChatColor d = ChatColor.WHITE;
         String c = ChatColor.GRAY + ",";
-        pcur.setCaption("" + d + loc.getBlockX()
-                        + c + d + loc.getBlockY()
-                        + c + d + loc.getBlockZ());
+        pcur.setCaption(player.getDisplayName());
         cursors.addCursor(pcur);
+        if (plugin.renderCoordinates) {
+            final int y = 127;
+            final int rot = 8;
+            final MapCursor.Type type = MapCursor.Type.SMALL_WHITE_CIRCLE;
+            final ChatColor col = ChatColor.GRAY;
+            final ChatColor whi = ChatColor.WHITE;
+            final int dist = 24;
+            MapCursor icur;
+            icur = makeCursor(MapCursor.Type.WHITE_CIRCLE, 0, y, rot);
+            icur.setCaption(plugin.getWorldName(player.getWorld()));
+            cursors.addCursor(icur);
+            icur = makeCursor(type, 127 - dist - dist, y, rot);
+            icur.setCaption(col + "x=" + whi + loc.getBlockX());
+            cursors.addCursor(icur);
+            icur = makeCursor(type, 127 - dist, y, rot);
+            icur.setCaption(col + "y=" + whi + loc.getBlockY());
+            cursors.addCursor(icur);
+            icur = makeCursor(type, 127, y, rot);
+            icur.setCaption(col + "z=" + whi + loc.getBlockZ());
+            cursors.addCursor(icur);
+        }
         session.pasteCursors = cursors;
         session.cursoring = false;
     }
@@ -197,7 +214,7 @@ final class MagicMapRenderer extends MapRenderer {
         int x = (location.getBlockX() - centerX) * 2;
         int y = (location.getBlockZ() - centerZ) * 2;
         if (x < -127) x = -127;
-        if (y < -119) y = -119;
+        if (y < -127) y = -127;
         if (x > 127) x = 127;
         if (y > 127) y = 127;
         return new MapCursor((byte) x, (byte) y, (byte) dir, cursorType.getValue(), true);
@@ -207,13 +224,17 @@ final class MagicMapRenderer extends MapRenderer {
         int x = (block.getX() - centerX) * 2;
         int y = (block.getZ() - centerZ) * 2;
         if (x < -127) x = -127;
-        if (y < -119) y = -119;
+        if (y < -127) y = -127;
         if (x > 127) x = 127;
         if (y > 127) y = 127;
         return new MapCursor((byte) x, (byte) y, (byte) 8, cursorType.getValue(), true);
     }
 
     static MapCursor makeCursor(MapCursor.Type cursorType, int x, int y, int rot) {
+        if (x < 0) x = 0;
+        if (y < 0) y = 0;
+        if (x > 127) x = 127;
+        if (y > 127) y = 127;
         return new MapCursor((byte) ((x - 64) * 2), (byte) ((y - 64) * 2), (byte) rot,
                              cursorType.getValue(), true);
     }

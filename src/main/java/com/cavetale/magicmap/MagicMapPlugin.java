@@ -8,6 +8,7 @@ import lombok.Getter;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -37,6 +38,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     boolean renderPlayerNames;
     boolean renderEntities;
     boolean renderMarkerArmorStands;
+    boolean renderCoordinates = true;
     // Tools
     private TinyFont tinyFont;
     private MagicMapRenderer magicMapRenderer;
@@ -175,6 +177,13 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         meta.setDisplayName(mapName);
         item.setItemMeta(meta);
         return item;
+    }
+
+    public String getWorldName(World world) {
+        String name = worldNames.get(world.getName());
+        if (name == null) name = worldNames.get("default");
+        if (name == null) name = world.getName();
+        return name;
     }
 
     // --- Event Handling
