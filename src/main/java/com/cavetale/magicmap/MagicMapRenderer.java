@@ -182,21 +182,19 @@ final class MagicMapRenderer extends MapRenderer {
             final int y = 127;
             final int rot = 8;
             final MapCursor.Type type = MapCursor.Type.SMALL_WHITE_CIRCLE;
-            final ChatColor col = ChatColor.GRAY;
-            final ChatColor whi = ChatColor.WHITE;
             final int dist = 24;
             MapCursor icur;
             icur = makeCursor(MapCursor.Type.WHITE_CIRCLE, 0, y, rot);
             icur.setCaption(plugin.getWorldName(player.getWorld()));
             cursors.addCursor(icur);
             icur = makeCursor(type, 127 - dist - dist, y, rot);
-            icur.setCaption(col + "x=" + whi + loc.getBlockX());
+            icur.setCaption("" + loc.getBlockX());
             cursors.addCursor(icur);
             icur = makeCursor(type, 127 - dist, y, rot);
-            icur.setCaption(col + "y=" + whi + loc.getBlockY());
+            icur.setCaption("" + loc.getBlockY());
             cursors.addCursor(icur);
             icur = makeCursor(type, 127, y, rot);
-            icur.setCaption(col + "z=" + whi + loc.getBlockZ());
+            icur.setCaption("" + loc.getBlockZ());
             cursors.addCursor(icur);
         }
         session.pasteCursors = cursors;
