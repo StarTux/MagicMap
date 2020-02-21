@@ -125,8 +125,9 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
             mapView = getServer().createMap(getServer().getWorlds().get(0));
             mapId = mapView.getId();
             json.save(MAP_ID_PATH, mapId);
+        } else {
+            mapId = id;
         }
-        mapId = id;
         mapView = getServer().getMap(mapId);
         if (mapView == null) {
             mapView = getServer().createMap(getServer().getWorlds().get(0));
