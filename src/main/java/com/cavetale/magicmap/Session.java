@@ -7,7 +7,6 @@ import org.bukkit.map.MapCursorCollection;
 @RequiredArgsConstructor
 final class Session {
     final UUID player;
-    long lastRender;
     boolean forceUpdate;
     boolean rendering;
     boolean cursoring;
@@ -16,6 +15,8 @@ final class Session {
     int centerX;
     int centerZ;
     boolean partial;
+    long cooldown;
+    long lastRender;
     // Results
     MapCache pasteMap;
     MapCursorCollection pasteCursors;

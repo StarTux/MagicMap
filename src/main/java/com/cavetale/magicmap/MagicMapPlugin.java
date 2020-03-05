@@ -7,13 +7,17 @@ import java.util.Map;
 import lombok.Getter;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapRenderer;
@@ -198,6 +202,36 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         event.getPlayer().removeMetadata("magicmap.session", this);
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        getSession(event.getPlayer()).cooldown = nowInSeconds() + 5;
+    }
+
+    private static boolean isFar(Location a, Location b, double far) {
+        if (!a.getWorld().equals(b.getWorld())) return true;
+        double dist = Math.max(Math.abs(a.getX() - b.getX()),
+                               Math.abs(a.getZ() - b.getZ()));
+        return dist >= far;
+    }
+
+    @EventHandler
+    public void onPlayerTeleport(PlayerTeleportEvent event) {
+        Location from = event.getFrom();
+        Location to = event.getTo();
+        if (isFar(from, to, 64.0)) {
+            getSession(event.getPlayer()).cooldown = nowInSeconds() + 5;
+        }
+    }
+
+    @EventHandler
+    public void onPlayerRespawn(PlayerRespawnEvent event) {
+        getSession(event.getPlayer()).cooldown = nowInSeconds() + 5;
+    }
+
+    static long nowInSeconds() {
+        return System.nanoTime() / 1000000000;
     }
 
     // --- Event calling

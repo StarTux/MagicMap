@@ -44,26 +44,30 @@ final class MagicMapRenderer extends MapRenderer {
         // Schedule new
         Location loc = player.getLocation();
         String world = loc.getWorld().getName();
-        if (!session.rendering) {
-            long now = System.currentTimeMillis();
-            if (session.forceUpdate || now - session.lastRender > 3000L) {
-                if (session.forceUpdate
-                    || session.partial
-                    || !world.equals(session.world)
-                    || Math.abs(loc.getBlockX() - session.centerX) >= 24
-                    || Math.abs(loc.getBlockZ() - session.centerZ) >= 24) {
-                    session.forceUpdate = false;
-                    session.partial = false;
-                    session.rendering = true;
-                    session.lastRender = now;
-                    Bukkit.getScheduler().runTask(plugin, () -> newRender(player, session));
-                }
-            }
+        long now = plugin.nowInSeconds();
+        if (needsToRerender(session, world, loc, now)) {
+            session.forceUpdate = false;
+            session.partial = false;
+            session.rendering = true;
+            session.cooldown = now + 5;
+            session.lastRender = now;
+            Bukkit.getScheduler().runTask(plugin, () -> newRender(player, session));
         }
         if (!session.cursoring && world.equals(session.world)) {
             session.cursoring = true;
             Bukkit.getScheduler().runTask(plugin, () -> newCursor(player, session));
         }
+    }
+
+    boolean needsToRerender(Session session, String world, Location loc, long now) {
+        if (session.rendering) return false;
+        if (session.forceUpdate) return true;
+        if (now < session.cooldown) return false;
+        if (session.partial) return true;
+        if (!world.equals(session.world)) return true;
+        if (Math.abs(loc.getBlockX() - session.centerX) >= 32) return true;
+        if (Math.abs(loc.getBlockZ() - session.centerZ) >= 32) return true;
+        return now > session.lastRender + 30L;
     }
 
     /**
