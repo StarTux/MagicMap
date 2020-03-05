@@ -6,9 +6,10 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Animals;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Mob;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapCanvas;
@@ -123,6 +124,21 @@ final class MagicMapRenderer extends MapRenderer {
         }
     }
 
+    private boolean isHostile(Entity entity) {
+        switch (entity.getType()) {
+        case GHAST:
+        case SLIME:
+        case PHANTOM:
+        case MAGMA_CUBE:
+        case ENDER_DRAGON:
+        case SHULKER:
+        case SHULKER_BULLET:
+            return true;
+        default:
+            return entity instanceof Monster;
+        }
+    }
+
     /**
      * {@link render(MapView, MapCanvas, Player)} will Schedule this
      * for exec in the main thread.
@@ -151,13 +167,17 @@ final class MagicMapRenderer extends MapRenderer {
         if (plugin.renderEntities || plugin.renderMarkerArmorStands) {
             for (Entity e: player.getNearbyEntities(64, 24, 64)) {
                 if (e instanceof Player) continue;
-                if (e instanceof Monster) {
+                if (!(e instanceof LivingEntity)) continue;
+                if (isHostile(e)) {
                     if (!plugin.renderEntities) continue;
-                    cursors.addCursor(makeCursor(MapCursor.Type.RED_POINTER, e.getLocation(),
+                    Location at = e.getLocation().getBlock().getLocation();
+                    cursors.addCursor(makeCursor(MapCursor.Type.RED_MARKER, at,
                                                  session.centerX, session.centerZ));
-                } else if (e instanceof Mob) {
+                } else if (e instanceof Animals) {
+                    // TODO: renderMonsters, renderAnimals
                     if (!plugin.renderEntities) continue;
-                    cursors.addCursor(makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, e.getLocation(),
+                    Location at = e.getLocation().getBlock().getLocation();
+                    cursors.addCursor(makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, at,
                                                  session.centerX, session.centerZ));
                 } else if (e instanceof ArmorStand) {
                     if (!plugin.renderMarkerArmorStands) continue;
@@ -165,7 +185,8 @@ final class MagicMapRenderer extends MapRenderer {
                     if (!stand.isMarker()) continue;
                     String name = stand.getCustomName();
                     if (name == null || name.isEmpty()) continue;
-                    MapCursor cur = makeCursor(MapCursor.Type.WHITE_CROSS, stand.getLocation(),
+                    Location at = e.getLocation().getBlock().getLocation();
+                    MapCursor cur = makeCursor(MapCursor.Type.WHITE_CROSS, at,
                                                session.centerX, session.centerZ);
                     cur.setCaption(name);
                     cursors.addCursor(cur);
