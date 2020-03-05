@@ -170,8 +170,8 @@ final class MagicMapRenderer extends MapRenderer {
                 if (!(e instanceof LivingEntity)) continue;
                 if (isHostile(e)) {
                     if (!plugin.renderEntities) continue;
-                    Location at = e.getLocation().getBlock().getLocation();
-                    cursors.addCursor(makeCursor(MapCursor.Type.RED_MARKER, at,
+                    Location at = e.getLocation();
+                    cursors.addCursor(makeCursor(MapCursor.Type.RED_POINTER, at,
                                                  session.centerX, session.centerZ));
                 } else if (e instanceof Animals) {
                     // TODO: renderMonsters, renderAnimals
@@ -193,7 +193,7 @@ final class MagicMapRenderer extends MapRenderer {
                 }
             }
         }
-        MapCursor pcur = makeCursor(MapCursor.Type.WHITE_POINTER, loc,
+        MapCursor pcur = makeCursor(MapCursor.Type.GREEN_POINTER, loc,
                                     session.centerX, session.centerZ);
         ChatColor d = ChatColor.WHITE;
         String c = ChatColor.GRAY + ",";
