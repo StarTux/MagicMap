@@ -53,8 +53,9 @@ final class MagicMapRenderer extends MapRenderer {
             session.lastRender = now;
             Bukkit.getScheduler().runTask(plugin, () -> newRender(player, session));
         }
-        if (!session.cursoring && world.equals(session.world)) {
+        if (!session.cursoring && now > session.cursorCooldown) {
             session.cursoring = true;
+            session.cursorCooldown = now + plugin.cursorTicks;
             Bukkit.getScheduler().runTask(plugin, () -> newCursor(player, session));
         }
     }

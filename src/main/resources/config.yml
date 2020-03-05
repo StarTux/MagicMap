@@ -2,12 +2,13 @@ debug: false
 map:
   color: 0
   name: '&dMagic Map'
-render:
+cursor:
   players: true
   playerNames: true
   markerArmorStands: true
   entities: false
   async: false
+  ticks: 10 # in ticks
 give:
   enabled: false
   persist: true

@@ -43,6 +43,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     boolean renderEntities;
     boolean renderMarkerArmorStands;
     boolean renderCoordinates = true;
+    long cursorTicks = 10;
     // Tools
     private TinyFont tinyFont;
     private MagicMapRenderer magicMapRenderer;
@@ -101,11 +102,12 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         mapGiver.setMessage(colorize(getConfig().getString("give.message")));
         mapColor = getConfig().getInt("map.color");
         mapName = colorize(getConfig().getString("map.name"));
-        renderPlayers = getConfig().getBoolean("render.players");
-        renderPlayerNames = getConfig().getBoolean("render.playerNames");
-        renderEntities = getConfig().getBoolean("render.entities");
-        renderMarkerArmorStands = getConfig().getBoolean("render.markerArmorStands");
-        renderAsync = getConfig().getBoolean("render.async");
+        renderPlayers = getConfig().getBoolean("cursor.players");
+        renderPlayerNames = getConfig().getBoolean("cursor.playerNames");
+        renderEntities = getConfig().getBoolean("cursor.entities");
+        renderMarkerArmorStands = getConfig().getBoolean("cursor.markerArmorStands");
+        renderAsync = getConfig().getBoolean("cursor.async");
+        cursorTicks = getConfig().getLong("cursor.ticks");
         worldNames.clear();
         ConfigurationSection section = getConfig().getConfigurationSection("WorldNames");
         if (section != null) {

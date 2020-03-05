@@ -17,6 +17,7 @@ final class Session {
     boolean partial;
     long cooldown;
     long lastRender;
+    long cursorCooldown;
     // Results
     MapCache pasteMap;
     MapCursorCollection pasteCursors;
