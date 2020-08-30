@@ -14,6 +14,10 @@ public final class MagicMapPostRenderEvent extends Event {
     private final String worldName;
     private final int centerX;
     private final int centerZ;
+    private final int minX;
+    private final int minZ;
+    private final int maxX;
+    private final int maxZ;
     private final MapCache mapCache;
 
     MagicMapPostRenderEvent(final Player player, final Session session) {
@@ -22,6 +26,10 @@ public final class MagicMapPostRenderEvent extends Event {
         mapCache = session.pasteMap;
         centerX = session.centerX;
         centerZ = session.centerZ;
+        minX = centerX - 63;
+        minZ = centerZ - 63;
+        maxX = centerX + 64;
+        maxZ = centerZ + 64;
     }
 
     World getWorld() {
