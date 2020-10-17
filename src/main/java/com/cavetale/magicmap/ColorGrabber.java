@@ -2,9 +2,9 @@ package com.cavetale.magicmap;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import net.minecraft.server.v1_15_R1.Block;
-import net.minecraft.server.v1_15_R1.Blocks;
-import net.minecraft.server.v1_15_R1.MaterialMapColor;
+import net.minecraft.server.v1_16_R2.Block;
+import net.minecraft.server.v1_16_R2.Blocks;
+import net.minecraft.server.v1_16_R2.MaterialMapColor;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
