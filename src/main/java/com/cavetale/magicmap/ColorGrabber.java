@@ -2,6 +2,7 @@ package com.cavetale.magicmap;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,11 @@ final class ColorGrabber {
         Field field = type.getDeclaredField(name);
         field.setAccessible(true);
         return field.get(object);
+    }
+
+    static Object getter(Object object, Class<?> type, String methodName) throws Exception {
+        Method method = type.getDeclaredMethod(methodName);
+        return method.invoke(object);
     }
 
     static List<Field> getStaticFields(Class<?> containerType, Class<?> objectType) {
@@ -40,7 +46,6 @@ final class ColorGrabber {
         Class<?> blockBaseClass = Class.forName("net.minecraft.server." + ver + ".BlockBase");
         Class<?> blocksClass = Class.forName("net.minecraft.server." + ver + ".Blocks");
         Class<?> materialMapColorClass = Class.forName("net.minecraft.server." + ver + ".MaterialMapColor");
-        Class<?> materialClass = Class.forName("net.minecraft.server." + ver + ".Material");
         List<String> lines = new ArrayList<>();
         for (Field field : getStaticFields(blocksClass, blockClass)) {
             Material bukkitMaterial;
@@ -50,8 +55,7 @@ final class ColorGrabber {
                 continue;
             }
             Object block = field.get(null);
-            Object material = getField(block, blockBaseClass, "material");
-            Object materialMapColor = getField(material, materialClass, "S");
+            Object materialMapColor = getter(block, blockBaseClass, "s");
             Object val = getField(materialMapColor, materialMapColorClass, "aj");
             lines.add("" + val + " " + bukkitMaterial.name());
         }
