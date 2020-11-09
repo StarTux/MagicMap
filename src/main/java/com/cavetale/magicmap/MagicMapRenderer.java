@@ -107,7 +107,7 @@ final class MagicMapRenderer extends MapRenderer {
                 type = RenderType.SURFACE;
             }
         }
-        SyncMapRenderer renderer = new SyncMapRenderer(plugin, loc.getWorld(), session, type, centerX, centerZ, loc.getWorld().getTime());
+        SyncMapRenderer renderer = new SyncMapRenderer(plugin, plugin.getMapColor(), loc.getWorld(), session, type, centerX, centerZ, loc.getWorld().getTime());
         plugin.getMainQueue().add(renderer);
     }
 
@@ -161,7 +161,6 @@ final class MagicMapRenderer extends MapRenderer {
                     cursors.addCursor(makeCursor(MapCursor.Type.RED_POINTER, at,
                                                  session.centerX, session.centerZ));
                 } else if (e instanceof Animals) {
-                    // TODO: renderMonsters, renderAnimals
                     if (!plugin.renderEntities) continue;
                     Location at = e.getLocation().getBlock().getLocation();
                     cursors.addCursor(makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, at,

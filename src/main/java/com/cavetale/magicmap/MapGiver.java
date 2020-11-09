@@ -69,7 +69,7 @@ final class MapGiver implements Listener {
                 getGiven().add(uuid);
                 saveGiven();
             }
-            plugin.getLogger().info(player.getName() + " received a MagicMap.");
+            plugin.getLogger().info(player.getName() + " received a MagicMap");
             if (message != null && !message.isEmpty()) {
                 player.sendMessage(message);
             }

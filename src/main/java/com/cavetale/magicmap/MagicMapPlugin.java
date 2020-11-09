@@ -1,5 +1,6 @@
 package com.cavetale.magicmap;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,12 +29,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
 public final class MagicMapPlugin extends JavaPlugin implements Listener {
-    private static MagicMapPlugin instance;
+    @Getter private static MagicMapPlugin instance;
     // Map persistence
     private MapView mapView;
     // Configuration
     private int mapId;
-    private int mapColor;
+    private int mapItemColor;
     private String mapName;
     private boolean debug;
     private boolean persist;
@@ -51,6 +52,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     private final Map<String, String> worldNames = new HashMap<>();
     private final Map<String, Boolean> enableCaveView = new HashMap<>();
     static final String MAP_ID_PATH = "mapid.json";
+    private MapColor mapColor = new MapColor();
     Json json = new Json(this);
     // Queues
     private List<SyncMapRenderer> mainQueue = new ArrayList<>();
@@ -62,8 +64,9 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         instance = this;
         saveDefaultConfig();
         magicMapRenderer = new MagicMapRenderer(this);
+        loadMapColors();
         setupMap();
-        getLogger().info("Using map #" + mapId + ".");
+        getLogger().info("Using map #" + mapId);
         tinyFont = new TinyFont(this);
         mapGiver = new MapGiver(this);
         getServer().getPluginManager().registerEvents(mapGiver, this);
@@ -89,6 +92,16 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
 
     // --- Configuration
 
+    void loadMapColors() {
+        File file = new File(getDataFolder(), "colors.txt");
+        if (!file.exists()) saveResource("colors.txt", true);
+        if (!mapColor.load(file)) {
+            getLogger().warning("Failed to load colors!");
+        } else {
+            getLogger().info(mapColor.getCount() + " map colors loaded");
+        }
+    }
+
     String colorize(String msg) {
         return ChatColor.translateAlternateColorCodes('&', msg);
     }
@@ -99,7 +112,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         mapGiver.setEnabled(getConfig().getBoolean("give.enabled"));
         mapGiver.setPersist(getConfig().getBoolean("give.persist"));
         mapGiver.setMessage(colorize(getConfig().getString("give.message")));
-        mapColor = getConfig().getInt("map.color");
+        mapItemColor = getConfig().getInt("map.color");
         mapName = colorize(getConfig().getString("map.name"));
         renderPlayers = getConfig().getBoolean("cursor.players");
         renderPlayerNames = getConfig().getBoolean("cursor.playerNames");
@@ -183,7 +196,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         MapMeta meta = (MapMeta) item.getItemMeta();
         meta.setMapId(mapId);
         meta.setScaling(false);
-        meta.setColor(Color.fromRGB(mapColor));
+        meta.setColor(Color.fromRGB(mapItemColor));
         meta.setLocationName("MagicMap");
         meta.setDisplayName(mapName);
         item.setItemMeta(meta);

@@ -12,6 +12,7 @@ final class SyncMapRenderer {
     public static final int BRIGHT = 2;
     public static final int DARK = 3;
     private final MagicMapPlugin plugin;
+    private final MapColor mapColor;
     private final World world;
     private final Session session;
     private final RenderType type;
@@ -55,10 +56,10 @@ final class SyncMapRenderer {
                 continue;
             }
             Material mat = world.getBlockAt(x, highest, z).getType();
-            int color = MapColor.of(mat);
+            int color = mapColor.of(mat);
             if (color == 48) { // water
                 int lbottom = highest - 1;
-                while (lbottom > 0 && color == MapColor.of(world.getBlockAt(x, lbottom, z)
+                while (lbottom > 0 && color == mapColor.of(world.getBlockAt(x, lbottom, z)
                                                            .getType())) {
                     lbottom -= 1;
                 }
@@ -136,7 +137,7 @@ final class SyncMapRenderer {
             // skip air
             while (y >= 0 && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip transparent
-            while (y >= 0 && MapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
+            while (y >= 0 && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
             return y;
         }
         case CAVE: {
@@ -154,7 +155,7 @@ final class SyncMapRenderer {
             // skip air
             while (y >= 0 && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip transparent
-            while (y >= 0 && MapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
+            while (y >= 0 && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
             return y;
         }
         case SURFACE:
@@ -163,7 +164,7 @@ final class SyncMapRenderer {
             // skip air
             while (y >= 0 && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip transparent
-            while (y >= 0 && MapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
+            while (y >= 0 && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
             return y;
         }
         }

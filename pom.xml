@@ -16,8 +16,8 @@
 
     <!-- Paper Repo -->
     <repository>
-      <id>paper-repo</id>
-      <url>https://cavetale.com/jenkins/plugin/repository/everything/</url>
+      <id>papermc</id>
+      <url>https://papermc.io/repo/repository/maven-public/</url>
     </repository>
 
   </repositories>
@@ -26,8 +26,8 @@
     <!-- Paper -->
     <dependency>
       <groupId>com.destroystokyo.paper</groupId>
-      <artifactId>paper</artifactId>
-      <version>1.16.3-R0.1-SNAPSHOT</version>
+      <artifactId>paper-api</artifactId>
+      <version>1.16.4-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
       <optional>true</optional>
     </dependency>
