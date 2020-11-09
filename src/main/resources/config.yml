@@ -7,7 +7,6 @@ cursor:
   playerNames: true
   markerArmorStands: true
   entities: false
-  async: false
   ticks: 10 # in ticks
 give:
   enabled: false

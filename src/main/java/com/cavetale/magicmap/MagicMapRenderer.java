@@ -107,30 +107,8 @@ final class MagicMapRenderer extends MapRenderer {
                 type = RenderType.SURFACE;
             }
         }
-        if (plugin.renderAsync) {
-            AsyncMapRenderer renderer = new AsyncMapRenderer(plugin, session, type,
-                                                             centerX, centerZ,
-                                                             loc.getWorld().getTime());
-            int ax = (centerX - 63) >> 4;
-            int az = (centerZ - 63) >> 4;
-            int bx = (centerX + 64) >> 4;
-            int bz = (centerZ + 64) >> 4;
-            for (int z = az; z <= bz; z += 1) {
-                for (int x = ax; x <= bx; x += 1) {
-                    if (loc.getWorld().isChunkLoaded(x, z)) {
-                        long chunkIndex = ((long) z << 32) + (long) x;
-                        renderer.chunks.put(chunkIndex, loc.getWorld().getChunkAt(x, z)
-                                            .getChunkSnapshot(false, false, false));
-                    }
-                }
-            }
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, renderer);
-        } else {
-            SyncMapRenderer renderer = new SyncMapRenderer(plugin, loc.getWorld(), session, type,
-                                                           centerX, centerZ,
-                                                           loc.getWorld().getTime());
-            plugin.getMainQueue().add(renderer);
-        }
+        SyncMapRenderer renderer = new SyncMapRenderer(plugin, loc.getWorld(), session, type, centerX, centerZ, loc.getWorld().getTime());
+        plugin.getMainQueue().add(renderer);
     }
 
     private boolean isHostile(Entity entity) {
