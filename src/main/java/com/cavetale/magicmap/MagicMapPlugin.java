@@ -52,7 +52,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     private final Map<String, String> worldNames = new HashMap<>();
     private final Map<String, Boolean> enableCaveView = new HashMap<>();
     static final String MAP_ID_PATH = "mapid.json";
-    private MapColor mapColor = new MapColor();
+    private final MapColor mapColor = new MapColor();
     Json json = new Json(this);
     // Queues
     private List<SyncMapRenderer> mainQueue = new ArrayList<>();
@@ -245,15 +245,6 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
 
     static long nowInSeconds() {
         return System.nanoTime() / 1000000000;
-    }
-
-    // --- Event calling
-
-    void callPostEvent(Session session) {
-        Player player = getServer().getPlayer(session.player);
-        if (player == null) return;
-        MagicMapPostRenderEvent event = new MagicMapPostRenderEvent(player, session);
-        getServer().getPluginManager().callEvent(event);
     }
 
     public static void triggerRerender(Player player) {

@@ -37,7 +37,7 @@ final class SyncMapRenderer {
                 session.centerZ = centerZ;
                 session.world = world.getName();
                 session.partial = partial;
-                plugin.callPostEvent(session);
+                MagicMapPostRenderEvent.call(session);
                 return false;
             }
             final int canvasX = iterX;

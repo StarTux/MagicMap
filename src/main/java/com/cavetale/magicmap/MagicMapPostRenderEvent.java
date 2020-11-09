@@ -46,4 +46,11 @@ public final class MagicMapPostRenderEvent extends Event {
     public static HandlerList getHandlerList() {
         return HANDLERS;
     }
+
+    public static void call(Session session) {
+        Player player = Bukkit.getPlayer(session.player);
+        if (player == null) return;
+        MagicMapPostRenderEvent event = new MagicMapPostRenderEvent(player, session);
+        Bukkit.getPluginManager().callEvent(event);
+    }
 }

@@ -27,8 +27,7 @@ final class MagicMapRenderer extends MapRenderer {
     }
 
     @Override
-    public void initialize(MapView mapView) {
-    }
+    public void initialize(MapView mapView) { }
 
     @Override
     public void render(MapView view, MapCanvas canvas, Player player) {
