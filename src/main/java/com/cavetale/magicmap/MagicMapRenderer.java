@@ -178,6 +178,7 @@ final class MagicMapRenderer extends MapRenderer {
         ChatColor d = ChatColor.WHITE;
         String c = ChatColor.GRAY + ",";
         cursors.addCursor(pcur);
+        MagicMapCursorsEvent.call(player, session, cursors);
         session.pasteCursors = cursors;
         session.cursoring = false;
     }
