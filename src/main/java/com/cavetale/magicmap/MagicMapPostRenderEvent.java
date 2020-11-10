@@ -32,7 +32,7 @@ public final class MagicMapPostRenderEvent extends Event {
         maxZ = centerZ + 64;
     }
 
-    World getWorld() {
+    public World getWorld() {
         return Bukkit.getWorld(worldName);
     }
 

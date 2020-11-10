@@ -33,7 +33,7 @@ public final class MagicMapCursorsEvent extends Event {
         maxZ = centerZ + 64;
     }
 
-    World getWorld() {
+    public World getWorld() {
         return Bukkit.getWorld(worldName);
     }
 

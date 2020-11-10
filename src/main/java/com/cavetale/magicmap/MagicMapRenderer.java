@@ -18,7 +18,7 @@ import org.bukkit.map.MapCursorCollection;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 
-final class MagicMapRenderer extends MapRenderer {
+public final class MagicMapRenderer extends MapRenderer {
     private final MagicMapPlugin plugin;
 
     MagicMapRenderer(final MagicMapPlugin plugin) {
@@ -183,7 +183,7 @@ final class MagicMapRenderer extends MapRenderer {
         session.cursoring = false;
     }
 
-    static MapCursor makeCursor(MapCursor.Type cursorType, Location location,
+    public static MapCursor makeCursor(MapCursor.Type cursorType, Location location,
                                 int centerX, int centerZ) {
         int dir = (int) (location.getYaw() + 11.25f);
         while (dir < 0) dir += 360;
@@ -200,7 +200,7 @@ final class MagicMapRenderer extends MapRenderer {
         return new MapCursor((byte) x, (byte) y, (byte) dir, cursorType.getValue(), true);
     }
 
-    static MapCursor makeCursor(MapCursor.Type cursorType, Block block, int centerX, int centerZ) {
+    public static MapCursor makeCursor(MapCursor.Type cursorType, Block block, int centerX, int centerZ) {
         int x = (block.getX() - centerX) * 2;
         int y = (block.getZ() - centerZ) * 2;
         if (x < -127) x = -127;
@@ -210,7 +210,7 @@ final class MagicMapRenderer extends MapRenderer {
         return new MapCursor((byte) x, (byte) y, (byte) 8, cursorType.getValue(), true);
     }
 
-    static MapCursor makeCursor(MapCursor.Type cursorType, int x, int y, int rot) {
+    public static MapCursor makeCursor(MapCursor.Type cursorType, int x, int y, int rot) {
         if (x < 0) x = 0;
         if (y < 0) y = 0;
         if (x > 127) x = 127;
