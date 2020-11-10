@@ -12,7 +12,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.MapMeta;
 
 @Getter @RequiredArgsConstructor
 final class MapGiver implements Listener {
@@ -51,11 +50,10 @@ final class MapGiver implements Listener {
         UUID uuid = player.getUniqueId();
         if (persist && getGiven().contains(uuid)) return;
         for (ItemStack item: player.getInventory()) {
-            if (item == null || item.getType() != Material.FILLED_MAP || !item.hasItemMeta()) {
+            if (item == null || item.getType() != Material.MAP || !item.hasItemMeta()) {
                 continue;
             }
-            MapMeta meta = (MapMeta) item.getItemMeta();
-            if (meta.getMapId() == plugin.getMapId()) {
+            if (item.getDurability() == plugin.getMapId()) {
                 if (persist) {
                     getGiven().add(uuid);
                     saveGiven();

@@ -4,7 +4,6 @@ map:
   name: '&dMagic Map'
 cursor:
   players: true
-  playerNames: true
   markerArmorStands: true
   entities: false
   ticks: 10 # in ticks

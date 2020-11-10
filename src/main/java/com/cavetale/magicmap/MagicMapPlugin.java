@@ -39,10 +39,8 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     private boolean debug;
     private boolean persist;
     boolean renderPlayers;
-    boolean renderPlayerNames;
     boolean renderEntities;
     boolean renderMarkerArmorStands;
-    boolean renderCoordinates = true;
     long cursorTicks = 10;
     // Tools
     private TinyFont tinyFont;
@@ -115,7 +113,6 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         mapItemColor = getConfig().getInt("map.color");
         mapName = colorize(getConfig().getString("map.name"));
         renderPlayers = getConfig().getBoolean("cursor.players");
-        renderPlayerNames = getConfig().getBoolean("cursor.playerNames");
         renderEntities = getConfig().getBoolean("cursor.entities");
         renderMarkerArmorStands = getConfig().getBoolean("cursor.markerArmorStands");
         cursorTicks = getConfig().getLong("cursor.ticks");
@@ -145,7 +142,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         } else {
             mapId = id;
         }
-        mapView = getServer().getMap(mapId);
+        mapView = getServer().getMap((short) mapId);
         if (mapView == null) {
             mapView = getServer().createMap(getServer().getWorlds().get(0));
             mapId = mapView.getId();
@@ -192,9 +189,8 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     }
 
     public ItemStack createMapItem() {
-        ItemStack item = new ItemStack(Material.FILLED_MAP);
+        ItemStack item = new ItemStack(Material.MAP, 1, (short) mapId);
         MapMeta meta = (MapMeta) item.getItemMeta();
-        meta.setMapId(mapId);
         meta.setScaling(false);
         meta.setColor(Color.fromRGB(mapItemColor));
         meta.setLocationName("MagicMap");

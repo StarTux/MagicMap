@@ -114,7 +114,6 @@ final class MagicMapRenderer extends MapRenderer {
         switch (entity.getType()) {
         case GHAST:
         case SLIME:
-        case PHANTOM:
         case MAGMA_CUBE:
         case ENDER_DRAGON:
         case SHULKER:
@@ -144,9 +143,6 @@ final class MagicMapRenderer extends MapRenderer {
                 if (Math.abs(ol.getBlockZ() - pz) > 80) continue;
                 MapCursor cur = makeCursor(MapCursor.Type.BLUE_POINTER, ol,
                                            session.centerX, session.centerZ);
-                if (plugin.renderPlayerNames) {
-                    cur.setCaption(o.getDisplayName());
-                }
                 cursors.addCursor(cur);
             }
         }
@@ -173,7 +169,6 @@ final class MagicMapRenderer extends MapRenderer {
                     Location at = e.getLocation().getBlock().getLocation();
                     MapCursor cur = makeCursor(MapCursor.Type.WHITE_CROSS, at,
                                                session.centerX, session.centerZ);
-                    cur.setCaption(name);
                     cursors.addCursor(cur);
                 }
             }
@@ -182,27 +177,7 @@ final class MagicMapRenderer extends MapRenderer {
                                     session.centerX, session.centerZ);
         ChatColor d = ChatColor.WHITE;
         String c = ChatColor.GRAY + ",";
-        pcur.setCaption(player.getDisplayName());
         cursors.addCursor(pcur);
-        if (plugin.renderCoordinates) {
-            final int y = 127;
-            final int rot = 8;
-            final MapCursor.Type type = MapCursor.Type.SMALL_WHITE_CIRCLE;
-            final int dist = 24;
-            MapCursor icur;
-            icur = makeCursor(MapCursor.Type.WHITE_CIRCLE, 0, y, rot);
-            icur.setCaption(plugin.getWorldName(player.getWorld()));
-            cursors.addCursor(icur);
-            icur = makeCursor(type, 127 - dist - dist, y, rot);
-            icur.setCaption("" + loc.getBlockX());
-            cursors.addCursor(icur);
-            icur = makeCursor(type, 127 - dist, y, rot);
-            icur.setCaption("" + loc.getBlockY());
-            cursors.addCursor(icur);
-            icur = makeCursor(type, 127, y, rot);
-            icur.setCaption("" + loc.getBlockZ());
-            cursors.addCursor(icur);
-        }
         session.pasteCursors = cursors;
         session.cursoring = false;
     }

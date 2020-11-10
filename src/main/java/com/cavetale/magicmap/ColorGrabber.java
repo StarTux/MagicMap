@@ -31,7 +31,7 @@ final class ColorGrabber {
         List<Field> list = new ArrayList<>();
         for (Field field : containerType.getDeclaredFields()) {
             if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
-            if (!field.getType().equals(objectType)) continue;
+            if (!objectType.isAssignableFrom(field.getType())) continue;
             list.add(field);
         }
         return list;
@@ -43,7 +43,6 @@ final class ColorGrabber {
             MagicMapPlugin.getInstance().getLogger().info("Using ColorGrabber for v1.16.4 on " + ver);
         }
         Class<?> blockClass = Class.forName("net.minecraft.server." + ver + ".Block");
-        Class<?> blockBaseClass = Class.forName("net.minecraft.server." + ver + ".BlockBase");
         Class<?> blocksClass = Class.forName("net.minecraft.server." + ver + ".Blocks");
         Class<?> materialMapColorClass = Class.forName("net.minecraft.server." + ver + ".MaterialMapColor");
         List<String> lines = new ArrayList<>();
@@ -52,11 +51,12 @@ final class ColorGrabber {
             try {
                 bukkitMaterial = Material.valueOf(field.getName());
             } catch (IllegalArgumentException iae) {
+                MagicMapPlugin.getInstance().getLogger().info("Unknown material: " + field.getName());
                 continue;
             }
             Object block = field.get(null);
-            Object materialMapColor = getter(block, blockBaseClass, "s");
-            Object val = getField(materialMapColor, materialMapColorClass, "aj");
+            Object materialMapColor = getField(block, blockClass, "y");
+            Object val = getField(materialMapColor, materialMapColorClass, "ad");
             lines.add("" + val + " " + bukkitMaterial.name());
         }
         if (lines.isEmpty()) throw new IllegalStateException("No colors found!");
