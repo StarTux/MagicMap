@@ -48,7 +48,7 @@ final class MagicMapRenderer extends MapRenderer {
             session.forceUpdate = false;
             session.partial = false;
             session.rendering = true;
-            session.cooldown = now + 5;
+            session.cooldown = now + plugin.renderCooldown;
             session.lastRender = now;
             Bukkit.getScheduler().runTask(plugin, () -> newRender(player, session));
         }
@@ -67,11 +67,10 @@ final class MagicMapRenderer extends MapRenderer {
         if (session.rendering) return false;
         if (session.forceUpdate) return true;
         if (now < session.cooldown) return false;
-        if (session.partial) return true;
         if (!world.equals(session.world)) return true;
         if (Math.abs(loc.getBlockX() - session.centerX) >= 32) return true;
         if (Math.abs(loc.getBlockZ() - session.centerZ) >= 32) return true;
-        return now > session.lastRender + 30L;
+        return now > session.lastRender + plugin.renderRefresh;
     }
 
     /**

@@ -44,6 +44,9 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     boolean renderMarkerArmorStands;
     boolean renderCoordinates = true;
     long cursorTicks = 10;
+    long renderCooldown = 5;
+    long renderRefresh = 30;
+    long teleportCooldown = 5;
     // Tools
     private TinyFont tinyFont;
     private MagicMapRenderer magicMapRenderer;
@@ -119,6 +122,9 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         renderEntities = getConfig().getBoolean("cursor.entities");
         renderMarkerArmorStands = getConfig().getBoolean("cursor.markerArmorStands");
         cursorTicks = getConfig().getLong("cursor.ticks");
+        renderCooldown = getConfig().getLong("render.cooldown", 5L);
+        renderRefresh = getConfig().getLong("render.refresh", 30L);
+        teleportCooldown = getConfig().getLong("render.teleportCooldown", 5L);
         worldNames.clear();
         ConfigurationSection section = getConfig().getConfigurationSection("WorldNames");
         if (section != null) {
@@ -234,7 +240,9 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         Location from = event.getFrom();
         Location to = event.getTo();
         if (isFar(from, to, 64.0)) {
-            getSession(event.getPlayer()).cooldown = nowInSeconds() + 5;
+            Session session = getSession(event.getPlayer());
+            session.cooldown = nowInSeconds() + teleportCooldown;
+            session.lastRender = 0L;
         }
     }
 
