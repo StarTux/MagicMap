@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.Getter;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -23,8 +24,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
-import org.bukkit.metadata.FixedMetadataValue;
-import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
@@ -59,6 +58,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     Json json = new Json(this);
     // Queues
     private List<SyncMapRenderer> mainQueue = new ArrayList<>();
+    private Map<UUID, Session> sessions = new HashMap<>();
 
     // --- Plugin
 
@@ -88,9 +88,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         resetMapView();
-        for (Player player: getServer().getOnlinePlayers()) {
-            player.removeMetadata("magicmap.session", this);
-        }
+        sessions.clear();
     }
 
     // --- Configuration
@@ -180,12 +178,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     // --- Utility
 
     Session getSession(Player player) {
-        for (MetadataValue v: player.getMetadata("magicmap.session")) {
-            if (v.getOwningPlugin().equals(this)) return (Session) v.value();
-        }
-        Session session = new Session(player.getUniqueId());
-        player.setMetadata("magicmap.session", new FixedMetadataValue(this, session));
-        return session;
+        return sessions.computeIfAbsent(player.getUniqueId(), Session::new);
     }
 
     private void resetMapView() {
@@ -220,7 +213,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        event.getPlayer().removeMetadata("magicmap.session", this);
+        sessions.remove(event.getPlayer().getUniqueId());
     }
 
     @EventHandler

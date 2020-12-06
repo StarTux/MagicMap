@@ -27,9 +27,7 @@ final class MagicMapCommand implements TabExecutor {
             plugin.importConfig();
             plugin.getMapGiver().reset();
             plugin.loadMapColors();
-            for (Player target: plugin.getServer().getOnlinePlayers()) {
-                target.removeMetadata("magicmap.session", plugin);
-            }
+            plugin.getSessions().clear();
             sender.sendMessage("MagicMap config reloaded");
             return true;
         }
