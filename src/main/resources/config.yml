@@ -3,9 +3,12 @@ map:
   color: 0
   name: '&dMagic Map'
 render:
-  cooldown: 5 # seconds
-  refresh: 30 # alwyas refresh after x seconds
-  teleportCooldown: 5 # wait x seconds after (far) teleport
+  # seconds
+  cooldown: 5
+  # always refresh after x seconds
+  refresh: 30
+  # wait x seconds after (far) teleport
+  teleportCooldown: 5
 cursor:
   players: true
   playerNames: true
