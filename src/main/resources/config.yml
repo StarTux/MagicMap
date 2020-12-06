@@ -4,7 +4,7 @@ map:
   name: '&dMagic Map'
 render:
   cooldown: 5 # seconds
-  refresh: # alwyas refresh after x seconds
+  refresh: 30 # alwyas refresh after x seconds
   teleportCooldown: 5 # wait x seconds after (far) teleport
 cursor:
   players: true
