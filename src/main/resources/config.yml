@@ -10,11 +10,13 @@ render:
   # wait x seconds after (far) teleport
   teleportCooldown: 5
 cursor:
+  enabled: true
   players: true
   playerNames: true
   markerArmorStands: true
   entities: false
   ticks: 10 # in ticks
+  coordinates: true
 give:
   enabled: false
   persist: true
