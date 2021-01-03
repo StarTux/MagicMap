@@ -12,9 +12,13 @@ render:
 cursor:
   enabled: true
   players: true
+  maxPlayers: 16
   playerNames: true
+  monsters: false
+  maxMonsters: 32
+  animals: false
+  maxAnimals: 32
   markerArmorStands: true
-  entities: false
   ticks: 10 # in ticks
   coordinates: true
 give:

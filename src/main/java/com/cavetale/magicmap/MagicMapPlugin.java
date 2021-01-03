@@ -39,8 +39,12 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     private boolean persist;
     boolean doCursors;
     boolean renderPlayers;
+    int maxPlayers;
     boolean renderPlayerNames;
-    boolean renderEntities;
+    boolean renderAnimals;
+    int maxAnimals;
+    boolean renderMonsters;
+    int maxMonsters;
     boolean renderMarkerArmorStands;
     boolean renderCoordinates;
     long cursorTicks = 10;
@@ -118,8 +122,12 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         mapName = colorize(getConfig().getString("map.name"));
         doCursors = getConfig().getBoolean("cursor.enabled");
         renderPlayers = getConfig().getBoolean("cursor.players");
+        maxPlayers = getConfig().getInt("cursor.maxPlayers");
         renderPlayerNames = getConfig().getBoolean("cursor.playerNames");
-        renderEntities = getConfig().getBoolean("cursor.entities");
+        renderAnimals = getConfig().getBoolean("cursor.animals");
+        maxAnimals = getConfig().getInt("cursor.maxAnimals");
+        renderMonsters = getConfig().getBoolean("cursor.monsters");
+        maxMonsters = getConfig().getInt("cursor.maxMonsters");
         renderCoordinates = getConfig().getBoolean("cursor.coordinates");
         renderMarkerArmorStands = getConfig().getBoolean("cursor.markerArmorStands");
         cursorTicks = getConfig().getLong("cursor.ticks");

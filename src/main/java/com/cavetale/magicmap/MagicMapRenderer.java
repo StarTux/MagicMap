@@ -2,6 +2,7 @@ package com.cavetale.magicmap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -132,48 +133,77 @@ final class MagicMapRenderer extends MapRenderer {
         final Location loc = player.getLocation();
         final int px = loc.getBlockX();
         final int pz = loc.getBlockZ();
+        int minX = session.centerX - 63;
+        int minZ = session.centerZ - 63;
+        int maxX = session.centerX + 64;
+        int maxZ = session.centerZ + 64;
         MapCursorCollection cursors = new MapCursorCollection();
-        if (plugin.renderPlayers) {
-            for (Player o: player.getWorld().getPlayers()) {
-                if (player.equals(o)) continue;
-                if (!player.canSee(o)) continue;
-                if (o.getGameMode() == GameMode.SPECTATOR) continue;
-                Location ol = o.getLocation();
-                if (Math.abs(ol.getBlockX() - px) > 80) continue;
-                if (Math.abs(ol.getBlockZ() - pz) > 80) continue;
-                MapCursor cur = makeCursor(MapCursor.Type.BLUE_POINTER, ol,
-                                           session.centerX, session.centerZ);
-                if (plugin.renderPlayerNames) {
-                    cur.setCaption(o.getDisplayName());
-                }
-                cursors.addCursor(cur);
-            }
-        }
-        if (plugin.renderEntities || plugin.renderMarkerArmorStands) {
-            for (Entity e: player.getNearbyEntities(64, 24, 64)) {
-                if (e instanceof Player) continue;
-                if (!(e instanceof LivingEntity)) continue;
-                if (isHostile(e)) {
-                    if (!plugin.renderEntities) continue;
-                    Location at = e.getLocation();
-                    cursors.addCursor(makeCursor(MapCursor.Type.RED_POINTER, at,
-                                                 session.centerX, session.centerZ));
-                } else if (e instanceof Animals) {
-                    if (!plugin.renderEntities) continue;
-                    Location at = e.getLocation().getBlock().getLocation();
-                    cursors.addCursor(makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, at,
-                                                 session.centerX, session.centerZ));
-                } else if (e instanceof ArmorStand) {
-                    if (!plugin.renderMarkerArmorStands) continue;
-                    ArmorStand stand = (ArmorStand) e;
-                    if (!stand.isMarker()) continue;
-                    String name = stand.getCustomName();
-                    if (name == null || name.isEmpty()) continue;
-                    Location at = e.getLocation().getBlock().getLocation();
-                    MapCursor cur = makeCursor(MapCursor.Type.WHITE_CROSS, at,
-                                               session.centerX, session.centerZ);
-                    cur.setCaption(name);
-                    cursors.addCursor(cur);
+        World world = player.getWorld();
+        if (plugin.renderAnimals || plugin.renderMonsters || plugin.renderMarkerArmorStands || plugin.renderPlayers) {
+            int minChunkX = minX >> 4;
+            int maxChunkX = maxX >> 4;
+            int minChunkZ = minZ >> 4;
+            int maxChunkZ = maxZ >> 4;
+            int animals = 0;
+            int monsters = 0;
+            int players = 0;
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ += 1) {
+                for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX += 1) {
+                    if (!world.isChunkLoaded(chunkX, chunkZ)) continue;
+                    Chunk chunk = world.getChunkAt(chunkX, chunkZ);
+                    for (Entity e: chunk.getEntities()) {
+                        if (!(e instanceof LivingEntity)) continue;
+                        Location at = e.getLocation();
+                        int x = at.getBlockX();
+                        int z = at.getBlockZ();
+                        if (x < minX || x > maxX) continue;
+                        if (z < minZ || z > maxZ) continue;
+                        MapCursor mapCursor;
+                        if (isHostile(e)) {
+                            if (!plugin.renderMonsters) continue;
+                            if (monsters++ >= plugin.maxMonsters) continue;
+                            mapCursor = makeCursor(MapCursor.Type.RED_POINTER, at, session.centerX, session.centerZ);
+                            String customName = e.getCustomName();
+                            if (customName != null && !customName.isEmpty()) {
+                                mapCursor.setCaption(customName);
+                            }
+                        } else if (e instanceof Animals) {
+                            if (!plugin.renderAnimals) continue;
+                            if (animals++ >= plugin.maxAnimals) continue;
+                            at.setPitch(0);
+                            at.setYaw(0);
+                            mapCursor = makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, at, session.centerX, session.centerZ);
+                            String customName = e.getCustomName();
+                            if (customName != null && !customName.isEmpty()) {
+                                mapCursor.setCaption(customName);
+                            }
+                        } else if (e instanceof ArmorStand) {
+                            if (!plugin.renderMarkerArmorStands) continue;
+                            ArmorStand stand = (ArmorStand) e;
+                            if (!stand.isMarker()) continue;
+                            String name = stand.getCustomName();
+                            if (name == null || name.isEmpty()) continue;
+                            at.setPitch(0);
+                            at.setYaw(0);
+                            mapCursor = makeCursor(MapCursor.Type.WHITE_CROSS, at, session.centerX, session.centerZ);
+                            mapCursor.setCaption(name);
+                        } else if (e instanceof Player) {
+                            if (!plugin.renderPlayers) continue;
+                            if (players++ >= plugin.maxPlayers) continue;
+                            Player o = (Player) e;
+                            if (player.equals(o)) continue;
+                            if (!player.canSee(o)) continue;
+                            if (o.getGameMode() == GameMode.SPECTATOR) continue;
+                            if (o.isSneaking()) continue;
+                            mapCursor = makeCursor(MapCursor.Type.BLUE_POINTER, at, session.centerX, session.centerZ);
+                            if (plugin.renderPlayerNames) {
+                                mapCursor.setCaption(o.getDisplayName());
+                            }
+                        } else {
+                            continue;
+                        }
+                        cursors.addCursor(mapCursor);
+                    }
                 }
             }
         }
@@ -187,7 +217,7 @@ final class MagicMapRenderer extends MapRenderer {
             final int y = 127;
             final int rot = 8;
             final MapCursor.Type type = MapCursor.Type.SMALL_WHITE_CIRCLE;
-            final int dist = 24;
+            final int dist = 20;
             MapCursor icur;
             icur = makeCursor(MapCursor.Type.WHITE_CIRCLE, 0, y, rot);
             icur.setCaption(plugin.getWorldName(player.getWorld()));
@@ -206,8 +236,7 @@ final class MagicMapRenderer extends MapRenderer {
         session.cursoring = false;
     }
 
-    static MapCursor makeCursor(MapCursor.Type cursorType, Location location,
-                                int centerX, int centerZ) {
+    static MapCursor makeCursor(MapCursor.Type cursorType, Location location, int centerX, int centerZ) {
         int dir = (int) (location.getYaw() + 11.25f);
         while (dir < 0) dir += 360;
         while (dir > 360) dir -= 360;
