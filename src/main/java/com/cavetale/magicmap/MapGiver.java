@@ -63,8 +63,7 @@ final class MapGiver implements Listener {
                 return;
             }
         }
-        ItemStack newMap = plugin.createMapItem();
-        if (player.getInventory().addItem(newMap).isEmpty()) {
+        if (plugin.giveMapItem(player)) {
             if (persist) {
                 getGiven().add(uuid);
                 saveGiven();

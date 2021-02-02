@@ -55,7 +55,7 @@ final class MagicMapCommand implements TabExecutor {
             } else {
                 target = player;
             }
-            if (target.getInventory().addItem(plugin.createMapItem()).isEmpty()) {
+            if (plugin.giveMapItem(target)) {
                 sender.sendMessage("MagicMap given to " + target.getName());
             } else {
                 sender.sendMessage("Could not give MagicMap to " + target.getName()

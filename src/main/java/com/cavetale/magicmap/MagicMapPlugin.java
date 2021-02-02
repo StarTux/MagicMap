@@ -264,4 +264,20 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         if (player == null) throw new NullPointerException("Player cannot be null!");
         instance.getSession(player).forceUpdate = true;
     }
+
+    public static boolean giveMapItem(Player player) {
+        ItemStack mapItem = instance.createMapItem();
+        ItemStack old;
+        old = player.getInventory().getItemInOffHand();
+        if (old == null || old.getAmount() == 0) {
+            player.getInventory().setItemInOffHand(mapItem);
+            return true;
+        }
+        old = player.getInventory().getItemInMainHand();
+        if (old == null || old.getAmount() == 0) {
+            player.getInventory().setItemInMainHand(mapItem);
+            return true;
+        }
+        return player.getInventory().addItem(mapItem).isEmpty();
+    }
 }
