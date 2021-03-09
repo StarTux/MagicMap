@@ -1,5 +1,6 @@
 package com.cavetale.magicmap;
 
+import com.cavetale.magicmap.mytems.MagicMapMytem;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapRenderer;
@@ -64,6 +66,8 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     // Queues
     private List<SyncMapRenderer> mainQueue = new ArrayList<>();
     private Map<UUID, Session> sessions = new HashMap<>();
+    // Mytems
+    protected MagicMapMytem magicMapMytem;
 
     // --- Plugin
 
@@ -81,13 +85,21 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         magicMapCommand = new MagicMapCommand(this);
         getCommand("magicmap").setExecutor(magicMapCommand);
         importConfig();
+        getServer().getScheduler().runTaskTimer(this, () -> onTick(), 1L, 1L);
+        getServer().getPluginManager().registerEvents(this, this);
+        if (getServer().getPluginManager().isPluginEnabled("Mytems")) {
+            magicMapMytem = new MagicMapMytem(this);
+            magicMapMytem.register();
+            getLogger().info("Mytem registered!");
+            for (Player player : getServer().getOnlinePlayers()) {
+                magicMapMytem.fixPlayerInventory(player);
+            }
+        }
         if (mapGiver.isEnabled()) {
-            for (Player player: getServer().getOnlinePlayers()) {
+            for (Player player : getServer().getOnlinePlayers()) {
                 mapGiver.maybeGiveMap(player);
             }
         }
-        getServer().getScheduler().runTaskTimer(this, () -> onTick(), 1L, 1L);
-        getServer().getPluginManager().registerEvents(this, this);
     }
 
     @Override
@@ -209,6 +221,9 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         meta.setColor(Color.fromRGB(mapItemColor));
         meta.setLocationName("MagicMap");
         meta.setDisplayName(mapName);
+        if (magicMapMytem != null) {
+            magicMapMytem.markItemMeta(meta);
+        }
         item.setItemMeta(meta);
         return item;
     }
@@ -230,6 +245,18 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         getSession(event.getPlayer()).cooldown = nowInSeconds() + 5;
+        if (magicMapMytem != null) {
+            magicMapMytem.fixPlayerInventory(event.getPlayer());
+        }
+    }
+
+    @EventHandler
+    public void onPluginEnable(PluginEnableEvent event) {
+        if (event.getPlugin().getName().equals("Mytems")) {
+            magicMapMytem = new MagicMapMytem(this);
+            magicMapMytem.register();
+            getLogger().info("Mytem registered!");
+        }
     }
 
     private static boolean isFar(Location a, Location b, double far) {
@@ -279,5 +306,13 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
             return true;
         }
         return player.getInventory().addItem(mapItem).isEmpty();
+    }
+
+    public static boolean isMagicMap(ItemStack itemStack) {
+        if (itemStack == null || itemStack.getType() != Material.FILLED_MAP || !itemStack.hasItemMeta()) {
+            return false;
+        }
+        MapMeta meta = (MapMeta) itemStack.getItemMeta();
+        return meta.getMapId() == instance.mapId;
     }
 }

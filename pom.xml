@@ -37,7 +37,15 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <version>1.18.16</version>
-      <scope>compile</scope>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Mytems -->
+    <dependency>
+      <groupId>com.cavetale.mytems</groupId>
+      <artifactId>mytems</artifactId>
+      <version>0.1-SNAPSHOT</version>
+      <scope>provided</scope>
     </dependency>
 
   </dependencies>

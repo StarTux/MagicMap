@@ -50,7 +50,7 @@ final class MapGiver implements Listener {
         if (!player.hasPermission("magicmap.receive")) return;
         UUID uuid = player.getUniqueId();
         if (persist && getGiven().contains(uuid)) return;
-        for (ItemStack item: player.getInventory()) {
+        for (ItemStack item : player.getInventory()) {
             if (item == null || item.getType() != Material.FILLED_MAP || !item.hasItemMeta()) {
                 continue;
             }

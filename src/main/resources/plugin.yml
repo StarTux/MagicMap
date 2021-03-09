@@ -6,7 +6,7 @@ api-version: 1.13
 website: https://github.com/StarTux/MagicMap
 main: com.cavetale.magicmap.MagicMapPlugin
 depend: []
-softdepend: []
+softdepend: [Mytems]
 commands:
   magicmap:
     description: Debug command
