@@ -6,8 +6,9 @@ import com.cavetale.mytems.Mytems;
 import com.cavetale.mytems.MytemsPlugin;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -16,9 +17,12 @@ import org.bukkit.inventory.meta.ItemMeta;
 public final class MagicMapMytem implements Mytem {
     private final MagicMapPlugin plugin;
     private final Mytems key = Mytems.MAGIC_MAP;
+    private Component displayName;
 
     @Override
-    public void enable() { }
+    public void enable() {
+        displayName = Component.text("Magic Map").color(NamedTextColor.LIGHT_PURPLE).decoration(TextDecoration.ITALIC, false);
+    }
 
     @Override
     public ItemStack getItem() {
@@ -26,8 +30,13 @@ public final class MagicMapMytem implements Mytem {
     }
 
     @Override
-    public BaseComponent[] getDisplayName() {
-        return TextComponent.fromLegacyText(plugin.getMapName());
+    public ItemStack createItemStack() {
+        return plugin.createMapItem();
+    }
+
+    @Override
+    public ItemStack createItemStack(Player player) {
+        return plugin.createMapItem();
     }
 
     public void markItemMeta(ItemMeta meta) {
