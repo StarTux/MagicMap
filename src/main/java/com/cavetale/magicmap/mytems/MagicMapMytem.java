@@ -25,17 +25,7 @@ public final class MagicMapMytem implements Mytem {
     }
 
     @Override
-    public ItemStack getItem() {
-        return plugin.createMapItem();
-    }
-
-    @Override
     public ItemStack createItemStack() {
-        return plugin.createMapItem();
-    }
-
-    @Override
-    public ItemStack createItemStack(Player player) {
         return plugin.createMapItem();
     }
 
