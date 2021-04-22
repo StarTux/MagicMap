@@ -197,7 +197,7 @@ final class MagicMapRenderer extends MapRenderer {
                             if (o.isSneaking()) continue;
                             mapCursor = makeCursor(MapCursor.Type.BLUE_POINTER, at, session.centerX, session.centerZ);
                             if (plugin.renderPlayerNames) {
-                                mapCursor.setCaption(o.getDisplayName());
+                                mapCursor.caption(o.displayName());
                             }
                         } else {
                             continue;
@@ -211,7 +211,7 @@ final class MagicMapRenderer extends MapRenderer {
                                     session.centerX, session.centerZ);
         ChatColor d = ChatColor.WHITE;
         String c = ChatColor.GRAY + ",";
-        pcur.setCaption(player.getDisplayName());
+        pcur.caption(player.displayName());
         cursors.addCursor(pcur);
         if (plugin.renderCoordinates) {
             final int y = 127;
