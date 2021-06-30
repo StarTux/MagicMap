@@ -1,9 +1,9 @@
 package com.cavetale.magicmap;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import lombok.Getter;
 import org.bukkit.Material;
 
@@ -20,11 +20,11 @@ public final class MapColor {
         return colors[mat.ordinal()];
     }
 
-    public boolean load(File file) {
+    public boolean load(InputStream inputStream) {
         Material[] mats = Material.values();
         count = 0;
         colors = new int[mats.length];
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
             String line;
             while (null != (line = reader.readLine())) {
                 line = line.trim();

@@ -2,6 +2,10 @@ package com.cavetale.magicmap;
 
 import com.cavetale.magicmap.mytems.MagicMapMytem;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -112,8 +116,17 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
 
     void loadMapColors() {
         File file = new File(getDataFolder(), "colors.txt");
-        if (!file.exists()) saveResource("colors.txt", true);
-        if (!mapColor.load(file)) {
+        InputStream inputStream;
+        if (file.exists()) {
+            try {
+                inputStream = new FileInputStream(file);
+            } catch (FileNotFoundException fnfe) {
+                throw new UncheckedIOException(fnfe);
+            }
+        } else {
+            inputStream = getResource("colors.txt");
+        }
+        if (!mapColor.load(inputStream)) {
             getLogger().warning("Failed to load colors!");
         } else {
             getLogger().info(mapColor.getCount() + " map colors loaded");

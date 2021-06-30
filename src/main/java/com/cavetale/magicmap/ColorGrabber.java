@@ -5,7 +5,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import lombok.Value;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 
@@ -37,33 +39,59 @@ final class ColorGrabber {
         return list;
     }
 
-    static void grab(File file) throws Exception {
+    @Value
+    public static final class ColorIndex implements Comparable<ColorIndex> {
+        protected final int index;
+        protected final Material material;
+
+        @Override
+        public int compareTo(ColorIndex other) {
+            return Integer.compare(index, other.index);
+        }
+
+        @Override
+        public String toString() {
+            return "" + index + " " + material;
+        }
+    }
+
+    static void grab(File output) throws Exception {
         String ver = getServerVersion();
-        if (!ver.equals("v1_16_R3")) {
-            MagicMapPlugin.getInstance().getLogger().info("Using ColorGrabber for v1.16.4 on " + ver);
+        String expectedVersion = "v1_17_R1";
+        if (!ver.equals(expectedVersion)) {
+            MagicMapPlugin.getInstance().getLogger().warning("Using ColorGrabber for " + expectedVersion + " on " + ver);
         }
-        Class<?> blockClass = Class.forName("net.minecraft.server." + ver + ".Block");
-        Class<?> blockBaseClass = Class.forName("net.minecraft.server." + ver + ".BlockBase");
-        Class<?> blocksClass = Class.forName("net.minecraft.server." + ver + ".Blocks");
-        Class<?> materialMapColorClass = Class.forName("net.minecraft.server." + ver + ".MaterialMapColor");
-        List<String> lines = new ArrayList<>();
+        Class<?> blockClass = Class.forName("net.minecraft.world.level.block.Block");
+        Class<?> blockBaseClass = Class.forName("net.minecraft.world.level.block.state.BlockBase");
+        Class<?> blocksClass = Class.forName("net.minecraft.world.level.block.Blocks");
+        Class<?> materialMapColorClass = Class.forName("net.minecraft.world.level.material.MaterialMapColor");
+        List<ColorIndex> indexList = new ArrayList<>();
+        // All fields in Blocks
         for (Field field : getStaticFields(blocksClass, blockClass)) {
-            Material bukkitMaterial;
-            try {
-                bukkitMaterial = Material.valueOf(field.getName());
-            } catch (IllegalArgumentException iae) {
-                continue;
-            }
             Object block = field.get(null);
+            // BlockBase::s() => MaterialMapColor
             Object materialMapColor = getter(block, blockBaseClass, "s");
-            Object val = getField(materialMapColor, materialMapColorClass, "aj");
-            lines.add("" + val + " " + bukkitMaterial.name());
+            // MaterialMapColor.am => int (color id)
+            int index = (Integer) getField(materialMapColor, materialMapColorClass, "am");
+            // BlockBase::r() => MinecraftKey
+            Object key = getter(block, blockBaseClass, "r"); // MinecraftKey
+            String str = key.toString();
+            int idx = str.lastIndexOf("/");
+            if (idx < 0) continue;
+            String mat = str.substring(idx + 1);
+            try {
+                final Material material = Material.valueOf(mat.toUpperCase());
+                indexList.add(new ColorIndex(index, material));
+            } catch (IllegalArgumentException iae) {
+                MagicMapPlugin.getInstance().getLogger().warning("Illegal material: " + mat);
+            }
         }
-        if (lines.isEmpty()) throw new IllegalStateException("No colors found!");
-        try (java.io.PrintStream out = new java.io.PrintStream(file)) {
+        if (indexList.isEmpty()) throw new IllegalStateException("No colors found!");
+        Collections.sort(indexList);
+        try (java.io.PrintStream out = new java.io.PrintStream(output)) {
             out.println("# " + ver);
-            for (String line : lines) {
-                out.println(line);
+            for (ColorIndex colorIndex : indexList) {
+                out.println(colorIndex);
             }
         }
     }
