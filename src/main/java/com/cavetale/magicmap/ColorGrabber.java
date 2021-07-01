@@ -72,18 +72,20 @@ final class ColorGrabber {
             // BlockBase::s() => MaterialMapColor
             Object materialMapColor = getter(block, blockBaseClass, "s");
             // MaterialMapColor.am => int (color id)
-            int index = (Integer) getField(materialMapColor, materialMapColorClass, "am");
+            int colorIndex = (Integer) getField(materialMapColor, materialMapColorClass, "am");
             // BlockBase::r() => MinecraftKey
-            Object key = getter(block, blockBaseClass, "r"); // MinecraftKey
-            String str = key.toString();
-            int idx = str.lastIndexOf("/");
-            if (idx < 0) continue;
-            String mat = str.substring(idx + 1);
+            String key = (String) getter(block, blockClass, "h");
+            int idx = key.lastIndexOf(".");
+            if (idx < 0) {
+                MagicMapPlugin.getInstance().getLogger().warning("Illegal material: " + key + " / " + colorIndex);
+                continue;
+            }
+            String mat = key.substring(idx + 1);
             try {
                 final Material material = Material.valueOf(mat.toUpperCase());
-                indexList.add(new ColorIndex(index, material));
+                indexList.add(new ColorIndex(colorIndex, material));
             } catch (IllegalArgumentException iae) {
-                MagicMapPlugin.getInstance().getLogger().warning("Illegal material: " + mat);
+                MagicMapPlugin.getInstance().getLogger().warning("Illegal material: " + mat + "/" + colorIndex);
             }
         }
         if (indexList.isEmpty()) throw new IllegalStateException("No colors found!");
