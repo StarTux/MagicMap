@@ -11,6 +11,7 @@ import org.bukkit.entity.Animals;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Mob;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.map.MapCanvas;
@@ -159,9 +160,11 @@ final class MagicMapRenderer extends MapRenderer {
                         if (x < minX || x > maxX) continue;
                         if (z < minZ || z > maxZ) continue;
                         MapCursor mapCursor;
-                        if (isHostile(e)) {
+                        if (e instanceof Mob && isHostile(e)) {
                             if (!plugin.renderMonsters) continue;
                             if (monsters++ >= plugin.maxMonsters) continue;
+                            Mob mob = (Mob) e;
+                            if (mob.isInvisible()) continue;
                             mapCursor = makeCursor(MapCursor.Type.RED_POINTER, at, session.centerX, session.centerZ);
                             String customName = e.getCustomName();
                             if (customName != null && !customName.isEmpty()) {
@@ -170,6 +173,8 @@ final class MagicMapRenderer extends MapRenderer {
                         } else if (e instanceof Animals) {
                             if (!plugin.renderAnimals) continue;
                             if (animals++ >= plugin.maxAnimals) continue;
+                            Mob mob = (Mob) e; // Mob instanceof Animals!
+                            if (mob.isInvisible()) continue;
                             at.setPitch(0);
                             at.setYaw(0);
                             mapCursor = makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, at, session.centerX, session.centerZ);
@@ -181,6 +186,7 @@ final class MagicMapRenderer extends MapRenderer {
                             if (!plugin.renderMarkerArmorStands) continue;
                             ArmorStand stand = (ArmorStand) e;
                             if (!stand.isMarker()) continue;
+                            if (stand.hasMetadata("nomap")) continue;
                             String name = stand.getCustomName();
                             if (name == null || name.isEmpty()) continue;
                             at.setPitch(0);
@@ -191,6 +197,7 @@ final class MagicMapRenderer extends MapRenderer {
                             if (!plugin.renderPlayers) continue;
                             if (players++ >= plugin.maxPlayers) continue;
                             Player o = (Player) e;
+                            if (o.isInvisible()) continue;
                             if (player.equals(o)) continue;
                             if (!player.canSee(o)) continue;
                             if (o.getGameMode() == GameMode.SPECTATOR) continue;
