@@ -165,6 +165,7 @@ final class MagicMapRenderer extends MapRenderer {
                             if (monsters++ >= plugin.maxMonsters) continue;
                             Mob mob = (Mob) e;
                             if (mob.isInvisible()) continue;
+                            if (mob.hasMetadata("nomap")) continue;
                             mapCursor = makeCursor(MapCursor.Type.RED_POINTER, at, session.centerX, session.centerZ);
                             String customName = e.getCustomName();
                             if (customName != null && !customName.isEmpty()) {
@@ -175,6 +176,7 @@ final class MagicMapRenderer extends MapRenderer {
                             if (animals++ >= plugin.maxAnimals) continue;
                             Mob mob = (Mob) e; // Mob instanceof Animals!
                             if (mob.isInvisible()) continue;
+                            if (mob.hasMetadata("nomap")) continue;
                             at.setPitch(0);
                             at.setYaw(0);
                             mapCursor = makeCursor(MapCursor.Type.SMALL_WHITE_CIRCLE, at, session.centerX, session.centerZ);
@@ -197,6 +199,7 @@ final class MagicMapRenderer extends MapRenderer {
                             if (!plugin.renderPlayers) continue;
                             if (players++ >= plugin.maxPlayers) continue;
                             Player o = (Player) e;
+                            if (o.hasMetadata("nomap")) continue;
                             if (o.isInvisible()) continue;
                             if (player.equals(o)) continue;
                             if (!player.canSee(o)) continue;
