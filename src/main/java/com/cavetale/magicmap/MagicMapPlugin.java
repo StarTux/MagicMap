@@ -49,6 +49,8 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     boolean renderPlayerNames;
     boolean renderAnimals;
     int maxAnimals;
+    boolean renderVillagers;
+    int maxVillagers;
     boolean renderMonsters;
     int maxMonsters;
     boolean renderMarkerArmorStands;
@@ -151,6 +153,8 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         renderPlayerNames = getConfig().getBoolean("cursor.playerNames");
         renderAnimals = getConfig().getBoolean("cursor.animals");
         maxAnimals = getConfig().getInt("cursor.maxAnimals");
+        renderVillagers = getConfig().getBoolean("cursor.villagers");
+        maxVillagers = getConfig().getInt("cursor.maxVillagers");
         renderMonsters = getConfig().getBoolean("cursor.monsters");
         maxMonsters = getConfig().getInt("cursor.maxMonsters");
         renderCoordinates = getConfig().getBoolean("cursor.coordinates");

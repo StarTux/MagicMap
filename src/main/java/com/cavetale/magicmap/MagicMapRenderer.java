@@ -1,5 +1,6 @@
 package com.cavetale.magicmap;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
@@ -14,6 +15,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Villager;
 import org.bukkit.map.MapCanvas;
 import org.bukkit.map.MapCursor;
 import org.bukkit.map.MapCursorCollection;
@@ -140,12 +142,13 @@ final class MagicMapRenderer extends MapRenderer {
         int maxZ = session.centerZ + 64;
         MapCursorCollection cursors = new MapCursorCollection();
         World world = player.getWorld();
-        if (plugin.renderAnimals || plugin.renderMonsters || plugin.renderMarkerArmorStands || plugin.renderPlayers) {
+        if (plugin.renderAnimals || plugin.renderVillagers || plugin.renderMonsters || plugin.renderMarkerArmorStands || plugin.renderPlayers) {
             int minChunkX = minX >> 4;
             int maxChunkX = maxX >> 4;
             int minChunkZ = minZ >> 4;
             int maxChunkZ = maxZ >> 4;
             int animals = 0;
+            int villagers = 0;
             int monsters = 0;
             int players = 0;
             for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ += 1) {
@@ -183,6 +186,17 @@ final class MagicMapRenderer extends MapRenderer {
                             String customName = e.getCustomName();
                             if (customName != null && !customName.isEmpty()) {
                                 mapCursor.setCaption(customName);
+                            }
+                        } else if (e instanceof Villager) {
+                            if (!plugin.renderVillagers) continue;
+                            if (villagers++ >= plugin.maxVillagers) continue;
+                            Villager villager = (Villager) e;
+                            if (villager.isInvisible()) continue;
+                            if (villager.hasMetadata("nomap")) continue;
+                            mapCursor = makeCursor(MapCursor.Type.WHITE_POINTER, at, session.centerX, session.centerZ);
+                            Component customName = e.customName();
+                            if (customName != null && !Component.empty().equals(customName)) {
+                                mapCursor.caption(customName);
                             }
                         } else if (e instanceof ArmorStand) {
                             if (!plugin.renderMarkerArmorStands) continue;
