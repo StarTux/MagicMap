@@ -258,7 +258,9 @@ final class MagicMapRenderer extends MapRenderer {
             icur.setCaption("" + loc.getBlockZ());
             cursors.addCursor(icur);
         }
-        new MagicMapCursorEvent(player, cursors, minX, minZ, maxX, maxZ).callEvent();
+        new MagicMapCursorEvent(player, cursors,
+                                session.centerX, session.centerZ,
+                                minX, minZ, maxX, maxZ).callEvent();
         session.pasteCursors = cursors;
         session.cursoring = false;
     }

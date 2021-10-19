@@ -17,6 +17,8 @@ public final class MagicMapCursorEvent extends Event {
     @Getter protected static HandlerList handlerList = new HandlerList();
     protected final Player player;
     protected final MapCursorCollection cursors;
+    protected final int centerX;
+    protected final int centerZ;
     protected final int minX;
     protected final int minZ;
     protected final int maxX;
