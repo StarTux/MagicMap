@@ -1,5 +1,6 @@
 package com.cavetale.magicmap;
 
+import com.cavetale.magicmap.event.MagicMapCursorEvent;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -256,6 +257,7 @@ final class MagicMapRenderer extends MapRenderer {
             icur.setCaption("" + loc.getBlockZ());
             cursors.addCursor(icur);
         }
+        new MagicMapCursorEvent(player, cursors, minX, minZ, maxX, maxZ).callEvent();
         session.pasteCursors = cursors;
         session.cursoring = false;
     }
