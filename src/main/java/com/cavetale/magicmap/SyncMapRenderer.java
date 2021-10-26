@@ -146,7 +146,7 @@ final class SyncMapRenderer {
             while (y >= 0 && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             while (y >= 0) { // skip sunlit blocks
                 Block block = world.getBlockAt(x, y, z);
-                if (!block.isEmpty() || block.getLightFromSky() > 0) {
+                if (!block.isEmpty() || block.getLightFromSky() == 15) {
                     y -= 1;
                 } else {
                     break;
