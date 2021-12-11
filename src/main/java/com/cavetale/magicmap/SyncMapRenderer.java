@@ -129,22 +129,24 @@ final class SyncMapRenderer {
             partial = true;
             return -1;
         }
+        final int min = world.getMinHeight();
+        final int max = world.getMaxHeight();
         switch (type) {
         case NETHER: {
-            int y = 127;
+            int y = max;
             // skip blocks
-            while (y >= 0 && !world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+            while (y >= min && !world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip air
-            while (y >= 0 && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+            while (y >= min && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip transparent
-            while (y >= 0 && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
+            while (y >= min && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
             return y;
         }
         case CAVE: {
-            int y = 255;
+            int y = max;
             // skip air
-            while (y >= 0 && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
-            while (y >= 0) { // skip sunlit blocks
+            while (y >= min && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+            while (y >= min) { // skip sunlit blocks
                 Block block = world.getBlockAt(x, y, z);
                 if (!block.isEmpty() || block.getLightFromSky() == 15) {
                     y -= 1;
@@ -153,18 +155,18 @@ final class SyncMapRenderer {
                 }
             }
             // skip air
-            while (y >= 0 && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+            while (y >= min && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip transparent
-            while (y >= 0 && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
+            while (y >= min && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
             return y;
         }
         case SURFACE:
         default: {
-            int y = 255;
+            int y = max;
             // skip air
-            while (y >= 0 && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+            while (y >= min && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip transparent
-            while (y >= 0 && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
+            while (y >= min && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
             return y;
         }
         }
