@@ -72,7 +72,7 @@ final class ColorGrabber {
             // BlockBase::s() => MaterialMapColor
             Object materialMapColor = getter(block, blockBaseClass, "s");
             // MaterialMapColor.am => int (color id)
-            int colorIndex = (Integer) getField(materialMapColor, materialMapColorClass, "am");
+            int colorIndex = (Integer) getField(materialMapColor, materialMapColorClass, "al");
             // BlockBase::r() => MinecraftKey
             String key = (String) getter(block, blockClass, "h");
             int idx = key.lastIndexOf(".");
