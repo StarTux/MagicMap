@@ -24,11 +24,15 @@ final class SyncMapRenderer {
     private final long dayTime;
     private final MapCache mapCache = new MapCache();
     private boolean partial = false;
+    private int minY;
+    private int maxY;
 
     /**
      * Run by the plugin's mainQueue.
      */
     public boolean run() {
+        minY = world.getMinHeight();
+        maxY = world.getMaxHeight();
         for (int i = 0; i < 1024; i += 1) {
             if (iterY >= 128) {
                 session.pasteMap = mapCache;
@@ -51,7 +55,7 @@ final class SyncMapRenderer {
             int x = canvasX + centerX - 63;
             int z = canvasY + centerZ - 63;
             int highest = highest(x, z);
-            if (highest < 0) {
+            if (highest < minY) {
                 mapCache.setPixel(canvasX, canvasY, (29 << 2) + 3);
                 continue;
             }
@@ -129,24 +133,22 @@ final class SyncMapRenderer {
             partial = true;
             return -1;
         }
-        final int min = world.getMinHeight();
-        final int max = world.getMaxHeight();
         switch (type) {
         case NETHER: {
-            int y = max;
+            int y = maxY;
             // skip blocks
-            while (y >= min && !world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+            while (y >= minY && !world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip air
-            while (y >= min && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+            while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip transparent
-            while (y >= min && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
+            while (y >= minY && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
             return y;
         }
         case CAVE: {
-            int y = max;
+            int y = maxY;
             // skip air
-            while (y >= min && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
-            while (y >= min) { // skip sunlit blocks
+            while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+            while (y >= minY) { // skip sunlit blocks
                 Block block = world.getBlockAt(x, y, z);
                 if (!block.isEmpty() || block.getLightFromSky() == 15) {
                     y -= 1;
@@ -155,18 +157,18 @@ final class SyncMapRenderer {
                 }
             }
             // skip air
-            while (y >= min && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+            while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip transparent
-            while (y >= min && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
+            while (y >= minY && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
             return y;
         }
         case SURFACE:
         default: {
-            int y = max;
+            int y = maxY;
             // skip air
-            while (y >= min && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+            while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip transparent
-            while (y >= min && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
+            while (y >= minY && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
             return y;
         }
         }
