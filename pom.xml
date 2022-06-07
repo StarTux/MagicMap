@@ -29,7 +29,6 @@
       <artifactId>paper-api</artifactId>
       <version>1.18.1-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
-      <optional>true</optional>
     </dependency>
 
     <!-- Lombok -->
@@ -37,6 +36,14 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <version>1.18.20</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Core, ItemKind! -->
+    <dependency>
+      <groupId>com.cavetale.core</groupId>
+      <artifactId>core</artifactId>
+      <version>0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
 
