@@ -57,7 +57,7 @@ final class ColorGrabber {
 
     static void grab(File output) throws Exception {
         String ver = getServerVersion();
-        String expectedVersion = "v1_17_R1";
+        String expectedVersion = "v1_19_R1";
         if (!ver.equals(expectedVersion)) {
             MagicMapPlugin.getInstance().getLogger().warning("Using ColorGrabber for " + expectedVersion + " on " + ver);
         }
@@ -74,8 +74,8 @@ final class ColorGrabber {
             // MaterialMapColor.am => int (color id)
             int colorIndex = (Integer) getField(materialMapColor, materialMapColorClass, "al");
             // BlockBase::r() => MinecraftKey
-            String key = (String) getter(block, blockClass, "h");
-            int idx = key.lastIndexOf(".");
+            String key = getter(block, blockBaseClass, "r").toString();
+            int idx = key.lastIndexOf("/");
             if (idx < 0) {
                 MagicMapPlugin.getInstance().getLogger().warning("Illegal material: " + key + " / " + colorIndex);
                 continue;
