@@ -34,7 +34,7 @@ final class MapGiver implements Listener {
         return persistence.given;
     }
 
-    void saveGiven() {
+    protected void saveGiven() {
         if (!persist || persistence == null) return;
         plugin.json.save(GIVEN_PATH, persistence, true);
     }
@@ -45,7 +45,7 @@ final class MapGiver implements Listener {
         Bukkit.getScheduler().runTaskLater(plugin, () -> maybeGiveMap(event.getPlayer()), 100L);
     }
 
-    void maybeGiveMap(Player player) {
+    protected void maybeGiveMap(Player player) {
         if (!player.isValid()) return;
         if (!player.hasPermission("magicmap.receive")) return;
         UUID uuid = player.getUniqueId();
@@ -55,7 +55,7 @@ final class MapGiver implements Listener {
                 continue;
             }
             MapMeta meta = (MapMeta) item.getItemMeta();
-            if (meta.getMapId() == plugin.getMapId()) {
+            if (meta.getMapView().getId() == plugin.getMapId()) {
                 if (persist) {
                     getGiven().add(uuid);
                     saveGiven();

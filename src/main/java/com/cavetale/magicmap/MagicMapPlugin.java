@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -31,6 +32,8 @@ import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.plugin.java.JavaPlugin;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 @Getter
 public final class MagicMapPlugin extends JavaPlugin implements Listener {
@@ -39,26 +42,24 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     private MapView mapView;
     // Configuration
     private int mapId;
-    private int mapItemColor;
-    private String mapName;
     private boolean debug;
     private boolean persist;
-    boolean doCursors;
-    boolean renderPlayers;
-    int maxPlayers;
-    boolean renderPlayerNames;
-    boolean renderAnimals;
-    int maxAnimals;
-    boolean renderVillagers;
-    int maxVillagers;
-    boolean renderMonsters;
-    int maxMonsters;
-    boolean renderMarkerArmorStands;
-    boolean renderCoordinates;
-    long cursorTicks = 10;
-    long renderCooldown = 5;
-    long renderRefresh = 30;
-    long teleportCooldown = 5;
+    protected boolean doCursors;
+    protected boolean renderPlayers;
+    protected int maxPlayers;
+    protected boolean renderPlayerNames;
+    protected boolean renderAnimals;
+    protected int maxAnimals;
+    protected boolean renderVillagers;
+    protected int maxVillagers;
+    protected boolean renderMonsters;
+    protected int maxMonsters;
+    protected boolean renderMarkerArmorStands;
+    protected boolean renderCoordinates;
+    protected long cursorTicks = 10;
+    protected long renderCooldown = 5;
+    protected long renderRefresh = 30;
+    protected long teleportCooldown = 5;
     // Tools
     private TinyFont tinyFont;
     private MagicMapRenderer magicMapRenderer;
@@ -68,7 +69,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     private final Map<String, Boolean> enableCaveView = new HashMap<>();
     static final String MAP_ID_PATH = "mapid.json";
     private final MapColor mapColor = new MapColor();
-    Json json = new Json(this);
+    protected Json json = new Json(this);
     // Queues
     private List<SyncMapRenderer> mainQueue = new ArrayList<>();
     private Map<UUID, Session> sessions = new HashMap<>();
@@ -116,7 +117,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
 
     // --- Configuration
 
-    void loadMapColors() {
+    protected void loadMapColors() {
         File file = new File(getDataFolder(), "colors.txt");
         InputStream inputStream;
         if (file.exists()) {
@@ -135,18 +136,16 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         }
     }
 
-    String colorize(String msg) {
+    private String colorize(String msg) {
         return ChatColor.translateAlternateColorCodes('&', msg);
     }
 
-    void importConfig() {
+    protected void importConfig() {
         reloadConfig();
         debug = getConfig().getBoolean("debug");
         mapGiver.setEnabled(getConfig().getBoolean("give.enabled"));
         mapGiver.setPersist(getConfig().getBoolean("give.persist"));
         mapGiver.setMessage(colorize(getConfig().getString("give.message")));
-        mapItemColor = getConfig().getInt("map.color");
-        mapName = colorize(getConfig().getString("map.name"));
         doCursors = getConfig().getBoolean("cursor.enabled");
         renderPlayers = getConfig().getBoolean("cursor.players");
         maxPlayers = getConfig().getInt("cursor.maxPlayers");
@@ -179,7 +178,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         }
     }
 
-    void setupMap() {
+    protected void setupMap() {
         resetMapView();
         Integer id = json.load(MAP_ID_PATH, Integer.class);
         if (id == null) {
@@ -189,7 +188,8 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         } else {
             mapId = id;
         }
-        mapView = getServer().getMap(mapId);
+        @SuppressWarnings("deprecation") final MapView theMapView = Bukkit.getMap(mapId);
+        this.mapView = theMapView;
         if (mapView == null) {
             mapView = getServer().createMap(getServer().getWorlds().get(0));
             mapId = mapView.getId();
@@ -201,7 +201,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         mapView.addRenderer(magicMapRenderer);
     }
 
-    void onTick() {
+    private void onTick() {
         if (!mainQueue.isEmpty()) {
             SyncMapRenderer task = mainQueue.get(0);
             boolean ret;
@@ -217,7 +217,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
 
     // --- Utility
 
-    Session getSession(Player player) {
+    protected Session getSession(Player player) {
         return sessions.computeIfAbsent(player.getUniqueId(), Session::new);
     }
 
@@ -233,13 +233,14 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     public ItemStack createMapItem() {
         ItemStack item = new ItemStack(Material.FILLED_MAP);
         MapMeta meta = (MapMeta) item.getItemMeta();
-        meta.setMapId(mapId);
+        meta.setMapView(mapView);
         meta.setScaling(false);
-        meta.setColor(Color.fromRGB(mapItemColor));
+        meta.setColor(Color.fromRGB(0xFF00FF));
         meta.setLocationName("MagicMap");
-        meta.setDisplayName(mapName);
+        meta.displayName(text("Magic Map", LIGHT_PURPLE));
         if (magicMapMytem != null) {
             magicMapMytem.markItemMeta(meta);
+            meta.displayName(magicMapMytem.getDisplayName());
         }
         item.setItemMeta(meta);
         return item;
@@ -330,6 +331,6 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
             return false;
         }
         MapMeta meta = (MapMeta) itemStack.getItemMeta();
-        return meta.getMapId() == instance.mapId;
+        return meta.getMapView().getId() == instance.mapId;
     }
 }

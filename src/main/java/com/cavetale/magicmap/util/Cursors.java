@@ -20,7 +20,7 @@ public final class Cursors {
         if (y < -127) y = -127;
         if (x > 127) x = 127;
         if (y > 127) y = 127;
-        return new MapCursor((byte) x, (byte) y, (byte) dir, cursorType.getValue(), true);
+        return new MapCursor((byte) x, (byte) y, (byte) dir, cursorType, true);
     }
 
     public static MapCursor make(MapCursor.Type cursorType, Block block, int centerX, int centerZ) {
@@ -30,7 +30,7 @@ public final class Cursors {
         if (y < -127) y = -127;
         if (x > 127) x = 127;
         if (y > 127) y = 127;
-        return new MapCursor((byte) x, (byte) y, (byte) 8, cursorType.getValue(), true);
+        return new MapCursor((byte) x, (byte) y, (byte) 8, cursorType, true);
     }
 
     public static MapCursor make(MapCursor.Type cursorType, int x, int y, int rot) {
@@ -38,7 +38,6 @@ public final class Cursors {
         if (y < 0) y = 0;
         if (x > 127) x = 127;
         if (y > 127) y = 127;
-        return new MapCursor((byte) ((x - 64) * 2), (byte) ((y - 64) * 2), (byte) rot,
-                             cursorType.getValue(), true);
+        return new MapCursor((byte) ((x - 64) * 2), (byte) ((y - 64) * 2), (byte) rot, cursorType, true);
     }
 }

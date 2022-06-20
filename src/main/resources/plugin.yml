@@ -1,13 +1,18 @@
 name: MagicMap
 description: Dynamic map item
-author: StarTux
+
 version: 0.1
-api-version: 1.18
+api-version: 1.19
+
+author: StarTux
 website: https://github.com/StarTux/MagicMap
 main: com.cavetale.magicmap.MagicMapPlugin
+
 depend: [Core]
 softdepend: [Mytems]
+
 commands:
+
   magicmap:
     description: Debug command
     permission: magicmap.magicmap
@@ -16,10 +21,13 @@ commands:
       /magicmap debug - Debug stuff
       /magicmap give [player] - Spawn map for player
       /magicmap rerender - Trigger map rerender
+
 permissions:
+
   magicmap.magicmap:
     description: Use the /magicmap command
     default: op
+
   magicmap.receive:
     description: Be eligible for a free MagicMap.
     default: op

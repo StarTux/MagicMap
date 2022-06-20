@@ -7,22 +7,20 @@ import com.cavetale.mytems.MytemsPlugin;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
 
 @Getter @RequiredArgsConstructor
 public final class MagicMapMytem implements Mytem {
     private final MagicMapPlugin plugin;
     private final Mytems key = Mytems.MAGIC_MAP;
-    private Component displayName;
+    private Component displayName = Component.text("Magic Map", LIGHT_PURPLE).decoration(ITALIC, false);
 
     @Override
-    public void enable() {
-        displayName = Component.text("Magic Map").color(NamedTextColor.LIGHT_PURPLE).decoration(TextDecoration.ITALIC, false);
-    }
+    public void enable() { }
 
     @Override
     public ItemStack createItemStack() {

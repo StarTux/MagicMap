@@ -1,7 +1,4 @@
 debug: false
-map:
-  color: 0
-  name: '&dMagic Map'
 render:
   # seconds
   cooldown: 5

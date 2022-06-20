@@ -4,7 +4,6 @@ import com.cavetale.magicmap.event.MagicMapCursorEvent;
 import com.cavetale.magicmap.util.Cursors;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -23,6 +22,8 @@ import org.bukkit.map.MapCursor;
 import org.bukkit.map.MapCursorCollection;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
+import static net.kyori.adventure.text.Component.empty;
+import static net.kyori.adventure.text.Component.text;
 
 final class MagicMapRenderer extends MapRenderer {
     private final MagicMapPlugin plugin;
@@ -172,9 +173,9 @@ final class MagicMapRenderer extends MapRenderer {
                             if (mob.isInvisible()) continue;
                             if (mob.hasMetadata("nomap")) continue;
                             mapCursor = Cursors.make(MapCursor.Type.RED_POINTER, at, session.centerX, session.centerZ);
-                            String customName = e.getCustomName();
-                            if (customName != null && !customName.isEmpty()) {
-                                mapCursor.setCaption(customName);
+                            Component customName = e.customName();
+                            if (customName != null && !customName.equals(empty())) {
+                                mapCursor.caption(customName);
                             }
                         } else if (e instanceof Animals) {
                             if (!plugin.renderAnimals) continue;
@@ -185,9 +186,9 @@ final class MagicMapRenderer extends MapRenderer {
                             at.setPitch(0);
                             at.setYaw(0);
                             mapCursor = Cursors.make(MapCursor.Type.SMALL_WHITE_CIRCLE, at, session.centerX, session.centerZ);
-                            String customName = e.getCustomName();
-                            if (customName != null && !customName.isEmpty()) {
-                                mapCursor.setCaption(customName);
+                            Component customName = e.customName();
+                            if (customName != null && !customName.equals(empty())) {
+                                mapCursor.caption(customName);
                             }
                         } else if (e instanceof Villager) {
                             if (!plugin.renderVillagers) continue;
@@ -205,12 +206,12 @@ final class MagicMapRenderer extends MapRenderer {
                             ArmorStand stand = (ArmorStand) e;
                             if (!stand.isMarker()) continue;
                             if (stand.hasMetadata("nomap")) continue;
-                            String name = stand.getCustomName();
-                            if (name == null || name.isEmpty()) continue;
+                            Component name = stand.customName();
+                            if (name == null || name.equals(empty())) continue;
                             at.setPitch(0);
                             at.setYaw(0);
                             mapCursor = Cursors.make(MapCursor.Type.WHITE_CROSS, at, session.centerX, session.centerZ);
-                            mapCursor.setCaption(name);
+                            mapCursor.caption(name);
                         } else if (e instanceof Player) {
                             if (!plugin.renderPlayers) continue;
                             if (players++ >= plugin.maxPlayers) continue;
@@ -235,8 +236,6 @@ final class MagicMapRenderer extends MapRenderer {
         }
         MapCursor pcur = Cursors.make(MapCursor.Type.GREEN_POINTER, loc,
                                       session.centerX, session.centerZ);
-        ChatColor d = ChatColor.WHITE;
-        String c = ChatColor.GRAY + ",";
         pcur.caption(player.displayName());
         cursors.addCursor(pcur);
         if (plugin.renderCoordinates) {
@@ -246,16 +245,16 @@ final class MagicMapRenderer extends MapRenderer {
             final int dist = 20;
             MapCursor icur;
             icur = Cursors.make(MapCursor.Type.WHITE_CIRCLE, 0, y, rot);
-            icur.setCaption(plugin.getWorldName(player.getWorld()));
+            icur.caption(text(plugin.getWorldName(player.getWorld())));
             cursors.addCursor(icur);
             icur = Cursors.make(type, 127 - dist - dist, y, rot);
-            icur.setCaption("" + loc.getBlockX());
+            icur.caption(text(loc.getBlockX()));
             cursors.addCursor(icur);
             icur = Cursors.make(type, 127 - dist, y, rot);
-            icur.setCaption("" + loc.getBlockY());
+            icur.caption(text(loc.getBlockY()));
             cursors.addCursor(icur);
             icur = Cursors.make(type, 127, y, rot);
-            icur.setCaption("" + loc.getBlockZ());
+            icur.caption(text(loc.getBlockZ()));
             cursors.addCursor(icur);
         }
         new MagicMapCursorEvent(player, cursors,
