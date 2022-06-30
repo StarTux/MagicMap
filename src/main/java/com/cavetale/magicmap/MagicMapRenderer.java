@@ -238,25 +238,6 @@ final class MagicMapRenderer extends MapRenderer {
                                       session.centerX, session.centerZ);
         pcur.caption(player.displayName());
         cursors.addCursor(pcur);
-        if (plugin.renderCoordinates) {
-            final int y = 127;
-            final int rot = 8;
-            final MapCursor.Type type = MapCursor.Type.SMALL_WHITE_CIRCLE;
-            final int dist = 20;
-            MapCursor icur;
-            icur = Cursors.make(MapCursor.Type.WHITE_CIRCLE, 0, y, rot);
-            icur.caption(text(plugin.getWorldName(player.getWorld())));
-            cursors.addCursor(icur);
-            icur = Cursors.make(type, 127 - dist - dist, y, rot);
-            icur.caption(text(loc.getBlockX()));
-            cursors.addCursor(icur);
-            icur = Cursors.make(type, 127 - dist, y, rot);
-            icur.caption(text(loc.getBlockY()));
-            cursors.addCursor(icur);
-            icur = Cursors.make(type, 127, y, rot);
-            icur.caption(text(loc.getBlockZ()));
-            cursors.addCursor(icur);
-        }
         new MagicMapCursorEvent(player, cursors,
                                 session.centerX, session.centerZ,
                                 minX, minZ, maxX, maxZ).callEvent();

@@ -55,7 +55,6 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     protected boolean renderMonsters;
     protected int maxMonsters;
     protected boolean renderMarkerArmorStands;
-    protected boolean renderCoordinates;
     protected long cursorTicks = 10;
     protected long renderCooldown = 5;
     protected long renderRefresh = 30;
@@ -65,7 +64,6 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     private MagicMapRenderer magicMapRenderer;
     private MapGiver mapGiver;
     private MagicMapCommand magicMapCommand;
-    private final Map<String, String> worldNames = new HashMap<>();
     private final Map<String, Boolean> enableCaveView = new HashMap<>();
     static final String MAP_ID_PATH = "mapid.json";
     private final MapColor mapColor = new MapColor();
@@ -156,21 +154,13 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         maxVillagers = getConfig().getInt("cursor.maxVillagers");
         renderMonsters = getConfig().getBoolean("cursor.monsters");
         maxMonsters = getConfig().getInt("cursor.maxMonsters");
-        renderCoordinates = getConfig().getBoolean("cursor.coordinates");
         renderMarkerArmorStands = getConfig().getBoolean("cursor.markerArmorStands");
         cursorTicks = getConfig().getLong("cursor.ticks");
         renderCooldown = getConfig().getLong("render.cooldown", 5L);
         renderRefresh = getConfig().getLong("render.refresh", 30L);
         teleportCooldown = getConfig().getLong("render.teleportCooldown", 5L);
-        worldNames.clear();
-        ConfigurationSection section = getConfig().getConfigurationSection("WorldNames");
-        if (section != null) {
-            for (String key: section.getKeys(false)) {
-                worldNames.put(key, section.getString(key));
-            }
-        }
         enableCaveView.clear();
-        section = getConfig().getConfigurationSection("EnableCaveView");
+        ConfigurationSection section = getConfig().getConfigurationSection("EnableCaveView");
         if (section != null) {
             for (String key: section.getKeys(false)) {
                 enableCaveView.put(key, section.getBoolean(key));
@@ -244,13 +234,6 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         }
         item.setItemMeta(meta);
         return item;
-    }
-
-    public String getWorldName(World world) {
-        String name = worldNames.get(world.getName());
-        if (name == null) name = worldNames.get("default");
-        if (name == null) name = world.getName();
-        return name;
     }
 
     // --- Event Handling
