@@ -51,6 +51,8 @@ public final class MapColor {
             ioe.printStackTrace();
             return false;
         }
+        colors[Material.WATER.ordinal()] = 12;
+        colors[Material.LAVA.ordinal()] = 15;
         return count > 0;
     }
 }

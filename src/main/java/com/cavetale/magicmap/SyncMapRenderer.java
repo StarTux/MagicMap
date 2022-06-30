@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.Waterlogged;
 
 @RequiredArgsConstructor
 final class SyncMapRenderer {
@@ -59,15 +60,36 @@ final class SyncMapRenderer {
                 mapCache.setPixel(canvasX, canvasY, (29 << 2) + 3);
                 continue;
             }
-            Material mat = world.getBlockAt(x, highest, z).getType();
-            int color = mapColor.of(mat);
-            if (color == 48) { // water
-                int lbottom = highest - 1;
-                while (lbottom > 0 && color == mapColor.of(world.getBlockAt(x, lbottom, z)
-                                                           .getType())) {
-                    lbottom -= 1;
+            Block block = world.getBlockAt(x, highest, z);
+            int color;
+            if (block.getType() == Material.WATER || (block.getBlockData() instanceof Waterlogged w && w.isWaterlogged())) {
+                color = mapColor.of(Material.WATER);
+                while (block.getY() > minY && (block.getType() == Material.WATER || (block.getBlockData() instanceof Waterlogged w2 && w2.isWaterlogged()))) {
+                    block = block.getRelative(0, -1, 0);
                 }
-                int depth = highest - lbottom;
+                int depth = highest - block.getY();
+                if (depth <= 2) {
+                    color += BRIGHT;
+                } else if (depth <= 4) {
+                    color += (canvasX & 1) == (canvasY & 1) ? BRIGHT : LIGHT;
+                } else if (depth <= 6) {
+                    color += LIGHT;
+                } else if (depth <= 8) {
+                    color += (canvasX & 1) == (canvasY & 1) ? NORMAL : LIGHT;
+                } else if (depth <= 12) {
+                    color += NORMAL;
+                } else if (depth <= 16) {
+                    color += (canvasX & 1) == (canvasY & 1) ? NORMAL : DARK;
+                } else {
+                    color += DARK;
+                }
+                mapCache.setPixel(canvasX, canvasY, color);
+            } else if (block.getType() == Material.LAVA) {
+                color = mapColor.of(Material.LAVA);
+                while (block.getY() > minY && block.getType() == Material.LAVA) {
+                    block = block.getRelative(0, -1, 0);
+                }
+                int depth = highest - block.getY();
                 if (depth <= 2) {
                     color += BRIGHT;
                 } else if (depth <= 4) {
@@ -85,6 +107,7 @@ final class SyncMapRenderer {
                 }
                 mapCache.setPixel(canvasX, canvasY, color);
             } else {
+                color = mapColor.of(block.getType());
                 // Neighbor block where the sunlight comes from.
                 int lx;
                 int ly;
@@ -135,7 +158,7 @@ final class SyncMapRenderer {
         }
         switch (type) {
         case NETHER: {
-            int y = maxY;
+            int y = 127;
             // skip blocks
             while (y >= minY && !world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip air
