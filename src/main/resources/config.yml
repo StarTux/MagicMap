@@ -19,16 +19,10 @@ cursor:
   maxVillagers: 32
   markerArmorStands: true
   ticks: 10 # in ticks
-  coordinates: true
 give:
   enabled: false
   persist: true
   message: '&eYou received a MagicMap!'
-WorldNames:
-  default: cavetale.com
-  world: Survival
-  world_nether: Nether
-  world_the_end: End
 EnableCaveView:
   default: true
   world_the_end: false

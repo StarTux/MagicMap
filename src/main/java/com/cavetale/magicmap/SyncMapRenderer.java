@@ -1,12 +1,12 @@
 package com.cavetale.magicmap;
 
-import lombok.RequiredArgsConstructor;
+import com.cavetale.area.struct.Area;
+import com.cavetale.area.struct.AreasFile;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.Waterlogged;
 
-@RequiredArgsConstructor
 final class SyncMapRenderer {
     public static final int NORMAL = 0;
     public static final int LIGHT = 1;
@@ -25,15 +25,39 @@ final class SyncMapRenderer {
     private final long dayTime;
     private final MapCache mapCache = new MapCache();
     private boolean partial = false;
-    private int minY;
-    private int maxY;
+    private final int minY;
+    private final int maxY;
+    private final int minX;
+    private final int minZ;
+    private final int maxX;
+    private final int maxZ;
+
+    SyncMapRenderer(final MagicMapPlugin plugin,
+                    final MapColor mapColor,
+                    final World world,
+                    final Session session,
+                    final RenderType type,
+                    final int centerX, final int centerZ) {
+        this.plugin = plugin;
+        this.mapColor = mapColor;
+        this.world = world;
+        this.session = session;
+        this.type = type;
+        this.centerX = centerX;
+        this.centerZ = centerZ;
+        this.dayTime = world.getTime();
+        this.minX = centerX - 63;
+        this.minZ = centerZ - 63;
+        this.maxX = centerX + 64;
+        this.maxZ = centerZ + 64;
+        this.minY = world.getMinHeight();
+        this.maxY = world.getMaxHeight();
+    }
 
     /**
      * Run by the plugin's mainQueue.
      */
     public boolean run() {
-        minY = world.getMinHeight();
-        maxY = world.getMaxHeight();
         for (int i = 0; i < 1024; i += 1) {
             if (iterY >= 128) {
                 session.pasteMap = mapCache;
@@ -42,6 +66,7 @@ final class SyncMapRenderer {
                 session.centerZ = centerZ;
                 session.world = world.getName();
                 session.partial = partial;
+                renderAreas();
                 MagicMapPostRenderEvent.call(session);
                 return false;
             }
@@ -197,4 +222,44 @@ final class SyncMapRenderer {
         }
     }
 
+    private void drawDotted(int worldX, int worldZ, int color) {
+        int x = worldX - minX;
+        int z = worldZ - minZ;
+        if ((x & 1) == (z & 1)) return;
+        mapCache.setPixel(x, z, color);
+    }
+
+    private void drawRect(String label, Area area, int color) {
+        for (int x = area.min.x; x <= area.max.x; x += 1) {
+            drawDotted(x, area.min.z, color);
+            drawDotted(x, area.max.z, color);
+        }
+        for (int z = area.min.z; z <= area.max.z; z += 1) {
+            drawDotted(area.min.x, z, color);
+            drawDotted(area.max.x, z, color);
+        }
+        if (label != null) {
+            plugin.getTinyFont().print(label, area.min.x - minX + 2, area.min.z - minZ + 2,
+                                       (x, y) -> {
+                                           if (x >= area.max.x - minX - 2) return;
+                                           mapCache.setPixel(x, y, color);
+                                       },
+                                       (x, y) -> {
+                                           if (x >= area.max.x - minX - 2) return;
+                                           mapCache.setPixel(x, y, 21 * 4 + 0);
+                                       });
+        }
+    }
+
+    private void renderAreas() {
+        if (session.shownArea == null) return;
+        AreasFile areasFile = AreasFile.load(world, session.shownArea);
+        if (areasFile == null) return;
+        for (String name : areasFile.getAreas().keySet()) {
+            var list = areasFile.getAreas().get(name);
+            if (list.isEmpty()) continue;
+            Area area = list.get(0);
+            drawRect(name, area, 8 * 4 + BRIGHT);
+        }
+    }
 }

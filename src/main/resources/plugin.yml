@@ -9,18 +9,14 @@ website: https://github.com/StarTux/MagicMap
 main: com.cavetale.magicmap.MagicMapPlugin
 
 depend: [Core]
-softdepend: [Mytems]
+softdepend: [Mytems, Area]
 
 commands:
 
   magicmap:
     description: Debug command
     permission: magicmap.magicmap
-    usage: |-
-      /magicmap reload - Reload config
-      /magicmap debug - Debug stuff
-      /magicmap give [player] - Spawn map for player
-      /magicmap rerender - Trigger map rerender
+    usage: /magicmap
 
 permissions:
 

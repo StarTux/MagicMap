@@ -17,7 +17,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -88,7 +87,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         mapGiver = new MapGiver(this);
         getServer().getPluginManager().registerEvents(mapGiver, this);
         magicMapCommand = new MagicMapCommand(this);
-        getCommand("magicmap").setExecutor(magicMapCommand);
+        magicMapCommand.enable();
         importConfig();
         getServer().getScheduler().runTaskTimer(this, () -> onTick(), 1L, 1L);
         getServer().getPluginManager().registerEvents(this, this);

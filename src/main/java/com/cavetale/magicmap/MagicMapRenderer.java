@@ -23,7 +23,6 @@ import org.bukkit.map.MapCursorCollection;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import static net.kyori.adventure.text.Component.empty;
-import static net.kyori.adventure.text.Component.text;
 
 final class MagicMapRenderer extends MapRenderer {
     private final MagicMapPlugin plugin;
@@ -112,7 +111,7 @@ final class MagicMapRenderer extends MapRenderer {
                 type = RenderType.SURFACE;
             }
         }
-        SyncMapRenderer renderer = new SyncMapRenderer(plugin, plugin.getMapColor(), loc.getWorld(), session, type, centerX, centerZ, loc.getWorld().getTime());
+        SyncMapRenderer renderer = new SyncMapRenderer(plugin, plugin.getMapColor(), loc.getWorld(), session, type, centerX, centerZ);
         plugin.getMainQueue().add(renderer);
     }
 

@@ -97,4 +97,31 @@ final class ColorGrabber {
             }
         }
     }
+
+    private static int brightness(int hex, int bright) {
+        if (hex == 0) return 0;
+        int r = (hex >> 16 & 0xFF) * bright / 255;
+        int g = (hex >> 8 & 0xFF) * bright / 255;
+        int b = (hex & 0xFF) * bright / 255;
+        return 0xFF000000 | r << 16 | g << 8 | b;
+    }
+
+    public static void grabColors() throws Exception {
+        Class<?> materialMapColorClass = Class.forName("net.minecraft.world.level.material.MaterialMapColor");
+        for (Field field : getStaticFields(materialMapColorClass, materialMapColorClass)) {
+            Object color = field.get(null);
+            int index = (Integer) getField(color, materialMapColorClass, "al");
+            int hex = (Integer) getField(color, materialMapColorClass, "ak");
+            System.out.println("COLOR_" + index
+                               + "(" + index
+                               + ", 0x" + Integer.toHexString(brightness(hex, 180))
+                               + ", 0x" + Integer.toHexString(brightness(hex, 220))
+                               + ", 0x" + Integer.toHexString(brightness(hex, 255))
+                               + ", 0x" + Integer.toHexString(brightness(hex, 135))
+                               + "),");
+            if (index != 0) {
+                assert (0xFF000000 | hex) == brightness(hex, 255);
+            }
+        }
+    }
 }

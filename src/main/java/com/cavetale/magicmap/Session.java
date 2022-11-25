@@ -21,4 +21,5 @@ final class Session {
     // Results
     MapCache pasteMap;
     MapCursorCollection pasteCursors;
+    String shownArea;
 }

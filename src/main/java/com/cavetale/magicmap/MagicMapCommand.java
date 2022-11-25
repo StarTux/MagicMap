@@ -1,109 +1,110 @@
 package com.cavetale.magicmap;
 
+import com.cavetale.core.command.AbstractCommand;
+import com.cavetale.core.command.CommandArgCompleter;
+import com.cavetale.core.command.CommandWarn;
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
-@RequiredArgsConstructor
-final class MagicMapCommand implements TabExecutor {
-    private final MagicMapPlugin plugin;
-
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length == 0) return false;
-        Player player = sender instanceof Player ? (Player) sender : null;
-        switch (args[0]) {
-        case "reload": {
-            plugin.setupMap();
-            plugin.importConfig();
-            plugin.getMapGiver().reset();
-            plugin.loadMapColors();
-            plugin.getSessions().clear();
-            sender.sendMessage("MagicMap config reloaded");
-            return true;
-        }
-        case "debug": {
-            if (player == null) return false;
-            Session session = plugin.getSession(player);
-            session.debug = !session.debug;
-            if (session.debug) {
-                sender.sendMessage("Debug mode enabled");
-            } else {
-                sender.sendMessage("Debug mode disabled");
-            }
-            return true;
-        }
-        case "give": {
-            if (args.length > 2) return false;
-            if (player == null && args.length < 2) return false;
-            Player target;
-            if (args.length >= 2) {
-                target = Bukkit.getPlayerExact(args[1]);
-                if (target == null) {
-                    sender.sendMessage(ChatColor.RED + "Player not found: " + args[1]);
-                    return true;
-                }
-            } else {
-                target = player;
-            }
-            if (plugin.giveMapItem(target)) {
-                sender.sendMessage("MagicMap given to " + target.getName());
-            } else {
-                sender.sendMessage("Could not give MagicMap to " + target.getName()
-                                   + ". Inventory is full");
-            }
-            return true;
-        }
-        case "rerender": {
-            if (player == null) {
-                sender.sendMessage("Player expected");
-                return true;
-            }
-            plugin.triggerRerender(player);
-            sender.sendMessage("Rerender triggered");
-            return true;
-        }
-        case "grab": {
-            File file = new File(plugin.getDataFolder(), "colors.txt");
-            try {
-                ColorGrabber.grab(file);
-            } catch (Exception e) {
-                sender.sendMessage("An error occured. See console");
-                e.printStackTrace();
-                return true;
-            }
-            plugin.loadMapColors();
-            sender.sendMessage("Colors grabbed, see " + file + "");
-            return true;
-        }
-        default: return false;
-        }
+final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
+    protected MagicMapCommand(final MagicMapPlugin plugin) {
+        super(plugin, "magicmap");
     }
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length == 0) return null;
-        String cmd = args[0];
-        if (args.length == 1) {
-            return Stream.of("reload", "debug", "give", "rerender", "grab")
-                .filter(it -> it.startsWith(cmd))
-                .collect(Collectors.toList());
+    protected void onEnable() {
+        rootNode.addChild("reload").denyTabCompletion()
+            .description("Reload config")
+            .senderCaller(this::reload);
+        rootNode.addChild("debug").denyTabCompletion()
+            .description("Debug stuff")
+            .playerCaller(this::debug);
+        rootNode.addChild("give").arguments("[player]")
+            .description("Spawn map item for player")
+            .completers(CommandArgCompleter.NULL)
+            .senderCaller(this::give);
+        rootNode.addChild("rerender").denyTabCompletion()
+            .description("Trigger map rerender")
+            .playerCaller(this::rerender);
+        rootNode.addChild("area").denyTabCompletion()
+            .description("Render areas")
+            .playerCaller(this::area);
+    }
+
+    private void reload(CommandSender sender) {
+        plugin.setupMap();
+        plugin.importConfig();
+        plugin.getMapGiver().reset();
+        plugin.loadMapColors();
+        plugin.getSessions().clear();
+        sender.sendMessage(text("MagicMap config reloaded", AQUA));
+    }
+
+    private void debug(Player player) {
+        Session session = plugin.getSession(player);
+        session.debug = !session.debug;
+        if (session.debug) {
+            player.sendMessage(text("Debug mode enabled", GREEN));
+        } else {
+            player.sendMessage(text("Debug mode disabled", YELLOW));
         }
-        switch (cmd) {
-        case "give":
-            if (args.length == 2) return null;
-            return Collections.emptyList();
-        default:
-            return Collections.emptyList();
+    }
+
+    private boolean give(CommandSender sender, String[] args) {
+        if (args.length > 1) return false;
+        final Player target;
+        if (sender instanceof Player player && args.length == 0) {
+            target = player;
+        } else if (args.length >= 1) {
+            target = Bukkit.getPlayerExact(args[0]);
+            if (target == null) {
+                throw new CommandWarn("Player not found: " + args[1]);
+            }
+        } else {
+            return false;
+        }
+        if (!plugin.giveMapItem(target)) {
+            throw new CommandWarn("Inventory of " + target.getName() + " is full");
+        }
+        sender.sendMessage(text("MagicMap given to " + target.getName(), YELLOW));
+        return true;
+    }
+
+    private void rerender(Player player) {
+        plugin.triggerRerender(player);
+        player.sendMessage(text("Rerender triggered", AQUA));
+    }
+
+    private void grab(CommandSender sender) {
+        File file = new File(plugin.getDataFolder(), "colors.txt");
+        try {
+            ColorGrabber.grab(file);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new CommandWarn("An error occured. See console");
+        }
+        plugin.loadMapColors();
+        sender.sendMessage("Colors grabbed, see " + file + "");
+    }
+
+    private boolean area(Player player, String[] args) {
+        Session session = plugin.getSession(player);
+        if (args.length == 0) {
+            session.shownArea = null;
+            plugin.triggerRerender(player);
+            player.sendMessage(text("Not showing any area", YELLOW));
+            return true;
+        } else if (args.length == 1) {
+            session.shownArea = args[0];
+            plugin.triggerRerender(player);
+            player.sendMessage(text("Showing area " + session.shownArea, AQUA));
+            return true;
+        } else {
+            return false;
         }
     }
 }
