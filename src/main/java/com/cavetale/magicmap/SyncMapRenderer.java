@@ -255,11 +255,17 @@ final class SyncMapRenderer {
         if (session.shownArea == null) return;
         AreasFile areasFile = AreasFile.load(world, session.shownArea);
         if (areasFile == null) return;
+        final int areaColor = 8 * 4 + BRIGHT;
         for (String name : areasFile.getAreas().keySet()) {
             var list = areasFile.getAreas().get(name);
             if (list.isEmpty()) continue;
             Area area = list.get(0);
-            drawRect(name, area, 8 * 4 + BRIGHT);
+            drawRect(name, area, areaColor);
+            for (int i = 1; i < list.size(); i += 1) {
+                Area area2 = list.get(i);
+                if (area.contains(area2.getMin()) && area.contains(area2.getMax())) continue;
+                drawRect(name, area2, areaColor);
+            }
         }
     }
 }
