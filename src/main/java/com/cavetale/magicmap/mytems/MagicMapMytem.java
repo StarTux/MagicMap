@@ -47,4 +47,9 @@ public final class MagicMapMytem implements Mytem {
             }
         }
     }
+
+    @Override
+    public int getMaxStackSize() {
+        return 1;
+    }
 }
