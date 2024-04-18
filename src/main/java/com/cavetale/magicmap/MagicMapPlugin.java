@@ -1,11 +1,6 @@
 package com.cavetale.magicmap;
 
 import com.cavetale.magicmap.mytems.MagicMapMytem;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +8,6 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -65,7 +59,6 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     private MagicMapCommand magicMapCommand;
     private final Map<String, Boolean> enableCaveView = new HashMap<>();
     static final String MAP_ID_PATH = "mapid.json";
-    private final MapColor mapColor = new MapColor();
     protected Json json = new Json(this);
     // Queues
     private List<SyncMapRenderer> mainQueue = new ArrayList<>();
@@ -80,7 +73,6 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         instance = this;
         saveDefaultConfig();
         magicMapRenderer = new MagicMapRenderer(this);
-        loadMapColors();
         setupMap();
         getLogger().info("Using map #" + mapId);
         tinyFont = new TinyFont(this);
@@ -114,35 +106,12 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
 
     // --- Configuration
 
-    protected void loadMapColors() {
-        File file = new File(getDataFolder(), "colors.txt");
-        InputStream inputStream;
-        if (file.exists()) {
-            try {
-                inputStream = new FileInputStream(file);
-            } catch (FileNotFoundException fnfe) {
-                throw new UncheckedIOException(fnfe);
-            }
-        } else {
-            inputStream = getResource("colors.txt");
-        }
-        if (!mapColor.load(inputStream)) {
-            getLogger().warning("Failed to load colors!");
-        } else {
-            getLogger().info(mapColor.getCount() + " map colors loaded");
-        }
-    }
-
-    private String colorize(String msg) {
-        return ChatColor.translateAlternateColorCodes('&', msg);
-    }
-
     protected void importConfig() {
         reloadConfig();
         debug = getConfig().getBoolean("debug");
         mapGiver.setEnabled(getConfig().getBoolean("give.enabled"));
         mapGiver.setPersist(getConfig().getBoolean("give.persist"));
-        mapGiver.setMessage(colorize(getConfig().getString("give.message")));
+        mapGiver.setMessage(getConfig().getString("give.message"));
         doCursors = getConfig().getBoolean("cursor.enabled");
         renderPlayers = getConfig().getBoolean("cursor.players");
         maxPlayers = getConfig().getInt("cursor.maxPlayers");

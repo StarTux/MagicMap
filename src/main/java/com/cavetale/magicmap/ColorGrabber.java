@@ -40,12 +40,12 @@ final class ColorGrabber {
     }
 
     @Value
-    public static final class ColorIndex implements Comparable<ColorIndex> {
+    public static final class ColorEntry implements Comparable<ColorEntry> {
         protected final int index;
         protected final Material material;
 
         @Override
-        public int compareTo(ColorIndex other) {
+        public int compareTo(ColorEntry other) {
             return Integer.compare(index, other.index);
         }
 
@@ -55,9 +55,13 @@ final class ColorGrabber {
         }
     }
 
-    static void grab(File output) throws Exception {
+    /**
+     * This requires a fully initialized server runtime, thus can run
+     * as a command.
+     */
+    static void grabMaterials(File output) throws Exception {
         String ver = getServerVersion();
-        String expectedVersion = "v1_19_R1";
+        String expectedVersion = "v1_20_R3";
         if (!ver.equals(expectedVersion)) {
             MagicMapPlugin.getInstance().getLogger().warning("Using ColorGrabber for " + expectedVersion + " on " + ver);
         }
@@ -65,16 +69,16 @@ final class ColorGrabber {
         Class<?> blockBaseClass = Class.forName("net.minecraft.world.level.block.state.BlockBase");
         Class<?> blocksClass = Class.forName("net.minecraft.world.level.block.Blocks");
         Class<?> materialMapColorClass = Class.forName("net.minecraft.world.level.material.MaterialMapColor");
-        List<ColorIndex> indexList = new ArrayList<>();
+        List<ColorEntry> indexList = new ArrayList<>();
         // All fields in Blocks
         for (Field field : getStaticFields(blocksClass, blockClass)) {
             Object block = field.get(null);
-            // BlockBase::s() => MaterialMapColor
-            Object materialMapColor = getter(block, blockBaseClass, "s");
+            // BlockBase::w() => MaterialMapColor
+            Object materialMapColor = getter(block, blockBaseClass, "w");
             // MaterialMapColor.am => int (color id)
             int colorIndex = (Integer) getField(materialMapColor, materialMapColorClass, "al");
-            // BlockBase::r() => MinecraftKey
-            String key = getter(block, blockBaseClass, "r").toString();
+            // BlockBase::v() => MinecraftKey
+            String key = getter(block, blockBaseClass, "v").toString();
             int idx = key.lastIndexOf("/");
             if (idx < 0) {
                 MagicMapPlugin.getInstance().getLogger().warning("Illegal material: " + key + " / " + colorIndex);
@@ -83,7 +87,7 @@ final class ColorGrabber {
             String mat = key.substring(idx + 1);
             try {
                 final Material material = Material.valueOf(mat.toUpperCase());
-                indexList.add(new ColorIndex(colorIndex, material));
+                indexList.add(new ColorEntry(colorIndex, material));
             } catch (IllegalArgumentException iae) {
                 MagicMapPlugin.getInstance().getLogger().warning("Illegal material: " + mat + "/" + colorIndex);
             }
@@ -91,9 +95,8 @@ final class ColorGrabber {
         if (indexList.isEmpty()) throw new IllegalStateException("No colors found!");
         Collections.sort(indexList);
         try (java.io.PrintStream out = new java.io.PrintStream(output)) {
-            out.println("# " + ver);
-            for (ColorIndex colorIndex : indexList) {
-                out.println(colorIndex);
+            for (ColorEntry it : indexList) {
+                out.println("MATERIAL_MAP.put(Material." + it.material + ", " + it.index + ");");
             }
         }
     }
@@ -106,6 +109,9 @@ final class ColorGrabber {
         return 0xFF000000 | r << 16 | g << 8 | b;
     }
 
+    /**
+     * This can run as a test case.
+     */
     public static void grabColors() throws Exception {
         Class<?> materialMapColorClass = Class.forName("net.minecraft.world.level.material.MaterialMapColor");
         for (Field field : getStaticFields(materialMapColorClass, materialMapColorClass)) {

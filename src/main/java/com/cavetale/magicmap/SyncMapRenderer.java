@@ -8,12 +8,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.data.Waterlogged;
 
 final class SyncMapRenderer {
-    public static final int NORMAL = 0;
-    public static final int LIGHT = 1;
-    public static final int BRIGHT = 2;
-    public static final int DARK = 3;
     private final MagicMapPlugin plugin;
-    private final MapColor mapColor;
     private final World world;
     private final Session session;
     private final RenderType type;
@@ -33,13 +28,11 @@ final class SyncMapRenderer {
     private final int maxZ;
 
     SyncMapRenderer(final MagicMapPlugin plugin,
-                    final MapColor mapColor,
                     final World world,
                     final Session session,
                     final RenderType type,
                     final int centerX, final int centerZ) {
         this.plugin = plugin;
-        this.mapColor = mapColor;
         this.world = world;
         this.session = session;
         this.type = type;
@@ -86,53 +79,54 @@ final class SyncMapRenderer {
                 continue;
             }
             Block block = world.getBlockAt(x, highest, z);
-            int color;
+            final int color;
             if (block.getType() == Material.WATER || (block.getBlockData() instanceof Waterlogged w && w.isWaterlogged())) {
-                color = mapColor.of(Material.WATER);
+                final ColorIndex colorIndex = ColorIndex.indexed(12);
                 while (block.getY() > minY && (block.getType() == Material.WATER || (block.getBlockData() instanceof Waterlogged w2 && w2.isWaterlogged()))) {
                     block = block.getRelative(0, -1, 0);
                 }
                 int depth = highest - block.getY();
                 if (depth <= 2) {
-                    color += BRIGHT;
+                    color = colorIndex.bright;
                 } else if (depth <= 4) {
-                    color += (canvasX & 1) == (canvasY & 1) ? BRIGHT : LIGHT;
+                    color = (canvasX & 1) == (canvasY & 1) ? colorIndex.bright : colorIndex.light;
                 } else if (depth <= 6) {
-                    color += LIGHT;
+                    color = colorIndex.light;
                 } else if (depth <= 8) {
-                    color += (canvasX & 1) == (canvasY & 1) ? NORMAL : LIGHT;
+                    color = (canvasX & 1) == (canvasY & 1) ? colorIndex.normal : colorIndex.light;
                 } else if (depth <= 12) {
-                    color += NORMAL;
+                    color = colorIndex.normal;
                 } else if (depth <= 16) {
-                    color += (canvasX & 1) == (canvasY & 1) ? NORMAL : DARK;
+                    color = (canvasX & 1) == (canvasY & 1) ? colorIndex.normal : colorIndex.dark;
                 } else {
-                    color += DARK;
+                    color = colorIndex.dark;
                 }
                 mapCache.setPixel(canvasX, canvasY, color);
             } else if (block.getType() == Material.LAVA) {
-                color = mapColor.of(Material.LAVA);
+                final ColorIndex colorIndex = ColorIndex.indexed(15);
                 while (block.getY() > minY && block.getType() == Material.LAVA) {
                     block = block.getRelative(0, -1, 0);
                 }
                 int depth = highest - block.getY();
                 if (depth <= 2) {
-                    color += BRIGHT;
+                    color = colorIndex.bright;
                 } else if (depth <= 4) {
-                    color += (canvasX & 1) == (canvasY & 1) ? BRIGHT : LIGHT;
+                    color = (canvasX & 1) == (canvasY & 1) ? colorIndex.bright : colorIndex.light;
                 } else if (depth <= 6) {
-                    color += LIGHT;
+                    color = colorIndex.light;
                 } else if (depth <= 8) {
-                    color += (canvasX & 1) == (canvasY & 1) ? NORMAL : LIGHT;
+                    color = (canvasX & 1) == (canvasY & 1) ? colorIndex.normal : colorIndex.light;
                 } else if (depth <= 12) {
-                    color += NORMAL;
+                    color = colorIndex.normal;
                 } else if (depth <= 16) {
-                    color += (canvasX & 1) == (canvasY & 1) ? NORMAL : DARK;
+                    color = (canvasX & 1) == (canvasY & 1) ? colorIndex.normal : colorIndex.dark;
                 } else {
-                    color += DARK;
+                    color = colorIndex.dark;
                 }
                 mapCache.setPixel(canvasX, canvasY, color);
             } else {
-                color = mapColor.of(block.getType());
+                ColorIndex colorIndex = ColorIndex.ofMaterial(block.getType());
+                if (colorIndex == null) colorIndex = ColorIndex.COLOR_29;
                 // Neighbor block where the sunlight comes from.
                 int lx;
                 int ly;
@@ -163,12 +157,14 @@ final class SyncMapRenderer {
                 int highestN = highest(nx, nz);
                 if (highestN >= 0) {
                     if (highest > highestN) {
-                        color += BRIGHT;
+                        color = colorIndex.bright;
                     } else if (highest < highestN) {
-                        color += NORMAL;
+                        color = colorIndex.normal;
                     } else {
-                        color += LIGHT;
+                        color = colorIndex.light;
                     }
+                } else {
+                    color = colorIndex.normal;
                 }
                 mapCache.setPixel(canvasX, canvasY, color);
             }
@@ -189,7 +185,7 @@ final class SyncMapRenderer {
             // skip air
             while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip transparent
-            while (y >= minY && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
+            while (y >= minY && ColorIndex.ofMaterial(world.getBlockAt(x, y, z).getType()) == ColorIndex.EMPTY) y -= 1;
             return y;
         }
         case CAVE: {
@@ -207,7 +203,7 @@ final class SyncMapRenderer {
             // skip air
             while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip transparent
-            while (y >= minY && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
+            while (y >= minY && ColorIndex.ofMaterial(world.getBlockAt(x, y, z).getType()) == ColorIndex.EMPTY) y -= 1;
             return y;
         }
         case SURFACE:
@@ -216,7 +212,7 @@ final class SyncMapRenderer {
             // skip air
             while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip transparent
-            while (y >= minY && mapColor.of(world.getBlockAt(x, y, z).getType()) == 0) y -= 1;
+            while (y >= minY && ColorIndex.ofMaterial(world.getBlockAt(x, y, z).getType()) == ColorIndex.EMPTY) y -= 1;
             return y;
         }
         }
@@ -255,7 +251,7 @@ final class SyncMapRenderer {
         if (session.shownArea == null) return;
         AreasFile areasFile = AreasFile.load(world, session.shownArea);
         if (areasFile == null) return;
-        final int areaColor = 8 * 4 + BRIGHT;
+        final int areaColor = ColorIndex.COLOR_8.bright;
         for (String name : areasFile.getAreas().keySet()) {
             var list = areasFile.getAreas().get(name);
             if (list.isEmpty()) continue;

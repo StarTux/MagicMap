@@ -33,13 +33,15 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
         rootNode.addChild("area").denyTabCompletion()
             .description("Render areas")
             .playerCaller(this::area);
+        rootNode.addChild("grab").denyTabCompletion()
+            .description("Grab colors")
+            .senderCaller(this::grab);
     }
 
     private void reload(CommandSender sender) {
         plugin.setupMap();
         plugin.importConfig();
         plugin.getMapGiver().reset();
-        plugin.loadMapColors();
         plugin.getSessions().clear();
         sender.sendMessage(text("MagicMap config reloaded", AQUA));
     }
@@ -82,12 +84,11 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
     private void grab(CommandSender sender) {
         File file = new File(plugin.getDataFolder(), "colors.txt");
         try {
-            ColorGrabber.grab(file);
+            ColorGrabber.grabMaterials(file);
         } catch (Exception e) {
             e.printStackTrace();
             throw new CommandWarn("An error occured. See console");
         }
-        plugin.loadMapColors();
         sender.sendMessage("Colors grabbed, see " + file + "");
     }
 

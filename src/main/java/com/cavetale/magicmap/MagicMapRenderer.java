@@ -111,7 +111,7 @@ final class MagicMapRenderer extends MapRenderer {
                 type = RenderType.SURFACE;
             }
         }
-        SyncMapRenderer renderer = new SyncMapRenderer(plugin, plugin.getMapColor(), loc.getWorld(), session, type, centerX, centerZ);
+        SyncMapRenderer renderer = new SyncMapRenderer(plugin, loc.getWorld(), session, type, centerX, centerZ);
         plugin.getMainQueue().add(renderer);
     }
 
