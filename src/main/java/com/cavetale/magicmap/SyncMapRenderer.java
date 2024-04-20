@@ -184,8 +184,13 @@ final class SyncMapRenderer {
             while (y >= minY && !world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip air
             while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
-            // skip transparent
-            while (y >= minY && ColorIndex.ofMaterial(world.getBlockAt(x, y, z).getType()) == ColorIndex.EMPTY) y -= 1;
+            // skip transparent, non-lava
+            while (y >= minY) {
+                final Block block = world.getBlockAt(x, y, z);
+                if (block.isLiquid()) break;
+                if (ColorIndex.ofMaterial(block.getType()) != null) break;
+                y -= 1;
+            }
             return y;
         }
         case CAVE: {
@@ -194,7 +199,7 @@ final class SyncMapRenderer {
             while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             while (y >= minY) { // skip sunlit blocks
                 Block block = world.getBlockAt(x, y, z);
-                if (!block.isEmpty() || block.getLightFromSky() == 15) {
+                if (block.isLiquid() || !block.isEmpty() || block.getLightFromSky() == 15) {
                     y -= 1;
                 } else {
                     break;
@@ -202,8 +207,13 @@ final class SyncMapRenderer {
             }
             // skip air
             while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
-            // skip transparent
-            while (y >= minY && ColorIndex.ofMaterial(world.getBlockAt(x, y, z).getType()) == ColorIndex.EMPTY) y -= 1;
+            // skip transparent, non-water
+            while (y >= minY) {
+                final Block block = world.getBlockAt(x, y, z);
+                if (block.isLiquid()) break;
+                if (ColorIndex.ofMaterial(block.getType()) != null) break;
+                y -= 1;
+            }
             return y;
         }
         case SURFACE:
@@ -212,7 +222,12 @@ final class SyncMapRenderer {
             // skip air
             while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
             // skip transparent
-            while (y >= minY && ColorIndex.ofMaterial(world.getBlockAt(x, y, z).getType()) == ColorIndex.EMPTY) y -= 1;
+            while (y >= minY) {
+                final Block block = world.getBlockAt(x, y, z);
+                if (block.isLiquid()) break;
+                if (ColorIndex.ofMaterial(block.getType()) != null) break;
+                y -= 1;
+            }
             return y;
         }
         }

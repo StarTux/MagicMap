@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.Component.textOfChildren;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
@@ -36,6 +37,9 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
         rootNode.addChild("grab").denyTabCompletion()
             .description("Grab colors")
             .senderCaller(this::grab);
+        rootNode.addChild("getcolor").denyTabCompletion()
+            .description("Get color of current block")
+            .playerCaller(this::getcolor);
     }
 
     private void reload(CommandSender sender) {
@@ -107,5 +111,17 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
         } else {
             return false;
         }
+    }
+
+    private void getcolor(Player player) {
+        final var block = player.getLocation().getBlock();
+        final var material = block.getType();
+        final ColorIndex colorIndex = ColorIndex.ofMaterial(material);
+        player.sendMessage(textOfChildren(text("block:", GRAY),
+                                          text(block.getX() + " " + block.getY() + " " + block.getZ(), WHITE),
+                                          text(" material:", GRAY),
+                                          text("" + material, WHITE),
+                                          text(" color:", GRAY),
+                                          text("" + colorIndex, WHITE)));
     }
 }
