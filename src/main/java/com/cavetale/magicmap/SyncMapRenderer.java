@@ -75,7 +75,7 @@ final class SyncMapRenderer {
             int z = canvasY + centerZ - 63;
             int highest = highest(x, z);
             if (highest < minY) {
-                mapCache.setPixel(canvasX, canvasY, (29 << 2) + 3);
+                mapCache.setPixel(canvasX, canvasY, ColorIndex.BLACK.dark);
                 continue;
             }
             Block block = world.getBlockAt(x, highest, z);
