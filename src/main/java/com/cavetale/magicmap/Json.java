@@ -8,8 +8,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.function.Supplier;
-import org.bukkit.plugin.java.JavaPlugin;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.plugin.java.JavaPlugin;
 
 @RequiredArgsConstructor
 public final class Json {
