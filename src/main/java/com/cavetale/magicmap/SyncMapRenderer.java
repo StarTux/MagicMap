@@ -81,7 +81,7 @@ final class SyncMapRenderer {
             Block block = world.getBlockAt(x, highest, z);
             final int color;
             if (block.getType() == Material.WATER || (block.getBlockData() instanceof Waterlogged w && w.isWaterlogged())) {
-                final ColorIndex colorIndex = ColorIndex.indexed(12);
+                final ColorIndex colorIndex = ColorIndex.WATER;
                 while (block.getY() > minY && (block.getType() == Material.WATER || (block.getBlockData() instanceof Waterlogged w2 && w2.isWaterlogged()))) {
                     block = block.getRelative(0, -1, 0);
                 }
@@ -103,7 +103,7 @@ final class SyncMapRenderer {
                 }
                 mapCache.setPixel(canvasX, canvasY, color);
             } else if (block.getType() == Material.LAVA) {
-                final ColorIndex colorIndex = ColorIndex.indexed(15);
+                final ColorIndex colorIndex = ColorIndex.LAVA;
                 while (block.getY() > minY && block.getType() == Material.LAVA) {
                     block = block.getRelative(0, -1, 0);
                 }
@@ -125,8 +125,7 @@ final class SyncMapRenderer {
                 }
                 mapCache.setPixel(canvasX, canvasY, color);
             } else {
-                ColorIndex colorIndex = ColorIndex.ofMaterial(block.getType());
-                if (colorIndex == null) colorIndex = ColorIndex.COLOR_29;
+                final ColorIndex colorIndex = ColorIndex.ofMaterial(block.getType(), ColorIndex.BLACK);
                 // Neighbor block where the sunlight comes from.
                 int lx;
                 int ly;
@@ -266,7 +265,7 @@ final class SyncMapRenderer {
         if (session.shownArea == null) return;
         AreasFile areasFile = AreasFile.load(world, session.shownArea);
         if (areasFile == null) return;
-        final int areaColor = ColorIndex.COLOR_8.bright;
+        final int areaColor = ColorIndex.WHITE.bright;
         for (String name : areasFile.getAreas().keySet()) {
             var list = areasFile.getAreas().get(name);
             if (list.isEmpty()) continue;

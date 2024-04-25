@@ -95,6 +95,7 @@ public enum ColorIndex {
     public static final ColorIndex WATER = COLOR_12;
     public static final ColorIndex LAVA = COLOR_15;
     public static final ColorIndex BLACK = COLOR_29;
+    public static final ColorIndex WHITE = COLOR_8;
 
     ColorIndex(final int index, final int rgbNormal, final int rgbLight, final int rgbBright, final int rgbDark) {
         this.index = index;
@@ -1161,9 +1162,16 @@ public enum ColorIndex {
         return INDEXED[index];
     }
 
-    public static ColorIndex ofMaterial(Material material) {
+    public static ColorIndex ofMaterial(Material material, ColorIndex defaultValue) {
         final Integer index = MATERIAL_MAP.get(material);
-        if (index == null) return null;
-        return indexed(index);
+        if (index == null) return defaultValue;
+        ColorIndex result = indexed(index);
+        return result != null
+            ? result
+            : defaultValue;
+    }
+
+    public static ColorIndex ofMaterial(Material material) {
+        return ofMaterial(material, null);
     }
 }
