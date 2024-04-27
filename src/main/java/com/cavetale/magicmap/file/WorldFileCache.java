@@ -306,7 +306,6 @@ public final class WorldFileCache {
             final RegionFileCache old = regionMap.remove(region);
             if (old == null) continue;
             old.disable();
-            plugin().getLogger().info("[" + name + "] Unloaded " + old.getRegion());
         }
         unloadRegions.clear();
     }
@@ -370,7 +369,6 @@ public final class WorldFileCache {
                     break;
                 }
                 Bukkit.getScheduler().runTask(plugin(), () -> {
-                        plugin().getLogger().info("[" + name + "] Loadeded " + regionFileCache.getRegion());
                         if (!regionFileCache.getRegion().equals(currentAsyncRegion)) {
                             plugin().getLogger().severe("[" + name + "] current async region changed"
                                                         + " from " + regionFileCache.getRegion()
