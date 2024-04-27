@@ -1,6 +1,5 @@
 package com.cavetale.magicmap;
 
-import java.awt.Color;
 import java.util.EnumMap;
 import org.bukkit.Material;
 
@@ -85,10 +84,10 @@ public enum ColorIndex {
     public final int light;
     public final int bright;
     public final int dark;
-    public final Color normalColor;
-    public final Color lightColor;
-    public final Color brightColor;
-    public final Color darkColor;
+    public final int normalRgb;
+    public final int lightRgb;
+    public final int brightRgb;
+    public final int darkRgb;
     private static final ColorIndex[] INDEXED;
     private static final EnumMap<Material, Integer> MATERIAL_MAP = new EnumMap<>(Material.class);
     public static final ColorIndex EMPTY = COLOR_0;
@@ -97,16 +96,16 @@ public enum ColorIndex {
     public static final ColorIndex BLACK = COLOR_29;
     public static final ColorIndex WHITE = COLOR_8;
 
-    ColorIndex(final int index, final int rgbNormal, final int rgbLight, final int rgbBright, final int rgbDark) {
+    ColorIndex(final int index, final int normalRgb, final int lightRgb, final int brightRgb, final int darkRgb) {
         this.index = index;
         this.normal = index * 4 + 0;
         this.light = index * 4 + 1;
         this.bright = index * 4 + 2;
         this.dark = index * 4 + 3;
-        this.normalColor = new Color(rgbNormal, true);
-        this.lightColor = new Color(rgbLight, true);
-        this.brightColor = new Color(rgbBright, true);
-        this.darkColor = new Color(rgbDark, true);
+        this.normalRgb = normalRgb;
+        this.lightRgb = lightRgb;
+        this.brightRgb = brightRgb;
+        this.darkRgb = darkRgb;
     }
 
     static {
@@ -1173,5 +1172,9 @@ public enum ColorIndex {
 
     public static ColorIndex ofMaterial(Material material) {
         return ofMaterial(material, null);
+    }
+
+    public boolean isEmpty() {
+        return this == EMPTY;
     }
 }

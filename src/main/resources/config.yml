@@ -26,3 +26,6 @@ give:
 EnableCaveView:
   default: true
   world_the_end: false
+
+AllWorlds: false
+MapWorlds: []

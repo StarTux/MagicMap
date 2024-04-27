@@ -1,5 +1,5 @@
 package com.cavetale.magicmap;
 
-enum RenderType {
+public enum RenderType {
     SURFACE, CAVE, NETHER;
 }

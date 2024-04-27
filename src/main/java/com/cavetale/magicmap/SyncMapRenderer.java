@@ -11,7 +11,7 @@ final class SyncMapRenderer {
     private final MagicMapPlugin plugin;
     private final World world;
     private final Session session;
-    private final RenderType type;
+    private final RenderType renderType;
     // center coords
     private final int centerX;
     private final int centerZ;
@@ -20,8 +20,8 @@ final class SyncMapRenderer {
     private final long dayTime;
     private final MapCache mapCache = new MapCache();
     private boolean partial = false;
-    private final int minY;
-    private final int maxY;
+    private final int minWorldY;
+    private final int maxWorldY;
     private final int minX;
     private final int minZ;
     private final int maxX;
@@ -30,12 +30,12 @@ final class SyncMapRenderer {
     SyncMapRenderer(final MagicMapPlugin plugin,
                     final World world,
                     final Session session,
-                    final RenderType type,
+                    final RenderType renderType,
                     final int centerX, final int centerZ) {
         this.plugin = plugin;
         this.world = world;
         this.session = session;
-        this.type = type;
+        this.renderType = renderType;
         this.centerX = centerX;
         this.centerZ = centerZ;
         this.dayTime = world.getTime();
@@ -43,8 +43,8 @@ final class SyncMapRenderer {
         this.minZ = centerZ - 63;
         this.maxX = centerX + 64;
         this.maxZ = centerZ + 64;
-        this.minY = world.getMinHeight();
-        this.maxY = world.getMaxHeight();
+        this.minWorldY = world.getMinHeight();
+        this.maxWorldY = world.getMaxHeight();
     }
 
     /**
@@ -74,7 +74,7 @@ final class SyncMapRenderer {
             int x = canvasX + centerX - 63;
             int z = canvasY + centerZ - 63;
             int highest = highest(x, z);
-            if (highest < minY) {
+            if (highest < minWorldY) {
                 mapCache.setPixel(canvasX, canvasY, ColorIndex.BLACK.dark);
                 continue;
             }
@@ -82,7 +82,7 @@ final class SyncMapRenderer {
             final int color;
             if (block.getType() == Material.WATER || (block.getBlockData() instanceof Waterlogged w && w.isWaterlogged())) {
                 final ColorIndex colorIndex = ColorIndex.WATER;
-                while (block.getY() > minY && (block.getType() == Material.WATER || (block.getBlockData() instanceof Waterlogged w2 && w2.isWaterlogged()))) {
+                while (block.getY() > minWorldY && (block.getType() == Material.WATER || (block.getBlockData() instanceof Waterlogged w2 && w2.isWaterlogged()))) {
                     block = block.getRelative(0, -1, 0);
                 }
                 int depth = highest - block.getY();
@@ -104,7 +104,7 @@ final class SyncMapRenderer {
                 mapCache.setPixel(canvasX, canvasY, color);
             } else if (block.getType() == Material.LAVA) {
                 final ColorIndex colorIndex = ColorIndex.LAVA;
-                while (block.getY() > minY && block.getType() == Material.LAVA) {
+                while (block.getY() > minWorldY && block.getType() == Material.LAVA) {
                     block = block.getRelative(0, -1, 0);
                 }
                 int depth = highest - block.getY();
@@ -172,64 +172,69 @@ final class SyncMapRenderer {
     }
 
     private int highest(int x, int z) {
-        if (!world.isChunkLoaded(x >> 4, z >> 4)) {
-            partial = true;
-            return -1;
+        return switch (renderType) {
+        case NETHER -> highestNether(x, z);
+        case CAVE -> highestCave(x, z);
+        case SURFACE -> highestSurface(x, z);
+        default -> highestSurface(x, z);
+        };
+    }
+
+    private int highestNether(int x, int z) {
+        int y = 127;
+        // skip blocks
+        while (y >= minWorldY && !world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+        // skip air
+        while (y >= minWorldY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+        // skip transparent, non-lava
+        while (y >= minWorldY) {
+            final Block block = world.getBlockAt(x, y, z);
+            if (block.isLiquid()) break;
+            final ColorIndex colorIndex = ColorIndex.ofMaterial(block.getType());
+            if (colorIndex != null && !colorIndex.isEmpty()) break;
+            y -= 1;
         }
-        switch (type) {
-        case NETHER: {
-            int y = 127;
-            // skip blocks
-            while (y >= minY && !world.getBlockAt(x, y, z).isEmpty()) y -= 1;
-            // skip air
-            while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
-            // skip transparent, non-lava
-            while (y >= minY) {
-                final Block block = world.getBlockAt(x, y, z);
-                if (block.isLiquid()) break;
-                if (ColorIndex.ofMaterial(block.getType()) != null) break;
+        return y;
+    }
+
+    private int highestCave(int x, int z) {
+        int y = maxWorldY;
+        // skip air
+        while (y >= minWorldY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+        while (y >= minWorldY) { // skip sunlit blocks
+            Block block = world.getBlockAt(x, y, z);
+            if (block.isLiquid() || !block.isEmpty() || block.getLightFromSky() == 15) {
                 y -= 1;
+            } else {
+                break;
             }
-            return y;
         }
-        case CAVE: {
-            int y = maxY;
-            // skip air
-            while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
-            while (y >= minY) { // skip sunlit blocks
-                Block block = world.getBlockAt(x, y, z);
-                if (block.isLiquid() || !block.isEmpty() || block.getLightFromSky() == 15) {
-                    y -= 1;
-                } else {
-                    break;
-                }
-            }
-            // skip air
-            while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
-            // skip transparent, non-water
-            while (y >= minY) {
-                final Block block = world.getBlockAt(x, y, z);
-                if (block.isLiquid()) break;
-                if (ColorIndex.ofMaterial(block.getType()) != null) break;
-                y -= 1;
-            }
-            return y;
+        // skip air
+        while (y >= minWorldY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+        // skip transparent, non-water
+        while (y >= minWorldY) {
+            final Block block = world.getBlockAt(x, y, z);
+            if (block.isLiquid()) break;
+            final ColorIndex colorIndex = ColorIndex.ofMaterial(block.getType());
+            if (colorIndex != null && !colorIndex.isEmpty()) break;
+            y -= 1;
         }
-        case SURFACE:
-        default: {
-            int y = maxY;
-            // skip air
-            while (y >= minY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
-            // skip transparent
-            while (y >= minY) {
-                final Block block = world.getBlockAt(x, y, z);
-                if (block.isLiquid()) break;
-                if (ColorIndex.ofMaterial(block.getType()) != null) break;
-                y -= 1;
-            }
-            return y;
+        return y;
+    }
+
+    private int highestSurface(int x, int z) {
+        int y = maxWorldY;
+        // skip air
+        while (y >= minWorldY && world.getBlockAt(x, y, z).isEmpty()) y -= 1;
+        // skip transparent
+        while (y >= minWorldY) {
+            final Block block = world.getBlockAt(x, y, z);
+            if (block.isLiquid()) break;
+            final ColorIndex colorIndex = ColorIndex.ofMaterial(block.getType());
+            if (colorIndex != null && !colorIndex.isEmpty()) break;
+            y -= 1;
         }
-        }
+        return y;
     }
 
     private void drawDotted(int worldX, int worldZ, int color) {

@@ -1,5 +1,6 @@
 package com.cavetale.magicmap;
 
+import com.cavetale.magicmap.file.Worlds;
 import com.cavetale.magicmap.mytems.MagicMapMytem;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,12 +66,16 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     private Map<UUID, Session> sessions = new HashMap<>();
     // Mytems
     protected MagicMapMytem magicMapMytem;
+    // Worlds
+    private final Worlds worlds = new Worlds();
 
-    // --- Plugin
+    @Override
+    public void onLoad() {
+        instance = this;
+    }
 
     @Override
     public void onEnable() {
-        instance = this;
         saveDefaultConfig();
         magicMapRenderer = new MagicMapRenderer(this);
         setupMap();
@@ -96,12 +101,14 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
                 mapGiver.maybeGiveMap(player);
             }
         }
+        worlds.enableWorldServer();
     }
 
     @Override
     public void onDisable() {
         resetMapView();
         sessions.clear();
+        worlds.disableWorldServer();
     }
 
     // --- Configuration
@@ -283,5 +290,9 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         }
         MapMeta meta = (MapMeta) itemStack.getItemMeta();
         return meta.getMapView().getId() == instance.mapId;
+    }
+
+    public static MagicMapPlugin plugin() {
+        return instance;
     }
 }
