@@ -6,6 +6,12 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.WorldBorder;
 
+/**
+ * This stores information of common interest about a world's border
+ * for later use.
+ * Namely, the block coordinates of the center, as well as the bounds
+ * in all directions.
+ */
 @Value
 public final class WorldBorderCache {
     public final int centerX;

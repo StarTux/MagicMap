@@ -5,6 +5,7 @@ import com.cavetale.core.util.Json;
 import com.cavetale.magicmap.RenderType;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,42 +24,64 @@ import static com.cavetale.magicmap.MagicMapPlugin.plugin;
  */
 @Data
 public final class WorldFileCache {
-    public static final int NO_TICK_THRESHOLD = 20 * 60;
     private final String name;
-    private final File worldFolder;
     private final File magicMapFolder;
-    // Regions
-    private final Map<Vec2i, RegionFileCache> regionMap = new HashMap<>();
-    private final List<Vec2i> unloadRegions = new ArrayList<>();
+    // Renders
+    private final EnumMap<RenderType, WorldRenderCache> renderTypeMap = new EnumMap<>(RenderType.class);
     // Chunks
     private final Map<Vec2i, Integer> chunkTicketMap = new HashMap<>();
     private final Set<Vec2i> chunksLoading = new HashSet<>();
     // Consider removing chunk callbacks!
     private final Map<Vec2i, List<Consumer<Chunk>>> chunkCallbacks = new HashMap<>();
-    // Saving
+    // Meta
     private File tagFile;
     private WorldFileTag tag;
-    // Async thread
-    private Vec2i currentAsyncRegion;
-    // Usage:
-    // - Set state of regionFileCache to LOADING or SAVING
-    // - Add region vector to asyncQueue
-    // - Call checkAsyncQueue()
-    private final List<Vec2i> asyncQueue = new ArrayList<>();
 
     public WorldFileCache(final String name, final File worldFolder) {
         this.name = name;
-        this.worldFolder = worldFolder;
         this.magicMapFolder = new File(worldFolder, "magicmap");
     }
 
     /**
      * The enable method for the world server.
      */
-    public void enableWorld() {
+    public void enableWorld(World world) {
         this.tagFile = new File(magicMapFolder, "tag.json");
         magicMapFolder.mkdirs();
         loadTag();
+        boolean doSaveTag = false;
+        final WorldBorderCache worldBorder = WorldBorderCache.of(world);
+        if (!worldBorder.equals(tag.getWorldBorder())) {
+            tag.setWorldBorder(getWorldBorder());
+            doSaveTag = true;
+        }
+        final List<RenderType> renderTypes = new ArrayList<>();
+        switch (world.getEnvironment()) {
+        case NORMAL:
+            renderTypes.add(RenderType.SURFACE);
+            renderTypes.add(RenderType.CAVE);
+            break;
+        case NETHER:
+            renderTypes.add(RenderType.NETHER);
+            break;
+        case THE_END:
+        case CUSTOM:
+        default:
+            renderTypes.add(RenderType.SURFACE);
+            break;
+        }
+        if (!renderTypes.equals(tag.getRenderTypes())) {
+            tag.setRenderTypes(renderTypes);
+            doSaveTag = true;
+        }
+        if (doSaveTag) {
+            saveTag();
+        }
+        for (RenderType renderType : renderTypes) {
+            WorldRenderCache worldRenderCache = new WorldRenderCache(this, renderType, magicMapFolder);
+            renderTypeMap.put(renderType, worldRenderCache);
+            worldRenderCache.enable();
+        }
     }
 
     public void disableWorld() {
@@ -68,11 +91,11 @@ public final class WorldFileCache {
     }
 
     private void disableAll() {
-        regionMap.clear();
-        currentAsyncRegion = null;
-        asyncQueue.clear();
-        unloadRegions.clear();
         tag = null;
+        for (WorldRenderCache it : renderTypeMap.values()) {
+            it.disable();
+        }
+        renderTypeMap.clear();
     }
 
     /**
@@ -144,16 +167,6 @@ public final class WorldFileCache {
         return Bukkit.getWorld(name);
     }
 
-    public RegionFileCache getRegion(Vec2i vec) {
-        return regionMap.get(vec);
-    }
-
-    public RegionFileCache loadRegion(Vec2i vec) {
-        final RegionFileCache result = regionMap.computeIfAbsent(vec, v -> new RegionFileCache(this, vec).enable());
-        result.resetNoTick();
-        return result;
-    }
-
     public WorldBorderCache getWorldBorder() {
         final World world = getWorld();
         if (world == null) return null;
@@ -176,54 +189,83 @@ public final class WorldFileCache {
         final World world = getWorld();
         final Vec2i currentRegion = fullRender.getCurrentRegion();
         if (currentRegion != null) {
-            final RegionFileCache regionFileCache = loadRegion(currentRegion);
-            int unloadedChunks = 0;
+            int unloadedChunkCount = 0;
             for (Vec2i chunk : List.copyOf(fullRender.getCurrentChunks())) {
                 if (world.isChunkLoaded(chunk.x, chunk.z)) continue;
-                unloadedChunks += 1;
+                unloadedChunkCount += 1;
                 if (!chunksLoading.contains(chunk)) {
                     holdChunk(chunk);
                 }
             }
-            if (unloadedChunks > 0) {
+            if (unloadedChunkCount > 0) {
                 return;
             }
-            if (regionFileCache.getState() != RegionFileCache.State.LOADED) {
+            int unloadedRegionCount = 0;
+            for (WorldRenderCache worldRenderCache : renderTypeMap.values()) {
+                final RegionFileCache regionFileCache = worldRenderCache.loadRegion(currentRegion);
+                if (regionFileCache.getState() != RegionFileCache.State.LOADED) {
+                    unloadedRegionCount += 1;
+                }
+            }
+            if (unloadedRegionCount > 0) {
                 return;
             }
             // All chunks loaded!
             // Make sure there is a renderer and start rendering
-            final MapImageRenderer renderer;
-            if (fullRender.getRenderer() == null) {
+            final List<MapImageRenderer> renderers;
+            if (fullRender.getRenderers() == null) {
+                renderers = new ArrayList<>();
                 final int x = currentRegion.x << 9;
                 final int z = currentRegion.z << 9;
-                renderer = new MapImageRenderer(world,
-                                                regionFileCache.getImage(),
-                                                (world.getEnvironment() == World.Environment.NETHER
-                                                 ? RenderType.NETHER
-                                                 : RenderType.SURFACE),
-                                                x, z, 512, 512);
-                fullRender.setRenderer(renderer);
-            } else {
-                renderer = fullRender.getRenderer();
-            }
-            do {
-                if (renderer.isFinished()) {
-                    for (Vec2i chunk : fullRender.getCurrentChunks()) {
-                        unholdChunk(chunk);
-                    }
-                    // Region finished
-                    fullRender.setRenderer(null);
-                    fullRender.setCurrentRegion(null);
-                    fullRender.getCurrentChunks().clear();
-                    // Schedule saving
-                    scheduleSave(regionFileCache);
-                    break;
+                for (WorldRenderCache worldRenderCache : renderTypeMap.values()) {
+                    final RegionFileCache regionFileCache = worldRenderCache.getRegion(currentRegion);
+                    final MapImageRenderer renderer;
+                    renderer = new MapImageRenderer(world,
+                                                   regionFileCache.getImage(),
+                                                   worldRenderCache.getRenderType(),
+                                                   x, z, 512, 512);
+                    renderers.add(renderer);
                 }
-                renderer.run(16);
-            } while (System.currentTimeMillis() < stopTime);
-            return;
+                fullRender.setRenderers(renderers);
+            } else {
+                renderers = fullRender.getRenderers();
+            }
+            // Renderers are enabled, let's see if they are
+            // finished. If not, iterate a few times.
+            int notFinishedCount = 0;
+            for (MapImageRenderer renderer : renderers) {
+                if (!renderer.isFinished()) {
+                    notFinishedCount += 1;
+                }
+            }
+            if (notFinishedCount > 0) {
+                do {
+                    for (MapImageRenderer renderer : renderers) {
+                        if (renderer.isFinished()) {
+                            continue;
+                        }
+                        renderer.run(16);
+                        if (System.currentTimeMillis() >= stopTime) {
+                            break;
+                        }
+                    }
+                } while (System.currentTimeMillis() < stopTime);
+                return;
+            }
+            // Schedule saving
+            for (WorldRenderCache worldRenderCache : renderTypeMap.values()) {
+                final RegionFileCache regionFileCache = worldRenderCache.getRegion(currentRegion);
+                worldRenderCache.scheduleSave(regionFileCache);
+            }
+        } // end if currentRegion != null
+        // Region finished!
+        for (Vec2i chunk : fullRender.getCurrentChunks()) {
+            unholdChunk(chunk);
         }
+        fullRender.setRenderers(null);
+        fullRender.setCurrentRegion(null);
+        fullRender.getCurrentChunks().clear();
+        // Pull the next region from the queue
         final List<Vec2i> regionQueue = fullRender.getRegionQueue();
         if (!regionQueue.isEmpty()) {
             final Vec2i nextRegion = regionQueue.remove(0);
@@ -273,113 +315,13 @@ public final class WorldFileCache {
         }
     }
 
-    protected void scheduleSave(RegionFileCache regionFileCache) {
-        if (regionFileCache.getState() != RegionFileCache.State.LOADED) {
-            throw new IllegalStateException("world:" + name
-                                            + " region:" + regionFileCache.getRegion()
-                                            + " state:" + regionFileCache.getState());
-        }
-        regionFileCache.setState(RegionFileCache.State.SAVING);
-        asyncQueue.add(regionFileCache.getRegion());
-        checkAsyncQueue();
-    }
-
-    protected void scheduleLoad(RegionFileCache regionFileCache) {
-        if (regionFileCache.getState() != RegionFileCache.State.INIT) {
-            throw new IllegalStateException("world:" + name
-                                            + " region:" + regionFileCache.getRegion()
-                                            + " state:" + regionFileCache.getState());
-        }
-        regionFileCache.setState(RegionFileCache.State.LOADING);
-        asyncQueue.add(regionFileCache.getRegion());
-        checkAsyncQueue();
-    }
-
     /**
      * Regular cleaning up of unused regions.
      */
     private void cleanUp() {
-        for (RegionFileCache it : regionMap.values()) {
-            cleanUpIter(it);
+        for (WorldRenderCache it : renderTypeMap.values()) {
+            it.cleanUp();
         }
-        for (Vec2i region : unloadRegions) {
-            final RegionFileCache old = regionMap.remove(region);
-            if (old == null) continue;
-            old.disable();
-        }
-        unloadRegions.clear();
-    }
-
-    /**
-     * In the main thread, we check on each region file and see if it
-     * needs loading or unloading.  Loading is done in an off-thread,
-     * one region at a time.  The asyncQueue remembers which regions
-     * need saving or loading.
-     */
-    private void cleanUpIter(RegionFileCache regionFileCache) {
-        switch (regionFileCache.getState()) {
-        case INIT: {
-            if (!getWorldBorder().containsRegion(regionFileCache.getRegion())) {
-                regionFileCache.setState(RegionFileCache.State.OUT_OF_BOUNDS);
-            } else {
-                scheduleLoad(regionFileCache);
-            }
-            break;
-        }
-        case OUT_OF_BOUNDS:
-        case LOADED: {
-            regionFileCache.increaseNoTick();
-            if (regionFileCache.getNoTicks() > NO_TICK_THRESHOLD) {
-                unloadRegions.add(regionFileCache.getRegion());
-            }
-            break;
-        }
-        // Fallthrough
-        case LOADING:
-        case SAVING:
-        default: break;
-        }
-    }
-
-    /**
-     * Called occasionally to make sure we are either currently doing
-     * a region in an async thread, scheduling a new region from the
-     * queue, or there is nothing to do.
-     */
-    private void checkAsyncQueue() {
-        if (currentAsyncRegion != null) return;
-        if (asyncQueue.isEmpty()) return;
-        currentAsyncRegion = asyncQueue.remove(0);
-        final RegionFileCache regionFileCache = regionMap.get(currentAsyncRegion);
-        if (regionFileCache == null) {
-            currentAsyncRegion = null;
-            return;
-        }
-        Bukkit.getScheduler().runTaskAsynchronously(plugin(), () -> {
-                switch (regionFileCache.getState()) {
-                case LOADING:
-                    regionFileCache.load();
-                    break;
-                case SAVING:
-                    regionFileCache.save();
-                    break;
-                default:
-                    plugin().getLogger().severe("[" + name + "] [Async] " + regionFileCache.getRegion()
-                                                + " has unexpected state: " + regionFileCache.getState());
-                    break;
-                }
-                Bukkit.getScheduler().runTask(plugin(), () -> {
-                        if (!regionFileCache.getRegion().equals(currentAsyncRegion)) {
-                            plugin().getLogger().severe("[" + name + "] current async region changed"
-                                                        + " from " + regionFileCache.getRegion()
-                                                        + " to " + currentAsyncRegion);
-                        } else {
-                            currentAsyncRegion = null;
-                        }
-                        regionFileCache.setState(RegionFileCache.State.LOADED);
-                        checkAsyncQueue();
-                    });
-            });
     }
 
     public boolean isFullRenderScheduled() {

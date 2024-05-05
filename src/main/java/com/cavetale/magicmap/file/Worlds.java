@@ -57,7 +57,7 @@ public final class Worlds implements Listener {
         }
         WorldFileCache cache = new WorldFileCache(name, world.getWorldFolder());
         worldMap.put(name, cache);
-        cache.enableWorld();
+        cache.enableWorld(world);
         plugin.getLogger().info("World Cache loaded: " + name);
     }
 

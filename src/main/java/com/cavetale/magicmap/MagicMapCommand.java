@@ -6,6 +6,7 @@ import com.cavetale.core.command.CommandNode;
 import com.cavetale.core.command.CommandWarn;
 import com.cavetale.magicmap.file.MapImageRenderer;
 import com.cavetale.magicmap.file.WorldFileCache;
+import com.cavetale.magicmap.file.WorldRenderCache;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
@@ -197,18 +198,21 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
                                           text(cache.getName(), WHITE)));
         sender.sendMessage(textOfChildren(text("Border ", GRAY),
                                           text("" + cache.getWorldBorder(), WHITE)));
-        sender.sendMessage(textOfChildren(text("Regions Loaded ", GRAY),
-                                          text(cache.getRegionMap().size(), WHITE)));
+        for (WorldRenderCache renderCache : cache.getRenderTypeMap().values()) {
+            sender.sendMessage(text(renderCache.getRenderType().getHumanName(), YELLOW));
+            sender.sendMessage(textOfChildren(text(" Regions Loaded ", GRAY),
+                                              text(renderCache.getRegionMap().size(), WHITE)));
+            sender.sendMessage(textOfChildren(text(" Current Async Region ", GRAY),
+                                              text("" + renderCache.getCurrentAsyncRegion(), WHITE)));
+            sender.sendMessage(textOfChildren(text(" Async Queue ", GRAY),
+                                              text(renderCache.getAsyncQueue().size(), WHITE)));
+        }
         sender.sendMessage(textOfChildren(text("Chunk Tickets ", GRAY),
                                           text(cache.getChunkTicketMap().size(), WHITE)));
         sender.sendMessage(textOfChildren(text("Chunks Loading ", GRAY),
                                           text(cache.getChunksLoading().size(), WHITE)));
         sender.sendMessage(textOfChildren(text("Chunks Callbacks ", GRAY),
                                           text(cache.getChunkCallbacks().size(), WHITE)));
-        sender.sendMessage(textOfChildren(text("Current Async Region ", GRAY),
-                                          text("" + cache.getCurrentAsyncRegion(), WHITE)));
-        sender.sendMessage(textOfChildren(text("Async Queue ", GRAY),
-                                          text(cache.getAsyncQueue().size(), WHITE)));
         sender.sendMessage(textOfChildren(text("Full Render ", GRAY),
                                           (cache.isFullRenderScheduled()
                                            ? text("Active", RED)
@@ -270,8 +274,10 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
                                           text(render.getCurrentChunks().size(), WHITE)));
         sender.sendMessage(textOfChildren(text("Region Queue ", GRAY),
                                           text(render.getRegionQueue().size(), WHITE)));
-        sender.sendMessage(textOfChildren(text("Renderer ", GRAY),
-                                          text(render.getRenderer() != null, WHITE)));
+        sender.sendMessage(textOfChildren(text("Renderers ", GRAY),
+                                          text((render.getRenderers() != null
+                                                ? "" + render.getRenderers().size()
+                                                : "0"), WHITE)));
         return true;
     }
 }

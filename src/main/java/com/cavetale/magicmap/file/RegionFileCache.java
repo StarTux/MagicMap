@@ -11,11 +11,11 @@ import static com.cavetale.magicmap.MagicMapPlugin.plugin;
 
 /**
  * Represent one region image file.  This class is mostly dumb and
- * managed by WorldFileCache.
+ * managed by WorldRenderCache.
  */
 @Data
 public final class RegionFileCache {
-    private final WorldFileCache worldFileCache;
+    private final WorldRenderCache worldRenderCache; // parent
     private final Vec2i region;
     private File imageFile;
     private BufferedImage image;
@@ -32,7 +32,7 @@ public final class RegionFileCache {
     }
 
     protected RegionFileCache enable() {
-        imageFile = new File(worldFileCache.getMagicMapFolder(), "r." + region.x + "." + region.z + ".png");
+        imageFile = new File(worldRenderCache.getMapFolder(), "r." + region.x + "." + region.z + ".png");
         return this;
     }
 
@@ -43,14 +43,16 @@ public final class RegionFileCache {
     /**
      * Load or create the image file.
      * This should be called in an async thread by
-     * WorldFileCache.loadingQueue().
+     * WorldRenderCache.loadingQueue().
      */
     protected void load() {
         if (imageFile.exists()) {
             try {
                 image = ImageIO.read(imageFile);
             } catch (IOException ioe) {
-                plugin().getLogger().log(Level.SEVERE, "Read " + worldFileCache.getName() + " " + region, ioe);
+                plugin().getLogger().log(Level.SEVERE,
+                                         "Read " + worldRenderCache.getWorldFileCache().getName() + "/" + worldRenderCache.getRenderType() + "/" + region,
+                                         ioe);
                 image = new BufferedImage(512, 512, BufferedImage.TYPE_INT_ARGB);
             }
         } else {
@@ -63,7 +65,9 @@ public final class RegionFileCache {
         try {
             ImageIO.write(image, "png", imageFile);
         } catch (IOException ioe) {
-            plugin().getLogger().log(Level.SEVERE, "Write " + worldFileCache.getName() + " " + region, ioe);
+            plugin().getLogger().log(Level.SEVERE,
+                                     "Write " + worldRenderCache.getWorldFileCache().getName() + "/" + worldRenderCache.getRenderType() + "/" + region,
+                                     ioe);
         }
     }
 
