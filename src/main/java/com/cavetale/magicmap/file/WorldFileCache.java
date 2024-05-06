@@ -1,5 +1,6 @@
 package com.cavetale.magicmap.file;
 
+import com.cavetale.core.connect.NetworkServer;
 import com.cavetale.core.struct.Vec2i;
 import com.cavetale.core.util.Json;
 import com.cavetale.magicmap.RenderType;
@@ -24,6 +25,7 @@ import static com.cavetale.magicmap.MagicMapPlugin.plugin;
  */
 @Data
 public final class WorldFileCache {
+    private final NetworkServer server;
     private final String name;
     private final File magicMapFolder;
     // Renders
@@ -37,22 +39,26 @@ public final class WorldFileCache {
     private File tagFile;
     private WorldFileTag tag;
 
-    public WorldFileCache(final String name, final File worldFolder) {
+    public WorldFileCache(final NetworkServer server, final String name, final File worldFolder) {
+        this.server = server;
         this.name = name;
         this.magicMapFolder = new File(worldFolder, "magicmap");
+    }
+
+    public WorldFileCache(final String name, final File worldFolder) {
+        this(NetworkServer.current(), name, worldFolder);
     }
 
     /**
      * The enable method for the world server.
      */
     public void enableWorld(World world) {
-        this.tagFile = new File(magicMapFolder, "tag.json");
         magicMapFolder.mkdirs();
         loadTag();
         boolean doSaveTag = false;
         final WorldBorderCache worldBorder = WorldBorderCache.of(world);
         if (!worldBorder.equals(tag.getWorldBorder())) {
-            tag.setWorldBorder(getWorldBorder());
+            tag.setWorldBorder(computeWorldBorder());
             doSaveTag = true;
         }
         final List<RenderType> renderTypes = new ArrayList<>();
@@ -88,6 +94,15 @@ public final class WorldFileCache {
         saveTag();
         disableAll();
         unholdAllChunks();
+    }
+
+    public void enableWebserver() {
+        loadTag();
+        for (RenderType renderType : tag.getRenderTypes()) {
+            WorldRenderCache worldRenderCache = new WorldRenderCache(this, renderType, magicMapFolder);
+            renderTypeMap.put(renderType, worldRenderCache);
+            worldRenderCache.enable();
+        }
     }
 
     private void disableAll() {
@@ -155,6 +170,9 @@ public final class WorldFileCache {
     }
 
     private void loadTag() {
+        if (tagFile == null) {
+            tagFile = new File(magicMapFolder, "tag.json");
+        }
         tag = Json.load(tagFile, WorldFileTag.class, WorldFileTag::new);
     }
 
@@ -167,10 +185,20 @@ public final class WorldFileCache {
         return Bukkit.getWorld(name);
     }
 
-    public WorldBorderCache getWorldBorder() {
+    public WorldBorderCache computeWorldBorder() {
         final World world = getWorld();
         if (world == null) return null;
         return WorldBorderCache.of(world);
+    }
+
+    public WorldBorderCache getWorldBorder() {
+        return tag.getWorldBorder();
+    }
+
+    public RenderType getMainRenderType() {
+        if (tag == null) return null;
+        if (tag.getRenderTypes() == null || tag.getRenderTypes().isEmpty()) return null;
+        return tag.getRenderTypes().get(0);
     }
 
     protected void tick() {
@@ -331,7 +359,7 @@ public final class WorldFileCache {
 
     public FullRenderTag scheduleFullRender() {
         final FullRenderTag fullRender = new FullRenderTag();
-        fullRender.setWorldBorder(getWorldBorder());
+        fullRender.setWorldBorder(computeWorldBorder());
         tag.setFullRender(fullRender);
         saveTag();
         return fullRender;

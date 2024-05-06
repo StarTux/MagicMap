@@ -2,6 +2,7 @@ package com.cavetale.magicmap;
 
 import com.cavetale.magicmap.file.Worlds;
 import com.cavetale.magicmap.mytems.MagicMapMytem;
+import com.cavetale.magicmap.webserver.WebserverManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,6 +69,8 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     protected MagicMapMytem magicMapMytem;
     // Worlds
     private final Worlds worlds = new Worlds();
+    // Webserver
+    private WebserverManager webserverManager;
 
     @Override
     public void onLoad() {
@@ -101,6 +104,12 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
                 mapGiver.maybeGiveMap(player);
             }
         }
+        if (Bukkit.getPluginManager().isPluginEnabled("Webserver")) {
+            webserverManager = new WebserverManager();
+            if (!webserverManager.enable()) {
+                webserverManager = null;
+            }
+        }
         worlds.enableWorldServer();
     }
 
@@ -109,6 +118,10 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         resetMapView();
         sessions.clear();
         worlds.disableWorldServer();
+        if (webserverManager != null) {
+            webserverManager.disable();
+            webserverManager = null;
+        }
     }
 
     // --- Configuration

@@ -12,9 +12,7 @@ import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.event.world.WorldUnloadEvent;
 
 /**
- * Manage all mapped worlds.
- * This class is intended to be shared by both the server hosting the
- * world (world server) as well as the web server.
+ * Manage all mapped worlds for the world server (not the web server).
  */
 public final class Worlds implements Listener {
     private final Map<String, WorldFileCache> worldMap = new HashMap<>();

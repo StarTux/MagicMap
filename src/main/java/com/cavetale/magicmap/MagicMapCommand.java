@@ -197,7 +197,7 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
         sender.sendMessage(textOfChildren(text("Name ", GRAY),
                                           text(cache.getName(), WHITE)));
         sender.sendMessage(textOfChildren(text("Border ", GRAY),
-                                          text("" + cache.getWorldBorder(), WHITE)));
+                                          text("" + cache.getTag().getWorldBorder(), WHITE)));
         for (WorldRenderCache renderCache : cache.getRenderTypeMap().values()) {
             sender.sendMessage(text(renderCache.getRenderType().getHumanName(), YELLOW));
             sender.sendMessage(textOfChildren(text(" Regions Loaded ", GRAY),

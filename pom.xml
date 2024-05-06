@@ -71,6 +71,14 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- Webserver -->
+    <dependency>
+      <groupId>com.cavetale.webserver</groupId>
+      <artifactId>webserver</artifactId>
+      <version>0.1-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- JUnit Testing -->
     <dependency>
       <groupId>junit</groupId>

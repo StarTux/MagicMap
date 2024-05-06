@@ -106,7 +106,7 @@ public final class WorldRenderCache {
     private void cleanUpIter(RegionFileCache regionFileCache) {
         switch (regionFileCache.getState()) {
         case INIT: {
-            if (!worldFileCache.getWorldBorder().containsRegion(regionFileCache.getRegion())) {
+            if (!worldFileCache.getTag().getWorldBorder().containsRegion(regionFileCache.getRegion())) {
                 regionFileCache.setState(RegionFileCache.State.OUT_OF_BOUNDS);
             } else {
                 scheduleLoad(regionFileCache);
