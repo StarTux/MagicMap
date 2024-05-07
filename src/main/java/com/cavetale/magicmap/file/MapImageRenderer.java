@@ -75,7 +75,11 @@ public final class MapImageRenderer {
         }
         final int highest = highest(worldX, worldZ);
         if (highest < minWorldY) {
-            image.setRGB(canvasX, canvasY, 0);
+            if (renderType == RenderType.SURFACE) {
+                image.setRGB(canvasX, canvasY, 0);
+            } else {
+                image.setRGB(canvasX, canvasY, ColorIndex.BLACK.darkRgb);
+            }
             return;
         }
         Block block = world.getBlockAt(worldX, highest, worldZ);
