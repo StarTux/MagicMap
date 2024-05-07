@@ -5,7 +5,6 @@ import com.cavetale.magicmap.RenderType;
 import java.awt.image.BufferedImage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -21,6 +20,7 @@ public final class MapImageRenderer {
     private final int minWorldZ;
     private final int sizeX;
     private final int sizeZ;
+    private final WorldBorderCache worldBorder;
     private final int minWorldY;
     private final int maxWorldY;
     private int canvasX = -1;
@@ -31,7 +31,8 @@ public final class MapImageRenderer {
                             final BufferedImage image,
                             final RenderType renderType,
                             final int minWorldX, final int minWorldZ,
-                            final int sizeX, final int sizeZ) {
+                            final int sizeX, final int sizeZ,
+                            final WorldBorderCache worldBorder) {
         this.world = world;
         this.image = image;
         this.renderType = renderType;
@@ -39,18 +40,9 @@ public final class MapImageRenderer {
         this.minWorldZ = minWorldZ;
         this.sizeX = sizeX;
         this.sizeZ = sizeZ;
+        this.worldBorder = worldBorder;
         this.minWorldY = world.getMinHeight();
         this.maxWorldY = world.getMaxHeight();
-    }
-
-    public static MapImageRenderer renderChunk(Chunk chunk) {
-        final var renderer = new MapImageRenderer(chunk.getWorld(),
-                                                  new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB),
-                                                  RenderType.SURFACE,
-                                                  chunk.getX() << 4, chunk.getZ() << 4,
-                                                  16, 16);
-        renderer.run();
-        return renderer;
     }
 
     public void run(int steps) {
@@ -77,9 +69,13 @@ public final class MapImageRenderer {
         }
         final int worldX = canvasX + minWorldX;
         final int worldZ = canvasY + minWorldZ;
+        if (!worldBorder.containsBlock(worldX, worldZ)) {
+            image.setRGB(canvasX, canvasY, 0);
+            return;
+        }
         final int highest = highest(worldX, worldZ);
         if (highest < minWorldY) {
-            image.setRGB(canvasX, canvasY, ColorIndex.BLACK.darkRgb);
+            image.setRGB(canvasX, canvasY, 0);
             return;
         }
         Block block = world.getBlockAt(worldX, highest, worldZ);

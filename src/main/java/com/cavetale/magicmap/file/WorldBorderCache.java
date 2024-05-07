@@ -34,6 +34,11 @@ public final class WorldBorderCache {
         return new WorldBorderCache(centerX, centerZ, minX, minZ, maxX, maxZ);
     }
 
+    public boolean containsBlock(final int x, final int z) {
+        return x >= minX && x <= maxX
+            && z >= minZ && z <= maxZ;
+    }
+
     public boolean containsRegion(final int rx, final int rz) {
         final int ax = rx << 9;
         if (ax > maxX) return false;

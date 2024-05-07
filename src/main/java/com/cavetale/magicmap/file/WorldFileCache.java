@@ -249,9 +249,10 @@ public final class WorldFileCache {
                     final RegionFileCache regionFileCache = worldRenderCache.getRegion(currentRegion);
                     final MapImageRenderer renderer;
                     renderer = new MapImageRenderer(world,
-                                                   regionFileCache.getImage(),
-                                                   worldRenderCache.getRenderType(),
-                                                   x, z, 512, 512);
+                                                    regionFileCache.getImage(),
+                                                    worldRenderCache.getRenderType(),
+                                                    x, z, 512, 512,
+                                                    getWorldBorder());
                     renderers.add(renderer);
                 }
                 fullRender.setRenderers(renderers);

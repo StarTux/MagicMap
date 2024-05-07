@@ -4,12 +4,9 @@ import com.cavetale.core.command.AbstractCommand;
 import com.cavetale.core.command.CommandArgCompleter;
 import com.cavetale.core.command.CommandNode;
 import com.cavetale.core.command.CommandWarn;
-import com.cavetale.magicmap.file.MapImageRenderer;
 import com.cavetale.magicmap.file.WorldFileCache;
 import com.cavetale.magicmap.file.WorldRenderCache;
 import java.io.File;
-import java.io.IOException;
-import javax.imageio.ImageIO;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -48,9 +45,6 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
         rootNode.addChild("getcolor").denyTabCompletion()
             .description("Get color of current block")
             .playerCaller(this::getColor);
-        rootNode.addChild("renderchunk")
-            .description("Render current chunk to file")
-            .playerCaller(this::renderChunk);
         final CommandNode worldsNode = rootNode.addChild("worlds")
             .description("World server commands");
         worldsNode.addChild("list").denyTabCompletion()
@@ -158,18 +152,6 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
                                           text("" + material, WHITE),
                                           text(" color:", GRAY),
                                           text("" + colorIndex, WHITE)));
-    }
-
-    private void renderChunk(Player player) {
-        final var renderer = MapImageRenderer.renderChunk(player.getChunk());
-        final var file = new File(plugin.getDataFolder(), "chunk.png");
-        try {
-            ImageIO.write(renderer.getImage(), "png", file);
-        } catch (IOException ioe) {
-            player.sendMessage(text(file + ": " + ioe.getMessage(), RED));
-            return;
-        }
-        player.sendMessage(text("Chunk rendered to " + file + ", " + renderer.getMinWorldX() + " " + renderer.getMinWorldZ(), YELLOW));
     }
 
     private void worldsList(CommandSender sender) {
