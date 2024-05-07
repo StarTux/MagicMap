@@ -81,6 +81,7 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
             case BETA:
                 mapName = worldFolder.getFileName().toString().replace("world", "beta");
                 break;
+            case HUB:
             case EINS:
             case ZWEI:
             case DREI:
@@ -98,7 +99,7 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
     @Override
     public void onReady(ContentDeliverySession session, List<String> usedPath, List<String> unusedPath) {
         if (unusedPath.isEmpty()) {
-            sendMapHtml(session, "beta");
+            sendMapHtml(session, "spawn");
             return;
         }
         if (unusedPath.size() == 1) {
@@ -135,6 +136,17 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
         MagicMapScript.install(provider.getDocument(), mapName, worldFileCache.getTag());
         provider.getDocument().getHead().addElement("title", t -> t.addText("Regions"));
         provider.getDocument().getBody().addElement("div", div -> {
+                div.setId("map_frame")
+                    .setStyle(Map.of("position", "absolute",
+                                     "width", "100%",
+                                     "height", "100%",
+                                     "overflow", "scroll",
+                                     "padding", "0px",
+                                     "margin", "0px",
+                                     "left", "0",
+                                     "right", "0",
+                                     "top", "0",
+                                     "bottom", "0"));
                 final int minRegionX = worldBorder.getMinX() >> 9;
                 final int maxRegionX = worldBorder.getMaxX() >> 9;
                 final int minRegionZ = worldBorder.getMinZ() >> 9;
@@ -144,13 +156,16 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
                         final int left = (rx - minRegionX) * 512;
                         final int top = (rz - minRegionZ) * 512;
                         final String id = "r." + rx + "." + rz;
-                        //final String fileUrl = "map/" + mapName + "/r." + rx + "." + rz + ".png";
                         div.addElement("img", img -> {
-                                img.setId(id);
-                                img.setClassName("tile");
-                                //img.setAttribute("src", fileUrl);
-                                img.setAttribute("style", "width: 512px; height: 512px; position: absolute; top: "
-                                                 + top + "px; left: " + left + "px;");
+                                img.setId(id)
+                                    .setClassName("tile")
+                                    .setAttribute("draggable", "false")
+                                    .setStyle(Map.of("width", "512px",
+                                                     "height", "512px",
+                                                     "position", "absolute",
+                                                     "top", top + "px",
+                                                     "left", left + "px",
+                                                     "image-rendering", "pixelated"));
                             });
                     }
                 }
@@ -202,6 +217,5 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
 
     @Override
     public void onWebsocketReceiveText(String text) {
-        
     }
 }

@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import static com.cavetale.magicmap.MagicMapPlugin.plugin;
-import static com.cavetale.webserver.content.ContentManager.contentManager;
 
 public final class MagicMapScript {
     private static String code;
@@ -20,11 +19,13 @@ public final class MagicMapScript {
             plugin().getLogger().log(Level.SEVERE, resourceName, ioe);
         }
     }
-    
+
     public static void install(HtmlDocument document, String mapName, WorldFileTag tag) {
         final String text = code
             .replace("map_name", mapName)
             .replace("world_border", Json.prettyPrint(tag.getWorldBorder()));
         document.getBody().addElement("script", script -> script.addRawText(text));
     }
+
+    private MagicMapScript() { }
 }
