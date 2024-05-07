@@ -20,10 +20,11 @@ public final class MagicMapScript {
         }
     }
 
-    public static void install(HtmlDocument document, String mapName, WorldFileTag tag) {
+    public static void install(HtmlDocument document, String mapName, WorldFileTag tag, int scalingFactor) {
         final String text = code
             .replace("map_name", mapName)
-            .replace("world_border", Json.prettyPrint(tag.getWorldBorder()));
+            .replace("world_border", Json.prettyPrint(tag.getWorldBorder()))
+            .replace("scaling_factor", "" + scalingFactor);
         document.getBody().addElement("script", script -> script.addRawText(text));
     }
 

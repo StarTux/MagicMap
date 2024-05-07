@@ -110,6 +110,8 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
         }
     }
 
+    private int scalingFactor = 2;
+
     private void sendMapHtml(ContentDeliverySession session, String mapName) {
         final WorldFileCache worldFileCache = worldMap.get(mapName);
         if (worldFileCache == null) {
@@ -133,20 +135,22 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
         final CachedHtmlContentProvider provider = new CachedHtmlContentProvider();
         session.getResponse().setContentProvider(provider);
         new WebsocketScript(session).install(provider.getDocument());
-        MagicMapScript.install(provider.getDocument(), mapName, worldFileCache.getTag());
+        MagicMapScript.install(provider.getDocument(), mapName, worldFileCache.getTag(), scalingFactor);
         provider.getDocument().getHead().addElement("title", t -> t.addText("Regions"));
         provider.getDocument().getBody().addElement("div", div -> {
-                div.setId("map_frame")
-                    .setStyle(Map.of("position", "absolute",
-                                     "width", "100%",
-                                     "height", "100%",
-                                     "overflow", "scroll",
-                                     "padding", "0px",
-                                     "margin", "0px",
-                                     "left", "0",
-                                     "right", "0",
-                                     "top", "0",
-                                     "bottom", "0"));
+                final Map<String, String> divStyle = new HashMap<>();
+                divStyle.put("position", "absolute");
+                divStyle.put("width", "100%");
+                divStyle.put("height", "100%");
+                divStyle.put("overflow", "scroll");
+                divStyle.put("padding", "0px");
+                divStyle.put("margin", "0px");
+                divStyle.put("left", "0");
+                divStyle.put("right", "0");
+                divStyle.put("top", "0");
+                divStyle.put("bottom", "0");
+                divStyle.put("background-color", "#cda882");
+                div.setId("map_frame").setStyle(divStyle);
                 final int minRegionX = worldBorder.getMinX() >> 9;
                 final int maxRegionX = worldBorder.getMaxX() >> 9;
                 final int minRegionZ = worldBorder.getMinZ() >> 9;
@@ -160,11 +164,12 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
                                 img.setId(id)
                                     .setClassName("tile")
                                     .setAttribute("draggable", "false")
-                                    .setStyle(Map.of("width", "512px",
-                                                     "height", "512px",
+                                    .setAttribute("alt", id)
+                                    .setStyle(Map.of("width", scalingFactor * 512 + "px",
+                                                     "height", scalingFactor * 512 + "px",
                                                      "position", "absolute",
-                                                     "top", top + "px",
-                                                     "left", left + "px",
+                                                     "top", scalingFactor * top + "px",
+                                                     "left", scalingFactor * left + "px",
                                                      "image-rendering", "pixelated"));
                             });
                     }
