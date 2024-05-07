@@ -164,7 +164,6 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
                                 img.setId(id)
                                     .setClassName("tile")
                                     .setAttribute("draggable", "false")
-                                    .setAttribute("alt", id)
                                     .setStyle(Map.of("width", scalingFactor * 512 + "px",
                                                      "height", scalingFactor * 512 + "px",
                                                      "position", "absolute",
