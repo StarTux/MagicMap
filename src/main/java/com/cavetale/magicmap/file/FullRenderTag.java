@@ -8,6 +8,7 @@ import lombok.Data;
 
 @Data
 public final class FullRenderTag implements Serializable {
+    private long startTime = System.currentTimeMillis();
     private long maxMillisPerTick = 50L;
     private WorldBorderCache worldBorder;
     // Region - We load all chunks in a region with a ticket, then

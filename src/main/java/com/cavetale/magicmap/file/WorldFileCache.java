@@ -5,6 +5,7 @@ import com.cavetale.core.struct.Vec2i;
 import com.cavetale.core.util.Json;
 import com.cavetale.magicmap.RenderType;
 import java.io.File;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -340,7 +341,12 @@ public final class WorldFileCache {
         if (fullRender.getRegionQueue().isEmpty()) {
             tag.setFullRender(null);
             saveTag();
-            plugin().getLogger().info("[" + name + "] full render finished!");
+            final Duration duration = Duration.ofMillis(System.currentTimeMillis() - fullRender.getStartTime());
+            final String durationString = duration.toDays() + "d"
+                + " " + duration.toHours() + "h"
+                + " " + duration.toMinutes() + "m"
+                + " " + duration.toSeconds() + "s";
+            plugin().getLogger().info("[" + name + "] full render finished in " + durationString);
         }
     }
 
