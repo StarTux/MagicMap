@@ -109,7 +109,7 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
             sendMapHtml(session, unusedPath.get(0));
         }
         if (unusedPath.size() == 2) {
-            sendMapFile(session, unusedPath.get(0), unusedPath.get(1));
+            sendRegionFile(session, unusedPath.get(0), unusedPath.get(1));
         }
     }
 
@@ -181,7 +181,7 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
         session.send();
     }
 
-    private void sendMapFile(ContentDeliverySession session, String mapName, String fileName) {
+    private void sendRegionFile(ContentDeliverySession session, String mapName, String fileName) {
         final WorldFileCache worldFileCache = worldMap.get(mapName);
         if (worldFileCache == null) {
             plugin().getLogger().warning("World not found");
@@ -212,7 +212,7 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
         }
         final WorldRenderCache worldRenderCache = worldFileCache.getRenderTypeMap().get(renderType);
         final File sendFile = new File(worldRenderCache.getMapFolder(), "r." + x + "." + z + ".png");
-        if (!sendFile.exists()) {
+        if (!worldFileCache.getWorldBorder().containsRegion(x, z) || !sendFile.exists()) {
             session.getResponse().setContentProvider(emptyRegionPngProvider);
         } else {
             session.getResponse().setContentProvider(new FileContentProvider(HttpContentType.IMAGE_PNG, sendFile));
