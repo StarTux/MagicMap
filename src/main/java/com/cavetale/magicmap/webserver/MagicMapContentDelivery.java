@@ -12,7 +12,9 @@ import com.cavetale.webserver.content.WebsocketScript;
 import com.cavetale.webserver.html.CachedHtmlContentProvider;
 import com.cavetale.webserver.http.HttpContentType;
 import com.cavetale.webserver.http.HttpResponseStatus;
+import com.cavetale.webserver.http.StaticContentProvider;
 import com.cavetale.webserver.websocket.WebsocketHook;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -31,6 +33,7 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
     private final String name = "MagicMap";
     private final List<String> paths = List.of("map");
     private final Map<String, WorldFileCache> worldMap = new HashMap<>();
+    private final StaticContentProvider emptyRegionPngProvider = new StaticContentProvider(HttpContentType.IMAGE_PNG, new BufferedImage(512, 512, BufferedImage.TYPE_INT_ARGB), "png");
 
     /**
      * Scan for available maps.
@@ -210,11 +213,10 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
         final WorldRenderCache worldRenderCache = worldFileCache.getRenderTypeMap().get(renderType);
         final File sendFile = new File(worldRenderCache.getMapFolder(), "r." + x + "." + z + ".png");
         if (!sendFile.exists()) {
-            plugin().getLogger().warning("File not found: " + sendFile);
-            session.send(); // 404
-            return;
+            session.getResponse().setContentProvider(emptyRegionPngProvider);
+        } else {
+            session.getResponse().setContentProvider(new FileContentProvider(HttpContentType.IMAGE_PNG, sendFile));
         }
-        session.getResponse().setContentProvider(new FileContentProvider(HttpContentType.IMAGE_PNG, sendFile));
         session.getResponse().setStatus(HttpResponseStatus.OK);
         session.send();
     }
