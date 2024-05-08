@@ -8,7 +8,6 @@ import com.cavetale.magicmap.file.WorldRenderCache;
 import com.cavetale.webserver.content.ContentDelivery;
 import com.cavetale.webserver.content.ContentDeliverySession;
 import com.cavetale.webserver.content.FileContentProvider;
-import com.cavetale.webserver.content.WebsocketScript;
 import com.cavetale.webserver.html.CachedHtmlContentProvider;
 import com.cavetale.webserver.http.HttpContentType;
 import com.cavetale.webserver.http.HttpResponseStatus;
@@ -137,7 +136,7 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
         }
         final CachedHtmlContentProvider provider = new CachedHtmlContentProvider();
         session.getResponse().setContentProvider(provider);
-        new WebsocketScript(session).install(provider.getDocument());
+        session.attachWebsocketScript(provider.getDocument());
         MagicMapScript.install(provider.getDocument(), mapName, worldFileCache.getTag(), scalingFactor);
         provider.getDocument().getHead().addElement("title", t -> t.addText("Regions"));
         provider.getDocument().getBody().addElement("div", div -> {
