@@ -140,19 +140,19 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
         MagicMapScript.install(provider.getDocument(), mapName, worldFileCache.getTag(), scalingFactor);
         provider.getDocument().getHead().addElement("title", t -> t.addText("Regions"));
         provider.getDocument().getBody().addElement("div", div -> {
-                final Map<String, String> divStyle = new HashMap<>();
-                divStyle.put("position", "absolute");
-                divStyle.put("width", "100%");
-                divStyle.put("height", "100%");
-                divStyle.put("overflow", "scroll");
-                divStyle.put("padding", "0px");
-                divStyle.put("margin", "0px");
-                divStyle.put("left", "0");
-                divStyle.put("right", "0");
-                divStyle.put("top", "0");
-                divStyle.put("bottom", "0");
-                divStyle.put("background-color", "#cda882");
-                div.setId("map_frame").setStyle(divStyle);
+                div.setId("map_frame").style(style -> {
+                        style.put("position", "absolute");
+                        style.put("width", "100%");
+                        style.put("height", "100%");
+                        style.put("overflow", "scroll");
+                        style.put("padding", "0px");
+                        style.put("margin", "0px");
+                        style.put("left", "0");
+                        style.put("right", "0");
+                        style.put("top", "0");
+                        style.put("bottom", "0");
+                        style.put("background-color", "#cda882");
+                    });
                 final int minRegionX = worldBorder.getMinX() >> 9;
                 final int maxRegionX = worldBorder.getMaxX() >> 9;
                 final int minRegionZ = worldBorder.getMinZ() >> 9;
