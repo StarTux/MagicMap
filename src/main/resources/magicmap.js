@@ -32,7 +32,7 @@ var mouseDown = false;
 var dragX = 0;
 var dragY = 0;
 
-window.onload = function() {
+window.addEventListener("load", event => {
     const scrolling = document.getElementById("map_frame");
     const width = scrolling.clientWidth;
     const height = scrolling.clientHeight;
@@ -40,12 +40,14 @@ window.onload = function() {
 		       scalingFactor * (worldBorder.centerZ - worldBorder.minZ) - (height / 2));
     scrolling.onscroll = event => calculateFrame();
     scrolling.onscrollend = event => calculateFrame();
-    scrolling.onmousedown = event => {
+    const mouseSurface = document;
+    mouseSurface.onmousedown = event => {
 	mouseDown = true;
 	dragX = event.clientX;
 	dragY = event.clientY;
+	event.preventDefault();
     };
-    scrolling.onmousemove = event => {
+    mouseSurface.onmousemove = event => {
 	if (!mouseDown) return;
 	var x = event.clientX - dragX;
 	var y = event.clientY - dragY;
@@ -54,10 +56,18 @@ window.onload = function() {
 	dragX = event.clientX;
 	dragY = event.clientY;
     };
-    scrolling.onmouseup = event => {
+    mouseSurface.onmouseup = event => {
 	mouseDown = false;
     };
-    scrolling.onmouseleave = event => {
+    mouseSurface.onmouseleave = event => {
 	mouseDown = false;
     };
-};
+    websocket.addEventListener('websocketMessage', event => {
+	const chatBox = document.getElementById('chat_box');
+	const p = document.createElement('p');
+	p.className = 'minecraft-chat-line';
+	p.innerHTML = event.packet.html;
+	chatBox.appendChild(p);
+	chatBox.scrollTo(0, chatBox.scrollHeight);
+    });
+});

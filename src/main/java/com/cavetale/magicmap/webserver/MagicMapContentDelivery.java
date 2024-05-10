@@ -9,6 +9,7 @@ import com.cavetale.webserver.content.ContentDelivery;
 import com.cavetale.webserver.content.ContentDeliverySession;
 import com.cavetale.webserver.content.FileContentProvider;
 import com.cavetale.webserver.html.CachedHtmlContentProvider;
+import com.cavetale.webserver.html.DefaultStyleSheet;
 import com.cavetale.webserver.http.HttpContentType;
 import com.cavetale.webserver.http.HttpResponseStatus;
 import com.cavetale.webserver.http.StaticContentProvider;
@@ -137,9 +138,10 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
         final CachedHtmlContentProvider provider = new CachedHtmlContentProvider();
         session.getResponse().setContentProvider(provider);
         session.attachWebsocketScript(provider.getDocument());
+        DefaultStyleSheet.install(provider.getDocument());
         MagicMapScript.install(provider.getDocument(), mapName, worldFileCache.getTag(), scalingFactor);
         provider.getDocument().getHead().addElement("title", t -> t.addText("Regions"));
-        provider.getDocument().getBody().addElement("div", div -> {
+        final var mapFrame = provider.getDocument().getBody().addElement("div", div -> {
                 div.setId("map_frame").style(style -> {
                         style.put("position", "absolute");
                         style.put("width", "100%");
@@ -164,19 +166,42 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
                         final String id = "r." + rx + "." + rz;
                         div.addElement("img", img -> {
                                 img.setId(id)
-                                    .setClassName("tile")
+                                    .setClassName("map_region")
                                     .setAttribute("draggable", "false")
                                     .setStyle(Map.of("width", scalingFactor * 512 + "px",
                                                      "height", scalingFactor * 512 + "px",
                                                      "position", "absolute",
                                                      "top", scalingFactor * top + "px",
                                                      "left", scalingFactor * left + "px",
-                                                     "image-rendering", "pixelated"));
+                                                     "image-rendering", "pixelated",
+                                                     "user-select", "none"));
                             });
                     }
                 }
             });
+        final var chatBox = mapFrame.addElement("div", div -> {
+                div.setId("chat_box");
+                div.setClassName("minecraft-chat");
+                final String height = "200px";
+                div.style(style -> {
+                        style.put("position", "fixed");
+                        style.put("overflow-x", "none");
+                        style.put("overflow-y", "scroll");
+                        style.put("background-color", "rgba(0, 0, 0, 0.5)");
+                        style.put("margin", "0");
+                        style.put("padding", "20px");
+                        style.put("border", "0");
+                        style.put("border-radius", "8px");
+                        style.put("width", "auto");
+                        style.put("height", height);
+                        style.put("max-height", height);
+                        style.put("bottom", "30px");
+                        style.put("left", "20px");
+                        style.put("right", "30px");
+                    });
+            });
         session.getResponse().setStatus(HttpResponseStatus.OK);
+        session.setReceiveChatMessages(true);
         session.send();
     }
 
