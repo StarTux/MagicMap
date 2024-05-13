@@ -55,6 +55,12 @@ public final class WorldBorderCache {
         return containsRegion(region.x, region.z);
     }
 
+    public boolean isMalformed() {
+        return minX > maxX
+            || minZ > maxZ
+            || !containsBlock(centerX, centerZ);
+    }
+
     @Override
     public String toString() {
         return centerX + " " + centerZ

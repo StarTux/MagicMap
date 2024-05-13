@@ -8,6 +8,8 @@ import lombok.Data;
 @Data
 public final class WorldFileTag implements Serializable {
     private WorldBorderCache worldBorder;
+    private WorldBorderCache customWorldBorder;
+    private String displayName;
     private List<RenderType> renderTypes;
     private FullRenderTag fullRender;
 }

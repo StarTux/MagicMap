@@ -1,7 +1,7 @@
 package com.cavetale.magicmap.webserver;
 
 import com.cavetale.core.util.Json;
-import com.cavetale.magicmap.file.WorldFileTag;
+import com.cavetale.magicmap.file.WorldBorderCache;
 import com.cavetale.webserver.html.HtmlDocument;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -20,10 +20,10 @@ public final class MagicMapScript {
         }
     }
 
-    public static void install(HtmlDocument document, String mapName, WorldFileTag tag, int scalingFactor) {
+    public static void install(HtmlDocument document, String mapName, WorldBorderCache worldBorder, int scalingFactor) {
         final String text = code
             .replace("map_name", mapName)
-            .replace("world_border", Json.prettyPrint(tag.getWorldBorder()))
+            .replace("world_border", Json.prettyPrint(worldBorder))
             .replace("scaling_factor", "" + scalingFactor);
         document.getBody().addElement("script", script -> script.addRawText(text));
     }

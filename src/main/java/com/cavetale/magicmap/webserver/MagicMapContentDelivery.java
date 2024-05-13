@@ -122,7 +122,7 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
             session.send(); // 404
             return;
         }
-        final WorldBorderCache worldBorder = worldFileCache.getWorldBorder();
+        final WorldBorderCache worldBorder = worldFileCache.getEffectiveWorldBorder();
         final RenderType renderType = worldFileCache.getMainRenderType();
         if (renderType == null) {
             plugin().getLogger().warning("No main render type");
@@ -139,8 +139,8 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
         session.getResponse().setContentProvider(provider);
         session.attachWebsocketScript(provider.getDocument());
         DefaultStyleSheet.install(provider.getDocument());
-        MagicMapScript.install(provider.getDocument(), mapName, worldFileCache.getTag(), scalingFactor);
-        provider.getDocument().getHead().addElement("title", t -> t.addText("Regions"));
+        MagicMapScript.install(provider.getDocument(), mapName, worldBorder, scalingFactor);
+        provider.getDocument().getHead().addElement("title", t -> t.addText(worldFileCache.getDisplayName()));
         final var mapFrame = provider.getDocument().getBody().addElement("div", div -> {
                 div.setId("map_frame").style(style -> {
                         style.put("position", "absolute");

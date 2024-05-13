@@ -177,7 +177,7 @@ public final class WorldFileCache {
         tag = Json.load(tagFile, WorldFileTag.class, WorldFileTag::new);
     }
 
-    private void saveTag() {
+    public void saveTag() {
         if (tag == null) return;
         Json.save(tagFile, tag, true);
     }
@@ -194,6 +194,18 @@ public final class WorldFileCache {
 
     public WorldBorderCache getWorldBorder() {
         return tag.getWorldBorder();
+    }
+
+    public WorldBorderCache getEffectiveWorldBorder() {
+        WorldBorderCache result = tag.getCustomWorldBorder();
+        if (result != null) return result;
+        return tag.getWorldBorder();
+    }
+
+    public String getDisplayName() {
+        String result = tag.getDisplayName();
+        if (result != null) return result;
+        return name;
     }
 
     public RenderType getMainRenderType() {

@@ -4,12 +4,14 @@ import com.cavetale.core.command.AbstractCommand;
 import com.cavetale.core.command.CommandArgCompleter;
 import com.cavetale.core.command.CommandNode;
 import com.cavetale.core.command.CommandWarn;
+import com.cavetale.magicmap.file.WorldBorderCache;
 import com.cavetale.magicmap.file.WorldFileCache;
 import com.cavetale.magicmap.file.WorldRenderCache;
 import java.io.File;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import static java.util.Arrays.copyOfRange;
 import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.Component.textOfChildren;
@@ -54,6 +56,32 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
             .description("Get mapped world info")
             .completers(CommandArgCompleter.supplyList(() -> plugin.getWorlds().getWorldNames()))
             .senderCaller(this::worldsInfo);
+        final CommandNode worldsBorderNode = worldsNode.addChild("border")
+            .description("Custom world border");
+        worldsBorderNode.addChild("reset").arguments("<world>")
+            .description("Reset the custom world border")
+            .completers(CommandArgCompleter.supplyList(() -> plugin.getWorlds().getWorldNames()))
+            .senderCaller(this::worldsBorderReset);
+        worldsBorderNode.addChild("set").arguments("<world> <centerX> <centerZ> <minX> <minZ> <maxX> <maxZ>")
+            .description("Set custom world border")
+            .completers(CommandArgCompleter.supplyList(() -> plugin.getWorlds().getWorldNames()),
+                        CommandArgCompleter.INTEGER,
+                        CommandArgCompleter.INTEGER,
+                        CommandArgCompleter.INTEGER,
+                        CommandArgCompleter.INTEGER,
+                        CommandArgCompleter.INTEGER,
+                        CommandArgCompleter.INTEGER)
+            .senderCaller(this::worldsBorderSet);
+        final CommandNode worldsDisplayNameNode = worldsNode.addChild("displayname")
+            .description("World display name");
+        worldsDisplayNameNode.addChild("reset").arguments("<world>")
+            .description("Reset the display name")
+            .completers(CommandArgCompleter.supplyList(() -> plugin.getWorlds().getWorldNames()))
+            .senderCaller(this::worldsDisplayNameReset);
+        worldsDisplayNameNode.addChild("set").arguments("<world> <displayname...>")
+            .description("Set the display name")
+            .completers(CommandArgCompleter.supplyList(() -> plugin.getWorlds().getWorldNames()))
+            .senderCaller(this::worldsDisplayNameSet);
         final CommandNode fullRenderNode = rootNode.addChild("fullrender")
             .description("Full render command");
         fullRenderNode.addChild("start").arguments("<world>")
@@ -68,6 +96,14 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
             .completers(CommandArgCompleter.supplyList(() -> plugin.getWorlds().getWorldNames()))
             .description("Print full world render info")
             .senderCaller(this::fullRenderInfo);
+    }
+
+    private WorldFileCache requireWorldFileCache(String worldName) {
+        final WorldFileCache cache = plugin.getWorlds().getWorld(worldName);
+        if (cache == null) {
+            throw new CommandWarn("World not loaded or not managed: " + worldName);
+        }
+        return cache;
     }
 
     private void reload(CommandSender sender) {
@@ -171,15 +207,15 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
 
     private boolean worldsInfo(CommandSender sender, String[] args) {
         if (args.length != 1) return false;
-        final String worldName = args[0];
-        final WorldFileCache cache = plugin.getWorlds().getWorld(worldName);
-        if (cache == null) {
-            throw new CommandWarn("World not loaded or not managed: " + worldName);
-        }
+        final WorldFileCache cache = requireWorldFileCache(args[0]);
         sender.sendMessage(textOfChildren(text("Name ", GRAY),
                                           text(cache.getName(), WHITE)));
         sender.sendMessage(textOfChildren(text("Border ", GRAY),
                                           text("" + cache.getTag().getWorldBorder(), WHITE)));
+        sender.sendMessage(textOfChildren(text("Custom Border ", GRAY),
+                                          text("" + cache.getTag().getCustomWorldBorder(), WHITE)));
+        sender.sendMessage(textOfChildren(text("Display Name ", GRAY),
+                                          text("" + cache.getTag().getDisplayName(), WHITE)));
         for (WorldRenderCache renderCache : cache.getRenderTypeMap().values()) {
             sender.sendMessage(text(renderCache.getRenderType().getHumanName(), YELLOW));
             sender.sendMessage(textOfChildren(text(" Regions Loaded ", GRAY),
@@ -202,48 +238,87 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
         return true;
     }
 
+    private boolean worldsBorderReset(CommandSender sender, String[] args) {
+        if (args.length != 1) return false;
+        final WorldFileCache cache = requireWorldFileCache(args[0]);
+        if (cache.getTag().getCustomWorldBorder() == null) {
+            throw new CommandWarn(cache.getName() + " does not have a custom world border");
+        }
+        cache.getTag().setCustomWorldBorder(null);
+        cache.saveTag();
+        sender.sendMessage(text("Custom world border was reset: " + cache.getName(), YELLOW));
+        return true;
+    }
+
+    private boolean worldsBorderSet(CommandSender sender, String[] args) {
+        if (args.length != 7) return false;
+        final WorldFileCache cache = requireWorldFileCache(args[0]);
+        final WorldBorderCache border = new WorldBorderCache(CommandArgCompleter.requireInt(args[1]),
+                                                             CommandArgCompleter.requireInt(args[2]),
+                                                             CommandArgCompleter.requireInt(args[3]),
+                                                             CommandArgCompleter.requireInt(args[4]),
+                                                             CommandArgCompleter.requireInt(args[5]),
+                                                             CommandArgCompleter.requireInt(args[6]));
+        if (border.isMalformed()) {
+            throw new CommandWarn("Malformed border: " + border);
+        }
+        cache.getTag().setCustomWorldBorder(border);
+        cache.saveTag();
+        sender.sendMessage(text("Custom world border updated: " + cache.getName() + ", " + border, YELLOW));
+        return true;
+    }
+
+    private boolean worldsDisplayNameReset(CommandSender sender, String[] args) {
+        if (args.length != 1) return false;
+        final WorldFileCache cache = requireWorldFileCache(args[0]);
+        if (cache.getTag().getDisplayName() == null) {
+            throw new CommandWarn(cache.getName() + " does not set a display name");
+        }
+        cache.getTag().setDisplayName(null);
+        cache.saveTag();
+        sender.sendMessage(text("Display name was reset: " + cache.getName(), YELLOW));
+        return true;
+    }
+
+    private boolean worldsDisplayNameSet(CommandSender sender, String[] args) {
+        if (args.length < 2) return false;
+        final WorldFileCache cache = requireWorldFileCache(args[0]);
+        cache.getTag().setDisplayName(String.join(" ", copyOfRange(args, 1, args.length)));
+        cache.saveTag();
+        sender.sendMessage(text("Display name was updated: " + cache.getName() + ", " + cache.getDisplayName(), YELLOW));
+        return true;
+    }
+
     private boolean fullRenderStart(CommandSender sender, String[] args) {
         if (args.length != 1) return false;
-        final String worldName = args[0];
-        final WorldFileCache cache = plugin.getWorlds().getWorld(worldName);
-        if (cache == null) {
-            throw new CommandWarn("World not loaded or not managed: " + worldName);
-        }
+        final WorldFileCache cache = requireWorldFileCache(args[0]);
         if (cache.isFullRenderScheduled()) {
-            throw new CommandWarn("Full render is already scheduled: " + worldName);
+            throw new CommandWarn("Full render is already scheduled: " + cache.getName());
         }
         cache.scheduleFullRender();
-        sender.sendMessage(text("Full render scheduled: " + worldName, YELLOW));
+        sender.sendMessage(text("Full render scheduled: " + cache.getName(), YELLOW));
         return true;
     }
 
     private boolean fullRenderStop(CommandSender sender, String[] args) {
         if (args.length != 1) return false;
-        final String worldName = args[0];
-        final WorldFileCache cache = plugin.getWorlds().getWorld(worldName);
-        if (cache == null) {
-            throw new CommandWarn("World not loaded or not managed: " + worldName);
-        }
+        final WorldFileCache cache = requireWorldFileCache(args[0]);
         if (!cache.isFullRenderScheduled()) {
-            throw new CommandWarn(worldName + " does not have an active full render");
+            throw new CommandWarn(cache.getName() + " does not have an active full render");
         }
         cache.cancelFullRender();
-        sender.sendMessage(text("Full render stopped: " + worldName, YELLOW));
+        sender.sendMessage(text("Full render stopped: " + cache.getName(), YELLOW));
         return true;
     }
 
     private boolean fullRenderInfo(CommandSender sender, String[] args) {
         if (args.length != 1) return false;
-        final String worldName = args[0];
-        final WorldFileCache cache = plugin.getWorlds().getWorld(worldName);
-        if (cache == null) {
-            throw new CommandWarn("World not loaded or not managed: " + worldName);
-        }
+        final WorldFileCache cache = requireWorldFileCache(args[0]);
         if (!cache.isFullRenderScheduled()) {
-            throw new CommandWarn(worldName + " does not have an active full render");
+            throw new CommandWarn(cache.getName() + " does not have an active full render");
         }
         final var render = cache.getTag().getFullRender();
-        sender.sendMessage(text("Full render: " + worldName, AQUA));
+        sender.sendMessage(text("Full render: " + cache.getName(), AQUA));
         sender.sendMessage(textOfChildren(text("Ring ", GRAY),
                                           text(render.getCurrentRing(), WHITE)));
         sender.sendMessage(textOfChildren(text("Max Millis ", GRAY),
