@@ -8,6 +8,7 @@ import com.cavetale.magicmap.file.WorldBorderCache;
 import com.cavetale.magicmap.file.WorldFileCache;
 import com.cavetale.magicmap.file.WorldRenderCache;
 import java.io.File;
+import java.util.Date;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -319,10 +320,16 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
         }
         final var render = cache.getTag().getFullRender();
         sender.sendMessage(text("Full render: " + cache.getName(), AQUA));
-        sender.sendMessage(textOfChildren(text("Ring ", GRAY),
-                                          text(render.getCurrentRing(), WHITE)));
+        sender.sendMessage(textOfChildren(text("Start Time ", GRAY),
+                                          text("" + new Date(render.getStartTime()), WHITE)));
+        sender.sendMessage(textOfChildren(text("Timeout ", GRAY),
+                                          (render.getTimeout() > 0L
+                                           ? text("" + new Date(render.getTimeout()), WHITE)
+                                           : text("None", DARK_GRAY))));
         sender.sendMessage(textOfChildren(text("Max Millis ", GRAY),
                                           text(render.getMaxMillisPerTick(), WHITE)));
+        sender.sendMessage(textOfChildren(text("Ring ", GRAY),
+                                          text(render.getCurrentRing(), WHITE)));
         sender.sendMessage(textOfChildren(text("Border ", GRAY),
                                           text("" + render.getWorldBorder(), WHITE)));
         sender.sendMessage(textOfChildren(text("Current Region ", GRAY),
@@ -332,9 +339,9 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
         sender.sendMessage(textOfChildren(text("Region Queue ", GRAY),
                                           text(render.getRegionQueue().size(), WHITE)));
         sender.sendMessage(textOfChildren(text("Renderers ", GRAY),
-                                          text((render.getRenderers() != null
-                                                ? "" + render.getRenderers().size()
-                                                : "0"), WHITE)));
+                                          (render.getRenderers() != null
+                                           ? text("" + render.getRenderers().size(), WHITE)
+                                           : text("0", DARK_GRAY))));
         return true;
     }
 }

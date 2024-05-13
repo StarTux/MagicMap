@@ -89,7 +89,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         magicMapCommand = new MagicMapCommand(this);
         magicMapCommand.enable();
         importConfig();
-        getServer().getScheduler().runTaskTimer(this, () -> onTick(), 1L, 1L);
+        getServer().getScheduler().runTaskTimer(this, this::tick, 1L, 1L);
         getServer().getPluginManager().registerEvents(this, this);
         if (getServer().getPluginManager().isPluginEnabled("Mytems")) {
             magicMapMytem = new MagicMapMytem(this);
@@ -179,7 +179,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         mapView.addRenderer(magicMapRenderer);
     }
 
-    private void onTick() {
+    private void tick() {
         if (!mainQueue.isEmpty()) {
             SyncMapRenderer task = mainQueue.get(0);
             boolean ret;

@@ -39,6 +39,9 @@ public final class WorldFileCache {
     // Meta
     private File tagFile;
     private WorldFileTag tag;
+    // Timing
+    private static final double TPS_THRESHOLD = 19.9;
+    private long timeAdjustmentCooldown = 0L;
 
     public WorldFileCache(final NetworkServer server, final String name, final File worldFolder) {
         this.server = server;
@@ -226,7 +229,38 @@ public final class WorldFileCache {
 
     private void fullRenderIter(FullRenderTag fullRender) {
         final long startTime = System.currentTimeMillis();
-        final long stopTime = startTime + fullRender.getMaxMillisPerTick();
+        final double tps = Bukkit.getTPS()[0];
+        if (fullRender.getTimeout() > startTime) {
+            if (tps > TPS_THRESHOLD) {
+                fullRender.setTimeout(0L);
+            } else {
+                return;
+            }
+        } else if (fullRender.getTimeout() > 0L) {
+            fullRender.setTimeout(0L);
+        }
+        final long maxMillis = fullRender.getMaxMillisPerTick();
+        if (tps < TPS_THRESHOLD) {
+            // Lower millis per tick if necessary
+            fullRender.setTimeout(startTime + 10_000L);
+            if (maxMillis > 1L) {
+                final long newMaxMillis = maxMillis - 1;
+                fullRender.setMaxMillisPerTick(newMaxMillis);
+                timeAdjustmentCooldown = startTime + 600_000L;
+                plugin().getLogger().info("[" + name + "] Full render decreasing max millis per tick: "
+                                          + maxMillis + " => " + newMaxMillis
+                                          + ", tps=" + String.format("%.01f", tps));
+            }
+            return;
+        } else if (tps > TPS_THRESHOLD && startTime > timeAdjustmentCooldown && maxMillis < 50) {
+            // Every now and then, try raising millis per tick
+            final long newMaxMillis = maxMillis + 1L;
+            fullRender.setMaxMillisPerTick(newMaxMillis);
+            timeAdjustmentCooldown = startTime + 60_000L;
+            plugin().getLogger().info("[" + name + "] Full render increasing max millis per tick: "
+                                      + maxMillis + " => " + newMaxMillis);
+        }
+        final long stopTime = startTime + maxMillis;
         final World world = getWorld();
         final Vec2i currentRegion = fullRender.getCurrentRegion();
         if (currentRegion != null) {
