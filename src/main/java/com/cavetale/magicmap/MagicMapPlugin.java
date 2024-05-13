@@ -5,6 +5,7 @@ import com.cavetale.magicmap.mytems.MagicMapMytem;
 import com.cavetale.magicmap.webserver.WebserverManager;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -71,6 +72,7 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     private final Worlds worlds = new Worlds();
     // Webserver
     private WebserverManager webserverManager;
+    private Map<UUID, PlayerLocationTag> playerLocationTags = new HashMap<>();
 
     @Override
     public void onLoad() {
@@ -190,6 +192,30 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
                 ret = false;
             }
             if (!ret) mainQueue.remove(0);
+        }
+        updatePlayerLocationTags();
+    }
+
+    private void updatePlayerLocationTags() {
+        // Remove offline players
+        for (Iterator<UUID> iter = playerLocationTags.keySet().iterator(); iter.hasNext();) {
+            if (Bukkit.getPlayer(iter.next()) == null) {
+                iter.remove();
+            }
+        }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            final UUID uuid = player.getUniqueId();
+            final Location location = player.getLocation();
+            PlayerLocationTag tag = playerLocationTags.get(uuid);
+            if (tag == null) {
+                tag = new PlayerLocationTag();
+                tag.update(location);
+                playerLocationTags.put(uuid, tag);
+                tag.saveToRedisAsync(uuid, null);
+            } else if (tag.isOutOfDate() || tag.didChange(location)) {
+                tag.update(location);
+                tag.saveToRedisAsync(uuid, null);
+            }
         }
     }
 

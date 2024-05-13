@@ -8,7 +8,9 @@ author: StarTux
 website: https://github.com/StarTux/MagicMap
 main: com.cavetale.magicmap.MagicMapPlugin
 
-depend: [Core]
+depend:
+- Core
+- Connect
 softdepend: [Mytems, Area, Webserver]
 
 commands:

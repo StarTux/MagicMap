@@ -7,6 +7,7 @@ import com.cavetale.core.command.CommandWarn;
 import com.cavetale.magicmap.file.WorldBorderCache;
 import com.cavetale.magicmap.file.WorldFileCache;
 import com.cavetale.magicmap.file.WorldRenderCache;
+import com.cavetale.webserver.WebserverPlugin;
 import java.io.File;
 import java.util.Date;
 import org.bukkit.Bukkit;
@@ -97,6 +98,11 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
             .completers(CommandArgCompleter.supplyList(() -> plugin.getWorlds().getWorldNames()))
             .description("Print full world render info")
             .senderCaller(this::fullRenderInfo);
+        final CommandNode liveMapNode = rootNode.addChild("livemap")
+            .description("Live map commands");
+        liveMapNode.addChild("info").denyTabCompletion()
+            .description("Print some live map info")
+            .senderCaller(this::liveMapInfo);
     }
 
     private WorldFileCache requireWorldFileCache(String worldName) {
@@ -343,5 +349,12 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
                                            ? text("" + render.getRenderers().size(), WHITE)
                                            : text("0", DARK_GRAY))));
         return true;
+    }
+
+    private void liveMapInfo(CommandSender sender) {
+        sender.sendMessage("WebserverManager.playerLocationTags: " + plugin.getWebserverManager().getPlayerLocationTags());
+        for (var it : WebserverPlugin.plugin().getContentManager().getAllLiveSessionsWithContentDelivery(plugin.getWebserverManager().getContentDelivery())) {
+            sender.sendMessage("Session.ContentDeliveryData: " + it.getContentDeliverySessionData());
+        }
     }
 }

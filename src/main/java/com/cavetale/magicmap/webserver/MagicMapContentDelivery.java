@@ -1,6 +1,8 @@
 package com.cavetale.magicmap.webserver;
 
 import com.cavetale.core.connect.NetworkServer;
+import com.cavetale.core.playercache.PlayerCache;
+import com.cavetale.magicmap.PlayerLocationTag;
 import com.cavetale.magicmap.RenderType;
 import com.cavetale.magicmap.file.WorldBorderCache;
 import com.cavetale.magicmap.file.WorldFileCache;
@@ -21,8 +23,10 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 import lombok.Getter;
 import static com.cavetale.core.util.CamelCase.toCamelCase;
@@ -135,71 +139,101 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
             session.send(); // 404
             return;
         }
+        final MagicMapContentDeliverySessionData sessionData = new MagicMapContentDeliverySessionData();
+        sessionData.setServer(worldFileCache.getServer());
+        sessionData.setMapName(mapName);
+        sessionData.setWorldName(worldFileCache.getName());
+        for (Map.Entry<UUID, PlayerLocationTag> entry : plugin().getWebserverManager().getPlayerLocationTags().entrySet()) {
+            sessionData.getPlayerLocationTags().put(entry.getKey(), entry.getValue().clone());
+        }
+        session.setContentDeliverySessionData(sessionData);
         final CachedHtmlContentProvider provider = new CachedHtmlContentProvider();
         session.getResponse().setContentProvider(provider);
         session.attachWebsocketScript(provider.getDocument());
         DefaultStyleSheet.install(provider.getDocument());
         MagicMapScript.install(provider.getDocument(), mapName, worldBorder, scalingFactor);
         provider.getDocument().getHead().addElement("title", t -> t.addText(worldFileCache.getDisplayName()));
-        final var mapFrame = provider.getDocument().getBody().addElement("div", div -> {
-                div.setId("map_frame").style(style -> {
-                        style.put("position", "absolute");
-                        style.put("width", "100%");
-                        style.put("height", "100%");
-                        style.put("overflow", "scroll");
-                        style.put("padding", "0px");
-                        style.put("margin", "0px");
-                        style.put("left", "0");
-                        style.put("right", "0");
-                        style.put("top", "0");
-                        style.put("bottom", "0");
-                        style.put("background-color", "#cda882");
-                    });
-                final int minRegionX = worldBorder.getMinX() >> 9;
-                final int maxRegionX = worldBorder.getMaxX() >> 9;
-                final int minRegionZ = worldBorder.getMinZ() >> 9;
-                final int maxRegionZ = worldBorder.getMaxZ() >> 9;
-                for (int rz = minRegionZ; rz <= maxRegionZ; rz += 1) {
-                    for (int rx = minRegionX; rx <= maxRegionX; rx += 1) {
-                        final int left = (rx - minRegionX) * 512;
-                        final int top = (rz - minRegionZ) * 512;
-                        final String id = "r." + rx + "." + rz;
-                        div.addElement("img", img -> {
-                                img.setId(id)
-                                    .setClassName("map_region")
-                                    .setAttribute("draggable", "false")
-                                    .setStyle(Map.of("width", scalingFactor * 512 + "px",
-                                                     "height", scalingFactor * 512 + "px",
-                                                     "position", "absolute",
-                                                     "top", scalingFactor * top + "px",
-                                                     "left", scalingFactor * left + "px",
-                                                     "image-rendering", "pixelated",
-                                                     "user-select", "none"));
-                            });
-                    }
-                }
+        final var mapFrame = provider.getDocument().getBody().addElement("div");
+        mapFrame.setId("map_frame").style(style -> {
+                style.put("position", "absolute");
+                style.put("width", "100%");
+                style.put("height", "100%");
+                style.put("overflow", "scroll");
+                style.put("padding", "0px");
+                style.put("margin", "0px");
+                style.put("left", "0");
+                style.put("right", "0");
+                style.put("top", "0");
+                style.put("bottom", "0");
+                style.put("background-color", "#cda882");
             });
-        final var chatBox = mapFrame.addElement("div", div -> {
-                div.setId("chat_box");
-                div.setClassName("minecraft-chat");
-                final String height = "200px";
-                div.style(style -> {
-                        style.put("position", "fixed");
-                        style.put("overflow-x", "none");
-                        style.put("overflow-y", "scroll");
-                        style.put("background-color", "rgba(0, 0, 0, 0.5)");
-                        style.put("margin", "0");
-                        style.put("padding", "20px");
-                        style.put("border", "0");
-                        style.put("border-radius", "8px");
-                        style.put("width", "auto");
-                        style.put("height", height);
-                        style.put("max-height", height);
-                        style.put("bottom", "30px");
-                        style.put("left", "20px");
-                        style.put("right", "30px");
+        final int minRegionX = worldBorder.getMinX() >> 9;
+        final int maxRegionX = worldBorder.getMaxX() >> 9;
+        final int minRegionZ = worldBorder.getMinZ() >> 9;
+        final int maxRegionZ = worldBorder.getMaxZ() >> 9;
+        for (int rz = minRegionZ; rz <= maxRegionZ; rz += 1) {
+            for (int rx = minRegionX; rx <= maxRegionX; rx += 1) {
+                final int left = (rx - minRegionX) * 512;
+                final int top = (rz - minRegionZ) * 512;
+                final String id = "r." + rx + "." + rz;
+                mapFrame.addElement("img", img -> {
+                        img.setId(id)
+                            .setClassName("map_region")
+                            .setAttribute("draggable", "false")
+                            .style(style -> {
+                                    style.put("width", scalingFactor * 512 + "px");
+                                    style.put("height", scalingFactor * 512 + "px");
+                                    style.put("position", "absolute");
+                                    style.put("top", scalingFactor * top + "px");
+                                    style.put("left", scalingFactor * left + "px");
+                                    style.put("image-rendering", "pixelated");
+                                    style.put("user-select", "none");
+                                });
                     });
-            });
+            }
+        }
+        final String chatBoxHeight = "200px";
+        final var chatBox = mapFrame.addElement("div");
+        chatBox.setId("chat_box")
+            .setClassName("minecraft-chat")
+            .style(style -> {
+                    style.put("position", "fixed");
+                    style.put("overflow-x", "none");
+                    style.put("overflow-y", "scroll");
+                    style.put("background-color", "rgba(0, 0, 0, 0.5)");
+                    style.put("margin", "0");
+                    style.put("padding", "20px");
+                    style.put("border", "0");
+                    style.put("border-radius", "8px");
+                    style.put("width", "auto");
+                    style.put("height", chatBoxHeight);
+                    style.put("max-height", chatBoxHeight);
+                    style.put("bottom", "30px");
+                    style.put("left", "20px");
+                    style.put("right", "30px");
+                });
+        for (Map.Entry<UUID, PlayerLocationTag> entry : sessionData.getPlayerLocationTags().entrySet()) {
+            final UUID uuid = entry.getKey();
+            final PlayerLocationTag tag = entry.getValue();
+            if (!sessionData.isInWorld(tag)) continue;
+            mapFrame.addElement("img", img -> {
+                    img.setClassName("live-player");
+                    img.setAttribute("src", "/skin/face/" + uuid + ".png");
+                    img.style(style -> {
+                            final int left = tag.getX() - (minRegionX << 9) - 8;
+                            final int top = tag.getZ() - (minRegionZ << 9) - 8;
+                            style.put("width", scalingFactor * 16 + "px");
+                            style.put("height", scalingFactor * 16 + "px");
+                            style.put("position", "absolute");
+                            style.put("top", scalingFactor * top + "px");
+                            style.put("left", scalingFactor * left + "px");
+                            style.put("z-index", "100");
+                            style.put("image-rendering", "pixelated");
+                            style.put("user-select", "none");
+                            style.put("outline", "2px solid white");
+                        });
+                });
+        }
         session.getResponse().setStatus(HttpResponseStatus.OK);
         session.setReceiveChatMessages(true);
         session.send();
@@ -236,13 +270,53 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
         }
         final WorldRenderCache worldRenderCache = worldFileCache.getRenderTypeMap().get(renderType);
         final File sendFile = new File(worldRenderCache.getMapFolder(), "r." + x + "." + z + ".png");
-        if (!worldFileCache.getWorldBorder().containsRegion(x, z) || !sendFile.exists()) {
+        if (!worldFileCache.getEffectiveWorldBorder().containsRegion(x, z) || !sendFile.exists()) {
             session.getResponse().setContentProvider(emptyRegionPngProvider);
         } else {
             session.getResponse().setContentProvider(new FileContentProvider(HttpContentType.IMAGE_PNG, sendFile));
         }
         session.getResponse().setStatus(HttpResponseStatus.OK);
         session.send();
+    }
+
+    @Override
+    public void tick(ContentDeliverySession session) {
+        final MagicMapContentDeliverySessionData data = (MagicMapContentDeliverySessionData) session.getContentDeliverySessionData();
+        if (data == null) return;
+        // Prune our map
+        for (Iterator<Map.Entry<UUID, PlayerLocationTag>> iter = data.getPlayerLocationTags().entrySet().iterator(); iter.hasNext();) {
+            Map.Entry<UUID, PlayerLocationTag> entry = iter.next();
+            final UUID uuid = entry.getKey();
+            if (plugin().getWebserverManager().getPlayerLocationTags().containsKey(uuid)) continue;
+            final PlayerLocationTag tag = entry.getValue();
+            iter.remove();
+            if (data.isInWorld(tag)) {
+                session.sendMessage(new PlayerRemoveMessage(uuid));
+            }
+        }
+        // Update
+        for (Map.Entry<UUID, PlayerLocationTag> entry : plugin().getWebserverManager().getPlayerLocationTags().entrySet()) {
+            final UUID uuid = entry.getKey();
+            final PlayerLocationTag tag = entry.getValue();
+            final PlayerLocationTag old = data.getPlayerLocationTags().get(uuid);
+            if (old == null) {
+                data.getPlayerLocationTags().put(uuid, tag.clone());
+                if (data.isInWorld(tag)) {
+                    session.sendMessage(new PlayerAddMessage(PlayerCache.forUuid(uuid), tag.getX(), tag.getZ()));
+                }
+            } else if (!old.equals(tag)) {
+                data.getPlayerLocationTags().put(uuid, tag.clone());
+                final boolean oldIsInWorld = data.isInWorld(old);
+                final boolean newIsInWorld = data.isInWorld(tag);
+                if (!oldIsInWorld && newIsInWorld) {
+                    session.sendMessage(new PlayerAddMessage(PlayerCache.forUuid(uuid), tag.getX(), tag.getZ()));
+                } else if (oldIsInWorld && !newIsInWorld) {
+                    session.sendMessage(new PlayerRemoveMessage(uuid));
+                } else if (oldIsInWorld && newIsInWorld) {
+                    session.sendMessage(new PlayerUpdateMessage(uuid, tag.getX(), tag.getZ()));
+                }
+            }
+        }
     }
 
     @Override
