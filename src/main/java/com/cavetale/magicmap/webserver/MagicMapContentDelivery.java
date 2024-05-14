@@ -1,7 +1,9 @@
 package com.cavetale.magicmap.webserver;
 
+import com.cavetale.core.connect.Connect;
 import com.cavetale.core.connect.NetworkServer;
 import com.cavetale.core.playercache.PlayerCache;
+import com.cavetale.core.util.Json;
 import com.cavetale.magicmap.PlayerLocationTag;
 import com.cavetale.magicmap.RenderType;
 import com.cavetale.magicmap.file.WorldBorderCache;
@@ -12,16 +14,22 @@ import com.cavetale.webserver.content.ContentDeliverySession;
 import com.cavetale.webserver.content.FileContentProvider;
 import com.cavetale.webserver.html.CachedHtmlContentProvider;
 import com.cavetale.webserver.html.DefaultStyleSheet;
+import com.cavetale.webserver.html.HtmlNodeList;
+import com.cavetale.webserver.html.SimpleHtmlElement;
 import com.cavetale.webserver.http.HttpContentType;
 import com.cavetale.webserver.http.HttpResponseStatus;
 import com.cavetale.webserver.http.StaticContentProvider;
-import com.cavetale.webserver.websocket.WebsocketHook;
+import com.cavetale.webserver.message.ChatClientMessage;
+import com.cavetale.webserver.message.EvalClientMessage;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -33,7 +41,7 @@ import static com.cavetale.core.util.CamelCase.toCamelCase;
 import static com.cavetale.magicmap.MagicMapPlugin.plugin;
 
 @Getter
-public final class MagicMapContentDelivery implements ContentDelivery, WebsocketHook {
+public final class MagicMapContentDelivery implements ContentDelivery {
     private final String name = "MagicMap";
     private final List<String> paths = List.of("map");
     private final Map<String, WorldFileCache> worldMap = new HashMap<>();
@@ -46,7 +54,6 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
         for (NetworkServer server : NetworkServer.values()) {
             enableNetworkServer(server);
         }
-        MagicMapScript.init();
         return this;
     }
 
@@ -140,33 +147,47 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
             return;
         }
         final MagicMapContentDeliverySessionData sessionData = new MagicMapContentDeliverySessionData();
-        sessionData.setServer(worldFileCache.getServer());
         sessionData.setMapName(mapName);
-        sessionData.setWorldName(worldFileCache.getName());
+        sessionData.setWorldFileCache(worldFileCache);
         for (Map.Entry<UUID, PlayerLocationTag> entry : plugin().getWebserverManager().getPlayerLocationTags().entrySet()) {
             sessionData.getPlayerLocationTags().put(entry.getKey(), entry.getValue().clone());
         }
+        sessionData.setPlayerList(fetchPlayerList());
         session.setContentDeliverySessionData(sessionData);
         final CachedHtmlContentProvider provider = new CachedHtmlContentProvider();
         session.getResponse().setContentProvider(provider);
         session.attachWebsocketScript(provider.getDocument());
         DefaultStyleSheet.install(provider.getDocument());
+        MagicMapStyleSheet.install(provider.getDocument());
         MagicMapScript.install(provider.getDocument(), mapName, worldBorder, scalingFactor);
-        provider.getDocument().getHead().addElement("title", t -> t.addText(worldFileCache.getDisplayName()));
+        provider.getDocument().getHead().addElement("title", t -> t.addText(worldFileCache.getDisplayName() + " - Magic Map"));
+        // Map Frame
         final var mapFrame = provider.getDocument().getBody().addElement("div");
-        mapFrame.setId("map_frame").style(style -> {
-                style.put("position", "absolute");
-                style.put("width", "100%");
-                style.put("height", "100%");
-                style.put("overflow", "scroll");
-                style.put("padding", "0px");
-                style.put("margin", "0px");
-                style.put("left", "0");
-                style.put("right", "0");
-                style.put("top", "0");
-                style.put("bottom", "0");
-                style.put("background-color", "#cda882");
-            });
+        mapFrame.setId("map-frame");
+        mapFrame.setClassName("map-frame");
+        // Chat Box
+        final var chatBox = provider.getDocument().getBody().addElement("div");
+        chatBox.setId("chat-box");
+        chatBox.setClassName("minecraft-chat chat-box");
+        // Player List
+        final var playerListBox = provider.getDocument().getBody().addElement("div");
+        playerListBox.setId("player-list");
+        playerListBox.setClassName("player-list");
+        for (var node : makePlayerList(sessionData.getPlayerList())) {
+            playerListBox.addChild(node);
+        }
+        // Regions and Live Players
+        for (var node : makeMapFrameContent(sessionData)) {
+            mapFrame.addChild(node);
+        }
+        session.getResponse().setStatus(HttpResponseStatus.OK);
+        session.setReceiveChatMessages(true);
+        session.send();
+    }
+
+    public HtmlNodeList makeMapFrameContent(MagicMapContentDeliverySessionData sessionData) {
+        HtmlNodeList result = new HtmlNodeList();
+        final var worldBorder = sessionData.getWorldFileCache().getEffectiveWorldBorder();
         final int minRegionX = worldBorder.getMinX() >> 9;
         final int maxRegionX = worldBorder.getMaxX() >> 9;
         final int minRegionZ = worldBorder.getMinZ() >> 9;
@@ -176,67 +197,66 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
                 final int left = (rx - minRegionX) * 512;
                 final int top = (rz - minRegionZ) * 512;
                 final String id = "r." + rx + "." + rz;
-                mapFrame.addElement("img", img -> {
-                        img.setId(id)
-                            .setClassName("map_region")
-                            .setAttribute("draggable", "false")
-                            .style(style -> {
-                                    style.put("width", scalingFactor * 512 + "px");
-                                    style.put("height", scalingFactor * 512 + "px");
-                                    style.put("position", "absolute");
-                                    style.put("top", scalingFactor * top + "px");
-                                    style.put("left", scalingFactor * left + "px");
-                                    style.put("image-rendering", "pixelated");
-                                    style.put("user-select", "none");
-                                });
-                    });
+                final var mapRegion = new SimpleHtmlElement("img");
+                mapRegion.setId(id)
+                    .setClassName("map-region")
+                    .setAttribute("draggable", "false")
+                    .style(style -> {
+                            style.put("width", scalingFactor * 512 + "px");
+                            style.put("height", scalingFactor * 512 + "px");
+                            style.put("top", scalingFactor * top + "px");
+                            style.put("left", scalingFactor * left + "px");
+                        });
+                result.add(mapRegion);
             }
         }
-        final String chatBoxHeight = "200px";
-        final var chatBox = mapFrame.addElement("div");
-        chatBox.setId("chat_box")
-            .setClassName("minecraft-chat")
-            .style(style -> {
-                    style.put("position", "fixed");
-                    style.put("overflow-x", "none");
-                    style.put("overflow-y", "scroll");
-                    style.put("background-color", "rgba(0, 0, 0, 0.5)");
-                    style.put("margin", "0");
-                    style.put("padding", "20px");
-                    style.put("border", "0");
-                    style.put("border-radius", "8px");
-                    style.put("width", "auto");
-                    style.put("height", chatBoxHeight);
-                    style.put("max-height", chatBoxHeight);
-                    style.put("bottom", "30px");
-                    style.put("left", "20px");
-                    style.put("right", "30px");
-                });
+        // Players
         for (Map.Entry<UUID, PlayerLocationTag> entry : sessionData.getPlayerLocationTags().entrySet()) {
             final UUID uuid = entry.getKey();
             final PlayerLocationTag tag = entry.getValue();
             if (!sessionData.isInWorld(tag)) continue;
-            mapFrame.addElement("img", img -> {
-                    img.setClassName("live-player");
-                    img.setAttribute("src", "/skin/face/" + uuid + ".png");
-                    img.style(style -> {
-                            final int left = tag.getX() - (minRegionX << 9) - 8;
-                            final int top = tag.getZ() - (minRegionZ << 9) - 8;
-                            style.put("width", scalingFactor * 16 + "px");
-                            style.put("height", scalingFactor * 16 + "px");
-                            style.put("position", "absolute");
-                            style.put("top", scalingFactor * top + "px");
-                            style.put("left", scalingFactor * left + "px");
-                            style.put("z-index", "100");
-                            style.put("image-rendering", "pixelated");
-                            style.put("user-select", "none");
-                            style.put("outline", "2px solid white");
-                        });
+            final var livePlayer = new SimpleHtmlElement("img");
+            livePlayer.setClassName("live-player");
+            livePlayer.setAttribute("src", "/skin/face/" + uuid + ".png");
+            livePlayer.style(style -> {
+                    final int left = tag.getX() - (minRegionX << 9) - 8;
+                    final int top = tag.getZ() - (minRegionZ << 9) - 8;
+                    style.put("width", scalingFactor * 16 + "px");
+                    style.put("height", scalingFactor * 16 + "px");
+                    style.put("top", scalingFactor * top + "px");
+                    style.put("left", scalingFactor * left + "px");
                 });
+            result.add(livePlayer);
         }
-        session.getResponse().setStatus(HttpResponseStatus.OK);
-        session.setReceiveChatMessages(true);
-        session.send();
+        return result;
+    }
+
+    public List<PlayerCache> fetchPlayerList() {
+        final List<PlayerCache> result = new ArrayList<>();
+        for (UUID online : Connect.get().getOnlinePlayers()) {
+            result.add(PlayerCache.forUuid(online));
+        }
+        Collections.sort(result, Comparator.comparing(PlayerCache::getName, String.CASE_INSENSITIVE_ORDER));
+        return result;
+    }
+
+    public HtmlNodeList makePlayerList(List<PlayerCache> playerList) {
+        final HtmlNodeList result = new HtmlNodeList();
+        for (PlayerCache player : playerList) {
+            final SimpleHtmlElement playerDiv = new SimpleHtmlElement("div");
+            playerDiv.setClassName("player-list-box");
+            playerDiv.addElement("img", img -> {
+                    img.setClassName("player-list-face");
+                    img.setAttribute("src", "/skin/face/" + player.uuid + ".png");
+                    img.setAttribute("onclick", "onClickPlayerList('" + player.uuid + "')");
+                });
+            playerDiv.addElement("div", nameDiv -> {
+                    nameDiv.addText(player.name);
+                    nameDiv.setClassName("minecraft-chat player-list-name");
+                });
+            result.add(playerDiv);
+        }
+        return result;
     }
 
     private void sendRegionFile(ContentDeliverySession session, String mapName, String fileName) {
@@ -281,16 +301,16 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
 
     @Override
     public void tick(ContentDeliverySession session) {
-        final MagicMapContentDeliverySessionData data = (MagicMapContentDeliverySessionData) session.getContentDeliverySessionData();
-        if (data == null) return;
+        final MagicMapContentDeliverySessionData sessionData = (MagicMapContentDeliverySessionData) session.getContentDeliverySessionData();
+        if (sessionData == null) return;
         // Prune our map
-        for (Iterator<Map.Entry<UUID, PlayerLocationTag>> iter = data.getPlayerLocationTags().entrySet().iterator(); iter.hasNext();) {
+        for (Iterator<Map.Entry<UUID, PlayerLocationTag>> iter = sessionData.getPlayerLocationTags().entrySet().iterator(); iter.hasNext();) {
             Map.Entry<UUID, PlayerLocationTag> entry = iter.next();
             final UUID uuid = entry.getKey();
             if (plugin().getWebserverManager().getPlayerLocationTags().containsKey(uuid)) continue;
             final PlayerLocationTag tag = entry.getValue();
             iter.remove();
-            if (data.isInWorld(tag)) {
+            if (sessionData.isInWorld(tag)) {
                 session.sendMessage(new PlayerRemoveMessage(uuid));
             }
         }
@@ -298,16 +318,16 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
         for (Map.Entry<UUID, PlayerLocationTag> entry : plugin().getWebserverManager().getPlayerLocationTags().entrySet()) {
             final UUID uuid = entry.getKey();
             final PlayerLocationTag tag = entry.getValue();
-            final PlayerLocationTag old = data.getPlayerLocationTags().get(uuid);
+            final PlayerLocationTag old = sessionData.getPlayerLocationTags().get(uuid);
             if (old == null) {
-                data.getPlayerLocationTags().put(uuid, tag.clone());
-                if (data.isInWorld(tag)) {
+                sessionData.getPlayerLocationTags().put(uuid, tag.clone());
+                if (sessionData.isInWorld(tag)) {
                     session.sendMessage(new PlayerAddMessage(PlayerCache.forUuid(uuid), tag.getX(), tag.getZ()));
                 }
             } else if (!old.equals(tag)) {
-                data.getPlayerLocationTags().put(uuid, tag.clone());
-                final boolean oldIsInWorld = data.isInWorld(old);
-                final boolean newIsInWorld = data.isInWorld(tag);
+                sessionData.getPlayerLocationTags().put(uuid, tag.clone());
+                final boolean oldIsInWorld = sessionData.isInWorld(old);
+                final boolean newIsInWorld = sessionData.isInWorld(tag);
                 if (!oldIsInWorld && newIsInWorld) {
                     session.sendMessage(new PlayerAddMessage(PlayerCache.forUuid(uuid), tag.getX(), tag.getZ()));
                 } else if (oldIsInWorld && !newIsInWorld) {
@@ -317,9 +337,88 @@ public final class MagicMapContentDelivery implements ContentDelivery, Websocket
                 }
             }
         }
+        // Update player list
+    }
+
+    private void updatePlayerList(ContentDeliverySession session, MagicMapContentDeliverySessionData sessionData) {
+        session.sendMessage(new EvalClientMessage("document.getElementById('player-list').innerHTML = '" + makePlayerList(sessionData.getPlayerList()).writeToJavaScriptString() + "'"));
     }
 
     @Override
-    public void onWebsocketReceiveText(String text) {
+    public void onPlayerJoin(ContentDeliverySession session, PlayerCache player) {
+        final MagicMapContentDeliverySessionData sessionData = (MagicMapContentDeliverySessionData) session.getContentDeliverySessionData();
+        if (sessionData == null) return;
+        final String raw = player.name + " joined";
+        session.sendMessage(new ChatClientMessage(new PlayerCache(new UUID(0L, 0L), "Console"),
+                                                  raw,
+                                                  new SimpleHtmlElement("span").addText(raw).setAttribute("style", "color: #55ff55").writeToString()));
+        sessionData.getPlayerList().add(player);
+        Collections.sort(sessionData.getPlayerList(), Comparator.comparing(PlayerCache::getName, String.CASE_INSENSITIVE_ORDER));
+        updatePlayerList(session, sessionData);
+    }
+
+    @Override
+    public void onPlayerQuit(ContentDeliverySession session, PlayerCache player) {
+        final MagicMapContentDeliverySessionData sessionData = (MagicMapContentDeliverySessionData) session.getContentDeliverySessionData();
+        if (sessionData == null) return;
+        final String raw = player.name + " disconnected";
+        session.sendMessage(new ChatClientMessage(new PlayerCache(new UUID(0L, 0L), "Console"),
+                                                  raw,
+                                                  new SimpleHtmlElement("span").addText(raw).setAttribute("style", "color: #55ffff").writeToString()));
+        sessionData.getPlayerList().removeIf(p -> p.uuid.equals(player.uuid));
+        updatePlayerList(session, sessionData);
+    }
+
+    @Override
+    public void onWebsocketReceiveText(ContentDeliverySession session, String text) {
+        final MagicMapContentDeliverySessionData sessionData = (MagicMapContentDeliverySessionData) session.getContentDeliverySessionData();
+        if (sessionData == null) return;
+        final Map<?, ?> map = Json.deserialize(text, Map.class);
+        if (map == null) return;
+        if (map.get("id") == null) return;
+        final String id = map.get("id").toString();
+        switch (id) {
+        case "click_player_list": {
+            if (map.get("value") == null) return;
+            final String value = map.get("value").toString();
+            final UUID uuid;
+            try {
+                uuid = UUID.fromString(value);
+            } catch (IllegalArgumentException iae) {
+                return;
+            }
+            final PlayerLocationTag tag = sessionData.getPlayerLocationTags().get(uuid);
+            if (tag == null) return;
+            if (sessionData.isInWorld(tag)) {
+                session.sendMessage(new ScrollMapMessage(tag.getX(), tag.getZ()));
+            } else {
+                if (changeMap(session, sessionData, tag.getServer(), tag.getWorld())) {
+                    session.sendMessage(new ScrollMapMessage(tag.getX(), tag.getZ()));
+                }
+            }
+            break;
+        }
+        default: break;
+        }
+    }
+
+    private boolean changeMap(ContentDeliverySession session, MagicMapContentDeliverySessionData sessionData, NetworkServer server, String worldName) {
+        String mapName = null;
+        WorldFileCache worldFileCache = null;
+        for (Map.Entry<String, WorldFileCache> entry : worldMap.entrySet()) {
+            final WorldFileCache it = entry.getValue();
+            if (it.getServer() == server && it.getName().equals(worldName)) {
+                mapName = entry.getKey();
+                worldFileCache = it;
+                break;
+            }
+        }
+        if (worldFileCache == null) return false;
+        sessionData.setMapName(mapName);
+        sessionData.setWorldFileCache(worldFileCache);
+        final String innerHtml = makeMapFrameContent(sessionData).writeToString();
+        session.sendMessage(new ChangeMapMessage(mapName, worldFileCache.getDisplayName() + " - Magic Map",
+                                                 worldFileCache.getEffectiveWorldBorder(), innerHtml));
+        return true;
     }
 }

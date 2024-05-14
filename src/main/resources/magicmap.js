@@ -1,14 +1,18 @@
-const mapName = "map_name";
-const worldBorder = world_border;
+var mapName = "map_name";
+var worldBorder = world_border;
 const scalingFactor = scaling_factor;
 
-worldBorder.minX = (worldBorder.minX >> 9) << 9;
-worldBorder.maxX = (worldBorder.maxX >> 9) << 9;
-worldBorder.minZ = (worldBorder.minZ >> 9) << 9;
-worldBorder.maxZ = (worldBorder.maxZ >> 9) << 9;
+function fixWorldBorder() {
+    worldBorder.minX = (worldBorder.minX >> 9) << 9;
+    worldBorder.maxX = (worldBorder.maxX >> 9) << 9;
+    worldBorder.minZ = (worldBorder.minZ >> 9) << 9;
+    worldBorder.maxZ = (worldBorder.maxZ >> 9) << 9;
+}
+
+fixWorldBorder();
 
 function calculateFrame() {
-    const scrolling = document.getElementById("map_frame");
+    const scrolling = document.getElementById("map-frame");
     const width = scrolling.clientWidth;
     const height = scrolling.clientHeight;
     const top = scrolling.scrollTop;
@@ -33,7 +37,7 @@ var dragX = 0;
 var dragY = 0;
 
 window.addEventListener("load", event => {
-    const scrolling = document.getElementById("map_frame");
+    const scrolling = document.getElementById("map-frame");
     const width = scrolling.clientWidth;
     const height = scrolling.clientHeight;
     scrolling.scrollTo(scalingFactor * (worldBorder.centerX - worldBorder.minX) - (width / 2),
@@ -65,7 +69,7 @@ window.addEventListener("load", event => {
     websocket.addEventListener('websocketMessage', event => {
         switch (event.packet.id) {
         case 'chat': {
-            const chatBox = document.getElementById('chat_box');
+            const chatBox = document.getElementById('chat-box');
             const p = document.createElement('p');
             p.className = 'minecraft-chat-line';
             p.innerHTML = event.packet.html;
@@ -91,7 +95,7 @@ window.addEventListener("load", event => {
             img.style['image-rendering'] = 'pixelated';
             img.style['user-select'] = 'none';
             img.style['outline'] = '2px solid white';
-            const mapFrame = document.getElementById('map_frame').appendChild(img);
+            const mapFrame = document.getElementById('map-frame').appendChild(img);
             break;
         }
         case 'magicmap:player_remove': {
@@ -118,7 +122,36 @@ window.addEventListener("load", event => {
             }
             break;
         }
+	case 'magicmap:scroll_map': {
+	    const x = event.packet.x;
+	    const z = event.packet.z;
+	    scrollTo(x, z);
+	    break;
+	}
+	case 'magicmap:change_map': {
+	    mapName = event.packet.mapName;
+	    worldBorder = event.packet.worldBorder;
+	    fixWorldBorder();
+	    document.getElementById('map-frame').innerHTML = event.packet.innerHtml;
+	    document.title = event.packet.displayName;
+	    break;
+	}
         default: break;
         }
     });
 });
+
+function scrollTo(x, z) {
+    const scrolling = document.getElementById("map-frame");
+    const width = scrolling.clientWidth;
+    const height = scrolling.clientHeight;
+    scrolling.scrollTo(scalingFactor * (x - worldBorder.minX) - (width / 2),
+                       scalingFactor * (z - worldBorder.minZ) - (height / 2));
+}
+
+function onClickPlayerList(uuid) {
+    websocket.send(JSON.stringify({
+	"id": "click_player_list",
+	"value": uuid,
+    }));
+}

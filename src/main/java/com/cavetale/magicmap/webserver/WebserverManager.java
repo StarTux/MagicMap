@@ -23,6 +23,8 @@ public final class WebserverManager {
 
     public boolean enable() {
         if (!WebserverPlugin.plugin().isWebserverEnabled()) return false;
+        MagicMapScript.init();
+        MagicMapStyleSheet.load();
         contentDelivery = new MagicMapContentDelivery();
         contentDelivery.enable();
         WebserverPlugin.plugin().getContentManager().register(contentDelivery);

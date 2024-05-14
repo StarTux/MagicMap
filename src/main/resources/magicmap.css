@@ -1,0 +1,90 @@
+.map-frame {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: scroll;
+    padding: 0px;
+    margin: 0px;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #cda882;
+}
+
+.map-region {
+    position: absolute;
+    image-rendering: pixelated;
+    user-select: none;
+}
+
+.chat-box {
+    position: fixed;
+    overflow-x: none;
+    overflow-y: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    margin: 0;
+    padding: 20px;
+    border: 0;
+    border-radius: 12px;
+    width: auto;
+    height: 200px;
+    bottom: 30px;
+    left: 20px;
+    right: 30px;
+    z-index: 200;
+}
+
+.live-player {
+    position: absolute;
+    z-index: 100;
+    image-rendering: pixelated;
+    user-select: none;
+    outline: 2px solid white;
+}
+
+.player-list {
+    display: flex;
+    flex-direction: row;
+    position: fixed;
+    overflow-x: auto;
+    overflow-y: none;
+    background-color: rgba(0, 0, 0, 0.25);
+    margin: 0;
+    padding: 12px;
+    border: 0;
+    border-radius: 12px;
+    width: auto;
+    height: 90px;
+    top: 20px;
+    left: 20px;
+    right: 30px;
+}
+
+.player-list-box {
+    flex-shrink: 0;
+    width: 128px;
+    height: 72px;
+    padding: 0px;
+    border: 0px;
+    margin: 0px;
+    text-align: center;
+}
+
+.player-list-face {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 2px solid rgba(0, 0, 0, 0.0);
+    margin: 0px;
+    image-rendering: pixelated;
+}
+
+.player-list-face:hover {
+    border: 2px solid gold;
+}
+
+.player-list-name {
+    font-size: 14px;
+    text-align: center;
+}
