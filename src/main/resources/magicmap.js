@@ -115,8 +115,6 @@ window.addEventListener("load", event => {
                 const top = event.packet.z - worldBorder.minZ - 8;
                 player.style['top'] = scalingFactor * top + 'px';
                 player.style['left'] = scalingFactor * left + 'px';
-                player.className = '';
-                player.className = 'live-player';
             }
             break;
         }
