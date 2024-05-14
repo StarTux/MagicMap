@@ -1,11 +1,12 @@
 package com.cavetale.magicmap.webserver;
 
+import com.cavetale.core.command.RemotePlayer;
 import com.cavetale.core.connect.Connect;
 import com.cavetale.magicmap.PlayerLocationTag;
 import com.cavetale.webserver.WebserverPlugin;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import lombok.Getter;
 import org.bukkit.Bukkit;
@@ -37,22 +38,23 @@ public final class WebserverManager {
     private void updatePlayerLocationTags() {
         if (updatingPlayerLocations) return;
         updatingPlayerLocations = true;
-        final Set<UUID> onlines = Connect.get().getOnlinePlayers();
+        final List<RemotePlayer> players = Connect.get().getRemotePlayers();
         Bukkit.getScheduler().runTaskAsynchronously(plugin(), () -> {
                 // Async thread
                 final Map<UUID, PlayerLocationTag> map = new HashMap<>();
-                for (UUID online : onlines) {
-                    PlayerLocationTag tag = PlayerLocationTag.loadFromRedis(online);
+                for (RemotePlayer player : players) {
+                    final UUID uuid = player.getUniqueId();
+                    PlayerLocationTag tag = PlayerLocationTag.loadFromRedis(player.getOriginServer(), uuid);
                     if (tag == null) {
                         tag = new PlayerLocationTag();
                         tag.makeUnknown();
                     }
-                    map.put(online, tag);
+                    map.put(uuid, tag);
                 }
                 Bukkit.getScheduler().runTask(plugin(), () -> {
                         // Main thread
                         updatingPlayerLocations = false;
-                        playerLocationTags.entrySet().retainAll(onlines);
+                        playerLocationTags.entrySet().retainAll(map.keySet());
                         playerLocationTags.putAll(map);
                     });
             });

@@ -10,6 +10,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import static com.cavetale.magicmap.MagicMapPlugin.plugin;
 
+/**
+ * Each server stores this info in Redis for the Webserver to pick up.
+ */
 @Data
 public final class PlayerLocationTag implements Serializable {
     public static final String KEY_PREFIX = "MagicMap.PlayerLocation.";
@@ -56,9 +59,12 @@ public final class PlayerLocationTag implements Serializable {
         this.z = 0;
     }
 
+    private static String getKey(NetworkServer server, UUID uuid) {
+        return KEY_PREFIX + server.name().toLowerCase() + "." + uuid;
+    }
+
     public void saveToRedis(UUID uuid) {
-        final String key = KEY_PREFIX + uuid;
-        Redis.set(key, Json.serialize(this), 60L);
+        Redis.set(getKey(server, uuid), Json.serialize(this), 60L);
     }
 
     public void saveToRedisAsync(UUID uuid, Runnable callback) {
@@ -73,19 +79,17 @@ public final class PlayerLocationTag implements Serializable {
             });
     }
 
-    public static PlayerLocationTag loadFromRedis(UUID uuid) {
-        final String key = KEY_PREFIX + uuid;
-        final String value = Redis.get(key);
+    public static PlayerLocationTag loadFromRedis(NetworkServer server, UUID uuid) {
+        final String value = Redis.get(getKey(server, uuid));
         if (value == null) return null;
         return Json.deserialize(value, PlayerLocationTag.class, () -> null);
     }
 
-    public static void removeFromRedis(UUID uuid) {
-        final String key = KEY_PREFIX + uuid;
-        Redis.del(key);
+    public void removeFromRedis(UUID uuid) {
+        Redis.del(getKey(server, uuid));
     }
 
-    public static void removeFromRedisAsync(UUID uuid, Runnable callback) {
+    public void removeFromRedisAsync(UUID uuid, Runnable callback) {
         Bukkit.getScheduler().runTaskAsynchronously(plugin(), () -> {
                 removeFromRedis(uuid);
                 if (callback != null) {
