@@ -196,10 +196,18 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
         updatePlayerLocationTags();
     }
 
+    /**
+     * This is run on every live server for the web server to pick it
+     * up in WebserverManager with a method of the same name.
+     */
     private void updatePlayerLocationTags() {
         // Remove offline players
-        for (Iterator<UUID> iter = playerLocationTags.keySet().iterator(); iter.hasNext();) {
-            if (Bukkit.getPlayer(iter.next()) == null) {
+        for (Iterator<Map.Entry<UUID, PlayerLocationTag>> iter = playerLocationTags.entrySet().iterator(); iter.hasNext();) {
+            final Map.Entry<UUID, PlayerLocationTag> entry = iter.next();
+            final UUID uuid = entry.getKey();
+            final PlayerLocationTag tag = entry.getValue();
+            if (Bukkit.getPlayer(uuid) == null) {
+                tag.removeFromRedisAsync(uuid, null);
                 iter.remove();
             }
         }

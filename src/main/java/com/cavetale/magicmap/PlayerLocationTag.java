@@ -79,4 +79,20 @@ public final class PlayerLocationTag implements Serializable {
         if (value == null) return null;
         return Json.deserialize(value, PlayerLocationTag.class, () -> null);
     }
+
+    public static void removeFromRedis(UUID uuid) {
+        final String key = KEY_PREFIX + uuid;
+        Redis.del(key);
+    }
+
+    public static void removeFromRedisAsync(UUID uuid, Runnable callback) {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin(), () -> {
+                removeFromRedis(uuid);
+                if (callback != null) {
+                    Bukkit.getScheduler().runTask(plugin(), () -> {
+                            callback.run();
+                        });
+                }
+            });
+    }
 }
