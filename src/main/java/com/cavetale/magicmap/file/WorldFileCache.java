@@ -18,6 +18,7 @@ import lombok.Data;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.World;
+import org.bukkit.World.Environment;
 import static com.cavetale.magicmap.MagicMapPlugin.plugin;
 
 /**
@@ -65,8 +66,13 @@ public final class WorldFileCache {
             tag.setWorldBorder(computeWorldBorder());
             doSaveTag = true;
         }
+        final Environment environment = world.getEnvironment();
+        if (environment != tag.getEnvironment()) {
+            tag.setEnvironment(environment);
+            doSaveTag = true;
+        }
         final List<RenderType> renderTypes = new ArrayList<>();
-        switch (world.getEnvironment()) {
+        switch (environment) {
         case NORMAL:
             renderTypes.add(RenderType.SURFACE);
             renderTypes.add(RenderType.CAVE);
