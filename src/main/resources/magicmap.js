@@ -1,3 +1,4 @@
+"use strict";
 var mapName = "map_name";
 var worldBorder = world_border;
 const scalingFactor = scaling_factor;
