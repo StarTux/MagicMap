@@ -1,6 +1,7 @@
 package com.cavetale.magicmap;
 
 import com.cavetale.magicmap.file.Worlds;
+import com.cavetale.magicmap.home.MagicMapHome;
 import com.cavetale.magicmap.mytems.MagicMapMytem;
 import com.cavetale.magicmap.webserver.WebserverManager;
 import java.util.ArrayList;
@@ -66,12 +67,13 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
     // Queues
     private List<SyncMapRenderer> mainQueue = new ArrayList<>();
     private Map<UUID, Session> sessions = new HashMap<>();
-    // Mytems
-    protected MagicMapMytem magicMapMytem;
     // Worlds
     private final Worlds worlds = new Worlds();
-    // Webserver
+    // Other plugin modules
+    private MagicMapMytem magicMapMytem;
     private WebserverManager webserverManager;
+    private MagicMapHome magicMapHome;
+    // Player locations for the web server
     private Map<UUID, PlayerLocationTag> playerLocationTags = new HashMap<>();
 
     @Override
@@ -107,9 +109,19 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
             }
         }
         if (Bukkit.getPluginManager().isPluginEnabled("Webserver")) {
-            webserverManager = new WebserverManager();
-            if (!webserverManager.enable()) {
-                webserverManager = null;
+            webserverManager = new WebserverManager().enable();
+            if (webserverManager != null) {
+                getLogger().info("Webserver module enabled");
+            } else {
+                getLogger().warning("Webserver module disabled");
+            }
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("Home")) {
+            magicMapHome = new MagicMapHome().enable();
+            if (magicMapHome != null) {
+                getLogger().info("Home module enabled");
+            } else {
+                getLogger().warning("Home module disabled");
             }
         }
         worlds.enableWorldServer();

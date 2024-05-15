@@ -21,15 +21,15 @@ public final class WebserverManager {
     private Map<UUID, PlayerLocationTag> playerLocationTags = new HashMap<>();
     private boolean updatingPlayerLocations = false;
 
-    public boolean enable() {
-        if (!WebserverPlugin.plugin().isWebserverEnabled()) return false;
+    public WebserverManager enable() {
+        if (!WebserverPlugin.plugin().isWebserverEnabled()) return null;
         MagicMapScript.init();
         MagicMapStyleSheet.load();
         contentDelivery = new MagicMapContentDelivery();
         contentDelivery.enable();
         WebserverPlugin.plugin().getContentManager().register(contentDelivery);
         Bukkit.getScheduler().runTaskTimer(plugin(), this::updatePlayerLocationTags, 5L, 5L);
-        return true;
+        return this;
     }
 
     public void disable() {

@@ -87,6 +87,14 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- Home -->
+    <dependency>
+      <groupId>com.cavetale.home</groupId>
+      <artifactId>home</artifactId>
+      <version>0.1-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- JUnit Testing -->
     <dependency>
       <groupId>junit</groupId>
