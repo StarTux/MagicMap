@@ -90,18 +90,25 @@ public enum ColorIndex {
     public final int darkRgb;
     private static final ColorIndex[] INDEXED;
     private static final EnumMap<Material, Integer> MATERIAL_MAP = new EnumMap<>(Material.class);
+    // Color sub indexes
+    public static final int NORMAL = 0;
+    public static final int LIGHT = 1;
+    public static final int BRIGHT = 2;
+    public static final int DARK = 3;
+    // Some named colors
     public static final ColorIndex EMPTY = COLOR_0;
     public static final ColorIndex WATER = COLOR_12;
     public static final ColorIndex LAVA = COLOR_15;
     public static final ColorIndex BLACK = COLOR_29;
     public static final ColorIndex WHITE = COLOR_8;
 
+
     ColorIndex(final int index, final int normalRgb, final int lightRgb, final int brightRgb, final int darkRgb) {
         this.index = index;
-        this.normal = index * 4 + 0;
-        this.light = index * 4 + 1;
-        this.bright = index * 4 + 2;
-        this.dark = index * 4 + 3;
+        this.normal = index * 4 + NORMAL;
+        this.light = index * 4 + LIGHT;
+        this.bright = index * 4 + BRIGHT;
+        this.dark = index * 4 + DARK;
         this.normalRgb = normalRgb;
         this.lightRgb = lightRgb;
         this.brightRgb = brightRgb;
