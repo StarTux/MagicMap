@@ -1,5 +1,5 @@
-"use strict";
-var mapName = "map_name";
+'use strict';
+var mapName = 'map_name';
 var worldBorder = world_border;
 const scalingFactor = scaling_factor;
 
@@ -13,7 +13,7 @@ function fixWorldBorder() {
 fixWorldBorder();
 
 function calculateFrame() {
-    const scrolling = document.getElementById("map-frame");
+    const scrolling = document.getElementById('map-frame');
     const width = scrolling.clientWidth;
     const height = scrolling.clientHeight;
     const top = scrolling.scrollTop;
@@ -24,9 +24,9 @@ function calculateFrame() {
     const rbz = (worldBorder.minZ + (top + height) / scalingFactor) >> 9;
     for (var rz = raz; rz <= rbz; rz += 1) {
         for (var rx = rax; rx <= rbx; rx += 1) {
-            var img = document.getElementById("region-" + rx + "-" + rz);
+            var img = document.getElementById('region-' + rx + '-' + rz);
             if (!img) continue;
-            const oldSrc = img.getAttribute("src");
+            const oldSrc = img.src;
             if (oldSrc && oldSrc !== '') continue;
             img.src = '/map/' + mapName + '/r.' + rx + '.' + rz + '.png';
         }
@@ -36,9 +36,12 @@ function calculateFrame() {
 var mouseDown = false;
 var dragX = 0;
 var dragY = 0;
+var mouseX = 0;
+var mouseY = 0;
 
 window.addEventListener('load', event => {
-    const scrolling = document.getElementById('map-frame');
+    const mapFrame = document.getElementById('map-frame');
+    const scrolling = mapFrame;
     const width = scrolling.clientWidth;
     const height = scrolling.clientHeight;
     scrolling.scrollTo(scalingFactor * (worldBorder.centerX - worldBorder.minX) - (width / 2),
@@ -53,6 +56,8 @@ window.addEventListener('load', event => {
         event.preventDefault();
     };
     mouseSurface.onmousemove = event => {
+        mouseX = event.clientX;
+        mouseY = event.clientY;
         if (!mouseDown) return;
         var x = event.clientX - dragX;
         var y = event.clientY - dragY;
@@ -62,7 +67,9 @@ window.addEventListener('load', event => {
         dragY = event.clientY;
     };
     mouseSurface.onmouseup = event => {
+        if (!mouseDown) return;
         mouseDown = false;
+        event.preventDefault();
     };
     mouseSurface.onmouseleave = event => {
         mouseDown = false;
@@ -100,12 +107,25 @@ window.addEventListener('load', event => {
             document.getElementById('map-frame').innerHTML = event.packet.innerHtml;
             document.title = event.packet.displayName;
             calculateFrame();
-            sendServerMessage('did_change_map');
+            sendServerMessage('magicmap:did_change_map');
+            break;
+        }
+        case 'magicmap:show_tooltip': {
+            removeTooltip();
+            const mapFrame = document.getElementById('map-frame');
+            const tooltip = parseHtml(event.packet.html)[0];
+            tooltip.style.left = (mouseX + mapFrame.scrollLeft) + 'px';
+            tooltip.style.top = (mouseY + mapFrame.scrollTop) + 'px';
+            mapFrame.appendChild(tooltip);
             break;
         }
         default: break;
         }
     });
+    mapFrame.onclick = event => {
+        removeClaimHighlight();
+        removeTooltip();
+    };
 });
 
 function scrollTo(x, z) {
@@ -117,13 +137,34 @@ function scrollTo(x, z) {
 }
 
 function onClickPlayerList(element, event) {
-    sendServerMessage('click_player_list', element.getAttribute('data-uuid'));
+    sendServerMessage('magicmap:click_player_list', element.getAttribute('data-uuid'));
 }
 
 function onClickClaim(element, event) {
-    console.log('click claim ' + element.getAttribute('data-claim-id') + ' ' + event);
+    removeTooltip();
+    removeClaimHighlight();
+    element.style['border-color'] = 'white';
+    sendServerMessage('magicmap:click_claim', element.getAttribute('data-claim-id'));
+    event.stopPropagation();
 }
 
 function onClickLivePlayer(element, event) {
-    console.log('click player ' + element.getAttribute('data-uuid') + ' ' + element.getAttribute('data-name'));
+    removeTooltip();
+    removeClaimHighlight();
+    sendServerMessage('magicmap:click_live_player', element.getAttribute('data-uuid'));
+    event.stopPropagation();
+}
+
+function removeClaimHighlight() {
+    const claims = document.getElementsByClassName('live-claim');
+    for (var i = 0; i < claims.length; i += 1) {
+        const claim = claims[i];
+        claim.style['border-color'] = null;
+    }
+}
+
+function removeTooltip() {
+    const tooltip = document.getElementById('magicmap-tooltip');
+    if (!tooltip) return;
+    tooltip.parentElement.removeChild(tooltip);
 }

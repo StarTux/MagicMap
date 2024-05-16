@@ -172,7 +172,7 @@ public final class MagicMapContentDelivery implements ContentDelivery {
         // Chat Box
         final var chatBox = provider.getDocument().getBody().addElement("div");
         chatBox.setId("chat-box");
-        chatBox.setClassName("minecraft-chat chat-box");
+        chatBox.setClassNames(List.of("minecraft-chat", "chat-box"));
         // Player List
         final var playerListBox = provider.getDocument().getBody().addElement("div");
         playerListBox.setId("player-list");
@@ -305,7 +305,7 @@ public final class MagicMapContentDelivery implements ContentDelivery {
                 });
             playerDiv.addElement("div", nameDiv -> {
                     nameDiv.addText(player.name);
-                    nameDiv.setClassName("minecraft-chat player-list-name");
+                    nameDiv.setClassNames(List.of("minecraft-chat", "player-list-name"));
                 });
             result.add(playerDiv);
         }
@@ -430,10 +430,10 @@ public final class MagicMapContentDelivery implements ContentDelivery {
         final MagicMapContentDeliverySessionData sessionData = (MagicMapContentDeliverySessionData) session.getContentDeliverySessionData();
         if (sessionData == null) return;
         switch (message.getId()) {
-        case "did_change_map":
+        case "magicmap:did_change_map":
             sessionData.setLoadingMap(false);
             break;
-        case "click_player_list": {
+        case "magicmap:click_player_list": {
             if (message.getValue() == null) return;
             final UUID uuid;
             try {
@@ -450,6 +450,61 @@ public final class MagicMapContentDelivery implements ContentDelivery {
                     session.sendMessage(new ScrollMapMessage(tag.getX(), tag.getZ()));
                 }
             }
+            break;
+        }
+        case "magicmap:click_claim": {
+            if (message.getValue() == null) return;
+            final int claimId;
+            try {
+                claimId = Integer.parseInt(message.getValue());
+            } catch (IllegalArgumentException iae) {
+                return;
+            }
+            final Claim claim = HomePlugin.getInstance().getClaimById(claimId);
+            if (claim == null || !claim.getWorld().equals(sessionData.getWorldFileCache().getName())) return;
+            final var tooltip = new SimpleHtmlElement("div");
+            tooltip.setId("magicmap-tooltip");
+            tooltip.setClassNames(List.of("minecraft-chat", "magicmap-tooltip"));
+            tooltip.addElement("p", p -> {
+                    p.setClassName("minecraft-chat-line");
+                    p.addElement("span", span -> {
+                            span.style(style -> style.put("color", "#aaaaaa"));
+                            span.addText("Claim Owner ");
+                        });
+                    p.addElement("span", span -> span.addText(claim.getOwnerName()));
+                });
+            tooltip.addElement("p", p -> {
+                    p.setClassName("minecraft-chat-line");
+                    p.addElement("span", span -> {
+                            span.style(style -> style.put("color", "#aaaaaa"));
+                            span.addText("Size ");
+                        });
+                    p.addElement("span", span -> span.addText("" + claim.getArea().width()));
+                    p.addElement("span", span -> {
+                            span.style(style -> style.put("color", "#ffffff"));
+                            span.addText("\u00D7");
+                        });
+                    p.addElement("span", span -> span.addText("" + claim.getArea().height()));
+                });
+            session.sendMessage(new ShowTooltipMessage(tooltip.writeToString()));
+            break;
+        }
+        case "magicmap:click_live_player": {
+            if (message.getValue() == null) return;
+            final UUID uuid;
+            try {
+                uuid = UUID.fromString(message.getValue());
+            } catch (IllegalArgumentException iae) {
+                return;
+            }
+            final var tooltip = new SimpleHtmlElement("div");
+            tooltip.setId("magicmap-tooltip");
+            tooltip.setClassNames(List.of("minecraft-chat", "magicmap-tooltip"));
+            tooltip.addElement("p", p -> {
+                    p.setClassName("minecraft-chat-line");
+                    p.addElement("span", span -> span.addText(PlayerCache.nameForUuid(uuid)));
+                });
+            session.sendMessage(new ShowTooltipMessage(tooltip.writeToString()));
             break;
         }
         default: break;
