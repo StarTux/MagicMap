@@ -3,7 +3,8 @@ package com.cavetale.magicmap.webserver;
 import com.cavetale.core.connect.Connect;
 import com.cavetale.core.connect.NetworkServer;
 import com.cavetale.core.playercache.PlayerCache;
-import com.cavetale.core.util.Json;
+import com.cavetale.home.Claim;
+import com.cavetale.home.HomePlugin;
 import com.cavetale.magicmap.PlayerLocationTag;
 import com.cavetale.magicmap.RenderType;
 import com.cavetale.magicmap.file.WorldBorderCache;
@@ -19,8 +20,11 @@ import com.cavetale.webserver.html.SimpleHtmlElement;
 import com.cavetale.webserver.http.HttpContentType;
 import com.cavetale.webserver.http.HttpResponseStatus;
 import com.cavetale.webserver.http.StaticContentProvider;
+import com.cavetale.webserver.message.AddHtmlElementsMessage;
 import com.cavetale.webserver.message.ChatClientMessage;
-import com.cavetale.webserver.message.EvalClientMessage;
+import com.cavetale.webserver.message.RemoveHtmlElementMessage;
+import com.cavetale.webserver.message.ServerMessage;
+import com.cavetale.webserver.message.SetInnerHtmlMessage;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -177,7 +181,13 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             playerListBox.addChild(node);
         }
         // Regions and Live Players
-        for (var node : makeMapFrameContent(sessionData)) {
+        for (var node : makeRegionElements(sessionData)) {
+            mapFrame.addChild(node);
+        }
+        for (var node : makeLivePlayerElements(sessionData)) {
+            mapFrame.addChild(node);
+        }
+        for (var node : makeClaimElements(sessionData)) {
             mapFrame.addChild(node);
         }
         session.getResponse().setStatus(HttpResponseStatus.OK);
@@ -185,7 +195,7 @@ public final class MagicMapContentDelivery implements ContentDelivery {
         session.send();
     }
 
-    public HtmlNodeList makeMapFrameContent(MagicMapContentDeliverySessionData sessionData) {
+    public HtmlNodeList makeRegionElements(MagicMapContentDeliverySessionData sessionData) {
         HtmlNodeList result = new HtmlNodeList();
         final var worldBorder = sessionData.getWorldFileCache().getEffectiveWorldBorder();
         final int minRegionX = worldBorder.getMinX() >> 9;
@@ -196,37 +206,78 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             for (int rx = minRegionX; rx <= maxRegionX; rx += 1) {
                 final int left = (rx - minRegionX) * 512;
                 final int top = (rz - minRegionZ) * 512;
-                final String id = "r." + rx + "." + rz;
                 final var mapRegion = new SimpleHtmlElement("img");
-                mapRegion.setId(id)
-                    .setClassName("map-region")
-                    .setAttribute("draggable", "false")
-                    .style(style -> {
-                            style.put("width", scalingFactor * 512 + "px");
-                            style.put("height", scalingFactor * 512 + "px");
-                            style.put("top", scalingFactor * top + "px");
-                            style.put("left", scalingFactor * left + "px");
-                        });
+                mapRegion.setId("region-" + rx + "-" + rz);
+                mapRegion.setClassName("map-region");
+                mapRegion.setAttribute("draggable", "false");
+                mapRegion.style(style -> {
+                        style.put("width", scalingFactor * 512 + "px");
+                        style.put("height", scalingFactor * 512 + "px");
+                        style.put("top", scalingFactor * top + "px");
+                        style.put("left", scalingFactor * left + "px");
+                    });
                 result.add(mapRegion);
             }
         }
-        // Players
+        return result;
+    }
+
+    public SimpleHtmlElement makeLivePlayer(UUID uuid, PlayerLocationTag tag, WorldBorderCache worldBorder) {
+        final var livePlayer = new SimpleHtmlElement("img");
+        livePlayer.setId("live-player-" + uuid);
+        livePlayer.setClassName("live-player");
+        livePlayer.setAttribute("src", "/skin/face/" + uuid + ".png");
+        livePlayer.setAttribute("data-uuid", "" + uuid);
+        livePlayer.setAttribute("data-name", PlayerCache.nameForUuid(uuid));
+        livePlayer.setAttribute("onclick", "onClickLivePlayer(this, event)");
+        livePlayer.style(style -> {
+                final int minX = (worldBorder.getMinX() >> 9) << 9;
+                final int minZ = (worldBorder.getMinZ() >> 9) << 9;
+                final int left = tag.getX() - minX - 8;
+                final int top = tag.getZ() - minZ - 8;
+                style.put("width", scalingFactor * 16 + "px");
+                style.put("height", scalingFactor * 16 + "px");
+                style.put("top", scalingFactor * top + "px");
+                style.put("left", scalingFactor * left + "px");
+            });
+        return livePlayer;
+    }
+
+    public HtmlNodeList makeLivePlayerElements(MagicMapContentDeliverySessionData sessionData) {
+        HtmlNodeList result = new HtmlNodeList();
+        final var worldBorder = sessionData.getWorldFileCache().getEffectiveWorldBorder();
         for (Map.Entry<UUID, PlayerLocationTag> entry : sessionData.getPlayerLocationTags().entrySet()) {
             final UUID uuid = entry.getKey();
             final PlayerLocationTag tag = entry.getValue();
             if (!sessionData.isInWorld(tag)) continue;
-            final var livePlayer = new SimpleHtmlElement("img");
-            livePlayer.setClassName("live-player");
-            livePlayer.setAttribute("src", "/skin/face/" + uuid + ".png");
-            livePlayer.style(style -> {
-                    final int left = tag.getX() - (minRegionX << 9) - 8;
-                    final int top = tag.getZ() - (minRegionZ << 9) - 8;
-                    style.put("width", scalingFactor * 16 + "px");
-                    style.put("height", scalingFactor * 16 + "px");
+            result.add(makeLivePlayer(uuid, tag, worldBorder));
+        }
+        return result;
+    }
+
+    public HtmlNodeList makeClaimElements(MagicMapContentDeliverySessionData sessionData) {
+        HtmlNodeList result = new HtmlNodeList();
+        if (!HomePlugin.getInstance().isHomeWorld(sessionData.getWorldFileCache().getServer(), sessionData.getWorldFileCache().getName())) return result;
+        final var worldBorder = sessionData.getWorldFileCache().getEffectiveWorldBorder();
+        final int minX = (worldBorder.getMinX() >> 9) << 9;
+        final int minZ = (worldBorder.getMinZ() >> 9) << 9;
+        for (Claim claim : HomePlugin.getInstance().getClaimCache().getAllClaims()) {
+            if (!claim.getWorld().equals(sessionData.getWorldFileCache().getName())) continue;
+            final var claimRect = new SimpleHtmlElement("div");
+            claimRect.setId("claim-" + claim.getId());
+            claimRect.setClassName("live-claim");
+            claimRect.setAttribute("data-claim-id", "" + claim.getId());
+            claimRect.style(style -> {
+                    final var area = claim.getArea();
+                    final int left = area.getAx() - minX;
+                    final int top = area.getAy() - minZ;
+                    style.put("width", scalingFactor * area.width() + "px");
+                    style.put("height", scalingFactor * area.height() + "px");
                     style.put("top", scalingFactor * top + "px");
                     style.put("left", scalingFactor * left + "px");
                 });
-            result.add(livePlayer);
+            claimRect.setAttribute("onclick", "onClickClaim(this, event)");
+            result.add(claimRect);
         }
         return result;
     }
@@ -248,7 +299,9 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             playerDiv.addElement("img", img -> {
                     img.setClassName("player-list-face");
                     img.setAttribute("src", "/skin/face/" + player.uuid + ".png");
-                    img.setAttribute("onclick", "onClickPlayerList('" + player.uuid + "')");
+                    img.setAttribute("data-uuid", "" + player.uuid);
+                    img.setAttribute("data-name", player.name);
+                    img.setAttribute("onclick", "onClickPlayerList(this, event)");
                 });
             playerDiv.addElement("div", nameDiv -> {
                     nameDiv.addText(player.name);
@@ -311,7 +364,7 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             final PlayerLocationTag tag = entry.getValue();
             iter.remove();
             if (sessionData.isInWorld(tag)) {
-                session.sendMessage(new PlayerRemoveMessage(uuid));
+                session.sendMessage(new RemoveHtmlElementMessage("live-player-" + uuid));
             }
         }
         // Update
@@ -322,16 +375,18 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             if (old == null) {
                 sessionData.getPlayerLocationTags().put(uuid, tag.clone());
                 if (sessionData.isInWorld(tag)) {
-                    session.sendMessage(new PlayerAddMessage(PlayerCache.forUuid(uuid), tag.getX(), tag.getZ()));
+                    session.sendMessage(new AddHtmlElementsMessage("map-frame",
+                                                                   makeLivePlayer(uuid, tag, sessionData.getWorldFileCache().getEffectiveWorldBorder())));
                 }
             } else if (!old.equals(tag)) {
                 sessionData.getPlayerLocationTags().put(uuid, tag.clone());
                 final boolean oldIsInWorld = sessionData.isInWorld(old);
                 final boolean newIsInWorld = sessionData.isInWorld(tag);
                 if (!oldIsInWorld && newIsInWorld) {
-                    session.sendMessage(new PlayerAddMessage(PlayerCache.forUuid(uuid), tag.getX(), tag.getZ()));
+                    session.sendMessage(new AddHtmlElementsMessage("map-frame",
+                                                                   makeLivePlayer(uuid, tag, sessionData.getWorldFileCache().getEffectiveWorldBorder())));
                 } else if (oldIsInWorld && !newIsInWorld) {
-                    session.sendMessage(new PlayerRemoveMessage(uuid));
+                    session.sendMessage(new RemoveHtmlElementMessage("live-player-" + uuid));
                 } else if (oldIsInWorld && newIsInWorld) {
                     session.sendMessage(new PlayerUpdateMessage(uuid, tag.getX(), tag.getZ()));
                 }
@@ -341,7 +396,8 @@ public final class MagicMapContentDelivery implements ContentDelivery {
     }
 
     private void updatePlayerList(ContentDeliverySession session, MagicMapContentDeliverySessionData sessionData) {
-        session.sendMessage(new EvalClientMessage("document.getElementById('player-list').innerHTML = '" + makePlayerList(sessionData.getPlayerList()).writeToJavaScriptString() + "'"));
+        session.sendMessage(new SetInnerHtmlMessage("player-list",
+                                                    makePlayerList(sessionData.getPlayerList()).writeToString()));
     }
 
     @Override
@@ -370,20 +426,18 @@ public final class MagicMapContentDelivery implements ContentDelivery {
     }
 
     @Override
-    public void onWebsocketReceiveText(ContentDeliverySession session, String text) {
+    public void onReceiveMessage(ContentDeliverySession session, ServerMessage message) {
         final MagicMapContentDeliverySessionData sessionData = (MagicMapContentDeliverySessionData) session.getContentDeliverySessionData();
         if (sessionData == null) return;
-        final Map<?, ?> map = Json.deserialize(text, Map.class);
-        if (map == null) return;
-        if (map.get("id") == null) return;
-        final String id = map.get("id").toString();
-        switch (id) {
+        switch (message.getId()) {
+        case "did_change_map":
+            sessionData.setLoadingMap(false);
+            break;
         case "click_player_list": {
-            if (map.get("value") == null) return;
-            final String value = map.get("value").toString();
+            if (message.getValue() == null) return;
             final UUID uuid;
             try {
-                uuid = UUID.fromString(value);
+                uuid = UUID.fromString(message.getValue());
             } catch (IllegalArgumentException iae) {
                 return;
             }
@@ -403,6 +457,7 @@ public final class MagicMapContentDelivery implements ContentDelivery {
     }
 
     private boolean changeMap(ContentDeliverySession session, MagicMapContentDeliverySessionData sessionData, NetworkServer server, String worldName) {
+        if (sessionData.isLoadingMap()) return false;
         String mapName = null;
         WorldFileCache worldFileCache = null;
         for (Map.Entry<String, WorldFileCache> entry : worldMap.entrySet()) {
@@ -414,9 +469,12 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             }
         }
         if (worldFileCache == null) return false;
+        sessionData.setLoadingMap(true);
         sessionData.setMapName(mapName);
         sessionData.setWorldFileCache(worldFileCache);
-        final String innerHtml = makeMapFrameContent(sessionData).writeToString();
+        final String innerHtml = makeRegionElements(sessionData).writeToString()
+            + makeLivePlayerElements(sessionData).writeToString()
+            + makeClaimElements(sessionData).writeToString();
         session.sendMessage(new ChangeMapMessage(mapName, worldFileCache.getDisplayName() + " - Magic Map",
                                                  worldFileCache.getEffectiveWorldBorder(), innerHtml));
         return true;

@@ -24,11 +24,11 @@ function calculateFrame() {
     const rbz = (worldBorder.minZ + (top + height) / scalingFactor) >> 9;
     for (var rz = raz; rz <= rbz; rz += 1) {
         for (var rx = rax; rx <= rbx; rx += 1) {
-            var img = document.getElementById("r." + rx + "." + rz);
+            var img = document.getElementById("region-" + rx + "-" + rz);
             if (!img) continue;
             const oldSrc = img.getAttribute("src");
             if (oldSrc && oldSrc !== '') continue;
-            img.setAttribute("src", "/map/" + mapName + "/r." + rx + "." + rz + ".png");
+            img.src = '/map/' + mapName + '/r.' + rx + '.' + rz + '.png';
         }
     }
 }
@@ -37,8 +37,8 @@ var mouseDown = false;
 var dragX = 0;
 var dragY = 0;
 
-window.addEventListener("load", event => {
-    const scrolling = document.getElementById("map-frame");
+window.addEventListener('load', event => {
+    const scrolling = document.getElementById('map-frame');
     const width = scrolling.clientWidth;
     const height = scrolling.clientHeight;
     scrolling.scrollTo(scalingFactor * (worldBorder.centerX - worldBorder.minX) - (width / 2),
@@ -78,81 +78,52 @@ window.addEventListener("load", event => {
             chatBox.scrollTo(0, chatBox.scrollHeight);
             break;
         }
-        case 'magicmap:player_add': {
-            const uuid = event.packet.player.uuid;
+        case 'magicmap:player_update': {
+            const player = document.getElementById('live-player-' + event.packet.player);
+            if (!player) return;
+            const left = event.packet.x - worldBorder.minX - 8;
+            const top = event.packet.z - worldBorder.minZ - 8;
+            player.style.top = scalingFactor * top + 'px';
+            player.style.left = scalingFactor * left + 'px';
+            break;
+        }
+        case 'magicmap:scroll_map': {
             const x = event.packet.x;
             const z = event.packet.z;
-            const img = document.createElement('img');
-            img.className = 'live-player';
-            img.setAttribute('src', '/skin/face/' + uuid + '.png');
-            const left = x - worldBorder.minX - 8;
-            const top = z - worldBorder.minZ - 8;
-            img.style['width'] = scalingFactor * 16 + 'px';
-            img.style['height'] = scalingFactor * 16 + 'px';
-            img.style['position'] = 'absolute';
-            img.style['top'] = scalingFactor * top + 'px';
-            img.style['left'] = scalingFactor * left + 'px';
-            img.style['z-index'] = '100';
-            img.style['image-rendering'] = 'pixelated';
-            img.style['user-select'] = 'none';
-            img.style['outline'] = '2px solid white';
-            const mapFrame = document.getElementById('map-frame').appendChild(img);
+            scrollTo(x, z);
             break;
         }
-        case 'magicmap:player_remove': {
-            const players = document.getElementsByClassName('live-player');
-            const uuid = event.packet.player;
-            for (var i = 0; i < players.length; i += 1) {
-                var player = players[i];
-                if (player.getAttribute('src').includes(uuid)) {
-                    player.parentElement.removeChild(player);
-                }
-            }
+        case 'magicmap:change_map': {
+            mapName = event.packet.mapName;
+            worldBorder = event.packet.worldBorder;
+            fixWorldBorder();
+            document.getElementById('map-frame').innerHTML = event.packet.innerHtml;
+            document.title = event.packet.displayName;
+            calculateFrame();
+            sendServerMessage('did_change_map');
             break;
         }
-        case 'magicmap:player_update': {
-            const players = document.getElementsByClassName('live-player');
-            const uuid = event.packet.player;
-            for (var i = 0; i < players.length; i += 1) {
-                var player = players[i];
-                if (!player.getAttribute('src').includes(uuid)) continue;
-                const left = event.packet.x - worldBorder.minX - 8;
-                const top = event.packet.z - worldBorder.minZ - 8;
-                player.style['top'] = scalingFactor * top + 'px';
-                player.style['left'] = scalingFactor * left + 'px';
-            }
-            break;
-        }
-	case 'magicmap:scroll_map': {
-	    const x = event.packet.x;
-	    const z = event.packet.z;
-	    scrollTo(x, z);
-	    break;
-	}
-	case 'magicmap:change_map': {
-	    mapName = event.packet.mapName;
-	    worldBorder = event.packet.worldBorder;
-	    fixWorldBorder();
-	    document.getElementById('map-frame').innerHTML = event.packet.innerHtml;
-	    document.title = event.packet.displayName;
-	    break;
-	}
         default: break;
         }
     });
 });
 
 function scrollTo(x, z) {
-    const scrolling = document.getElementById("map-frame");
+    const scrolling = document.getElementById('map-frame');
     const width = scrolling.clientWidth;
     const height = scrolling.clientHeight;
     scrolling.scrollTo(scalingFactor * (x - worldBorder.minX) - (width / 2),
                        scalingFactor * (z - worldBorder.minZ) - (height / 2));
 }
 
-function onClickPlayerList(uuid) {
-    websocket.send(JSON.stringify({
-	"id": "click_player_list",
-	"value": uuid,
-    }));
+function onClickPlayerList(element, event) {
+    sendServerMessage('click_player_list', element.getAttribute('data-uuid'));
+}
+
+function onClickClaim(element, event) {
+    console.log('click claim ' + element.getAttribute('data-claim-id') + ' ' + event);
+}
+
+function onClickLivePlayer(element, event) {
+    console.log('click player ' + element.getAttribute('data-uuid') + ' ' + element.getAttribute('data-name'));
 }
