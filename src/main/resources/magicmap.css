@@ -13,6 +13,14 @@
     cursor: crosshair;
 }
 
+.map-nether {
+    background-color: #8b0000;
+}
+
+.map-the-end {
+    background-color: #301934;
+}
+
 .map-region {
     position: absolute;
     image-rendering: pixelated;

@@ -104,9 +104,17 @@ window.addEventListener('load', event => {
             mapName = event.packet.mapName;
             worldBorder = event.packet.worldBorder;
             fixWorldBorder();
-            document.getElementById('map-frame').innerHTML = event.packet.innerHtml;
+            const mapFrame = document.getElementById('map-frame');
+            mapFrame.innerHTML = event.packet.innerHtml;
             document.title = event.packet.displayName;
             calculateFrame();
+            mapFrame.classList.remove('map-nether');
+            mapFrame.classList.remove('map-the-end');
+            if (event.packet.environment === 'NETHER') {
+                mapFrame.classList.add('map-nether');
+            } else if (event.packet.environment === 'THE_END') {
+                mapFrame.classList.add('map-the-end');
+            }
             sendServerMessage('magicmap:did_change_map');
             break;
         }

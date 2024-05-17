@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import lombok.Getter;
+import org.bukkit.World.Environment;
 import static com.cavetale.core.util.CamelCase.toCamelCase;
 import static com.cavetale.magicmap.MagicMapPlugin.plugin;
 
@@ -178,6 +179,11 @@ public final class MagicMapContentDelivery implements ContentDelivery {
         final var mapFrame = provider.getDocument().getBody().addElement("div");
         mapFrame.setId("map-frame");
         mapFrame.setClassName("map-frame");
+        if (sessionData.getWorldFileCache().getTag().getEnvironment() == Environment.NETHER) {
+            mapFrame.classNames(list -> list.add("map-nether"));
+        } else if (sessionData.getWorldFileCache().getTag().getEnvironment() == Environment.THE_END) {
+            mapFrame.classNames(list -> list.add("map-the-end"));
+        }
         // Chat Box
         final var chatBox = provider.getDocument().getBody().addElement("div");
         chatBox.setId("chat-box");
@@ -553,7 +559,8 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             + makeLivePlayerElements(sessionData).writeToString()
             + makeClaimElements(sessionData).writeToString();
         session.sendMessage(new ChangeMapMessage(mapName, worldFileCache.getDisplayName() + " - Magic Map",
-                                                 worldFileCache.getEffectiveWorldBorder(), innerHtml));
+                                                 worldFileCache.getEffectiveWorldBorder(), innerHtml,
+                                                 worldFileCache.getTag().getEnvironment().toString()));
         return true;
     }
 }

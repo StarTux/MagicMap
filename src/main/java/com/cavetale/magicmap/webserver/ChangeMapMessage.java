@@ -8,12 +8,14 @@ public final class ChangeMapMessage extends ClientMessage {
     private final String displayName;
     private final WorldBorderCache worldBorder;
     private final String innerHtml;
+    private final String environment;
 
-    public ChangeMapMessage(final String mapName, final String displayName, final WorldBorderCache worldBorder, final String innerHtml) {
+    public ChangeMapMessage(final String mapName, final String displayName, final WorldBorderCache worldBorder, final String innerHtml, final String environment) {
         super("magicmap:change_map");
         this.mapName = mapName;
         this.displayName = displayName;
         this.worldBorder = worldBorder;
         this.innerHtml = innerHtml;
+        this.environment = environment;
     }
 }
