@@ -1,5 +1,7 @@
 package com.cavetale.magicmap.webserver;
 
+import com.cavetale.core.chat.ChannelChatEvent;
+import com.cavetale.core.chat.Chat;
 import com.cavetale.core.connect.Connect;
 import com.cavetale.core.connect.NetworkServer;
 import com.cavetale.core.playercache.PlayerCache;
@@ -31,6 +33,8 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -153,18 +157,23 @@ public final class MagicMapContentDelivery implements ContentDelivery {
         final MagicMapContentDeliverySessionData sessionData = new MagicMapContentDeliverySessionData();
         sessionData.setMapName(mapName);
         sessionData.setWorldFileCache(worldFileCache);
+        session.setContentDeliverySessionData(sessionData);
+        Chat.getChannelLog("global", Instant.now().minus(6, ChronoUnit.HOURS), list -> chatHistoryCallback(session, list));
+    }
+
+    private void chatHistoryCallback(ContentDeliverySession session, List<ChannelChatEvent> chatHistory) {
+        final MagicMapContentDeliverySessionData sessionData = (MagicMapContentDeliverySessionData) session.getContentDeliverySessionData();
         for (Map.Entry<UUID, PlayerLocationTag> entry : plugin().getWebserverManager().getPlayerLocationTags().entrySet()) {
             sessionData.getPlayerLocationTags().put(entry.getKey(), entry.getValue().clone());
         }
         sessionData.setPlayerList(fetchPlayerList());
-        session.setContentDeliverySessionData(sessionData);
         final CachedHtmlContentProvider provider = new CachedHtmlContentProvider();
         session.getResponse().setContentProvider(provider);
         session.attachWebsocketScript(provider.getDocument());
         DefaultStyleSheet.install(provider.getDocument());
         MagicMapStyleSheet.install(provider.getDocument());
-        MagicMapScript.install(provider.getDocument(), mapName, worldBorder, scalingFactor);
-        provider.getDocument().getHead().addElement("title", t -> t.addText(worldFileCache.getDisplayName() + " - Magic Map"));
+        MagicMapScript.install(provider.getDocument(), sessionData.getMapName(), sessionData.getWorldFileCache().getEffectiveWorldBorder(), scalingFactor);
+        provider.getDocument().getHead().addElement("title", t -> t.addText(sessionData.getWorldFileCache().getDisplayName() + " - Magic Map"));
         // Map Frame
         final var mapFrame = provider.getDocument().getBody().addElement("div");
         mapFrame.setId("map-frame");
@@ -173,6 +182,19 @@ public final class MagicMapContentDelivery implements ContentDelivery {
         final var chatBox = provider.getDocument().getBody().addElement("div");
         chatBox.setId("chat-box");
         chatBox.setClassNames(List.of("minecraft-chat", "chat-box"));
+        for (ChannelChatEvent event : chatHistory) {
+            final PlayerCache sender = event.getSender() != null
+                ? PlayerCache.forUuid(event.getSender())
+                : new PlayerCache(new UUID(0L, 0L), "Console");
+            chatBox.addElement("p", p -> p
+                               .setClassName("minecraft-chat-line")
+                               .addElement("img", img -> {
+                                       img.setClassName("minecraft-chat-emoji");
+                                       img.setAttribute("src", "/skin/face/" + sender.uuid + ".png");
+                                   })
+                               .addElement("span", span -> span.addText(sender.name + ": "))
+                               .addElement("span", span -> span.addText(event.getRawMessage())));
+        }
         // Player List
         final var playerListBox = provider.getDocument().getBody().addElement("div");
         playerListBox.setId("player-list");

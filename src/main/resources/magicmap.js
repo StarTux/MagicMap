@@ -126,6 +126,8 @@ window.addEventListener('load', event => {
         removeClaimHighlight();
         removeTooltip();
     };
+    const chatBox = document.getElementById('chat-box');
+    chatBox.scrollTo(0, chatBox.scrollHeight);
 });
 
 function scrollTo(x, z) {
