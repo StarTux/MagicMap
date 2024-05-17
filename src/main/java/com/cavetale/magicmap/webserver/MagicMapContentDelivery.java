@@ -138,7 +138,7 @@ public final class MagicMapContentDelivery implements ContentDelivery {
     private void sendMapHtml(ContentDeliverySession session, String mapName) {
         final WorldFileCache worldFileCache = worldMap.get(mapName);
         if (worldFileCache == null) {
-            plugin().getLogger().warning("World not found");
+            plugin().getLogger().warning("World not found: " + mapName);
             session.send(); // 404
             return;
         }
@@ -343,7 +343,7 @@ public final class MagicMapContentDelivery implements ContentDelivery {
     private void sendRegionFile(ContentDeliverySession session, String mapName, String fileName) {
         final WorldFileCache worldFileCache = worldMap.get(mapName);
         if (worldFileCache == null) {
-            plugin().getLogger().warning("World not found");
+            plugin().getLogger().warning("World not found: " + mapName);
             session.send(); // 404
             return;
         }
