@@ -133,7 +133,7 @@ public final class MagicMapContentDelivery implements ContentDelivery {
         }
     }
 
-    private int scalingFactor = 2;
+    private int scalingFactor = 1;
 
     private void sendMapHtml(ContentDeliverySession session, String mapName) {
         final WorldFileCache worldFileCache = worldMap.get(mapName);
