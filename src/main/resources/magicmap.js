@@ -97,7 +97,7 @@ window.addEventListener('load', event => {
         case 'magicmap:scroll_map': {
             const x = event.packet.x;
             const z = event.packet.z;
-            scrollTo(x, z);
+            scrollTo(x, z, true);
             break;
         }
         case 'magicmap:change_map': {
@@ -115,6 +115,7 @@ window.addEventListener('load', event => {
             } else if (event.packet.environment === 'THE_END') {
                 mapFrame.classList.add('map-the-end');
             }
+            scrollTo(event.packet.x, event.packet.z);
             sendServerMessage('magicmap:did_change_map');
             break;
         }
@@ -138,12 +139,21 @@ window.addEventListener('load', event => {
     chatBox.scrollTo(0, chatBox.scrollHeight);
 });
 
-function scrollTo(x, z) {
+function scrollTo(x, z, smooth = false) {
     const scrolling = document.getElementById('map-frame');
     const width = scrolling.clientWidth;
     const height = scrolling.clientHeight;
-    scrolling.scrollTo(scalingFactor * (x - worldBorder.minX) - (width / 2),
-                       scalingFactor * (z - worldBorder.minZ) - (height / 2));
+    const left = scalingFactor * (x - worldBorder.minX) - (width / 2);
+    const top = scalingFactor * (z - worldBorder.minZ) - (height / 2);
+    if (smooth) {
+        scrolling.scrollTo({
+            'left': left,
+            'top': top,
+            'behavior': 'smooth'
+        });
+    } else {
+        scrolling.scrollTo(left, top);
+    }
 }
 
 function onClickPlayerList(element, event) {

@@ -474,9 +474,7 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             if (sessionData.isInWorld(tag)) {
                 session.sendMessage(new ScrollMapMessage(tag.getX(), tag.getZ()));
             } else {
-                if (changeMap(session, sessionData, tag.getServer(), tag.getWorld())) {
-                    session.sendMessage(new ScrollMapMessage(tag.getX(), tag.getZ()));
-                }
+                changeMap(session, sessionData, tag.getServer(), tag.getWorld(), tag.getX(), tag.getZ());
             }
             break;
         }
@@ -539,7 +537,7 @@ public final class MagicMapContentDelivery implements ContentDelivery {
         }
     }
 
-    private boolean changeMap(ContentDeliverySession session, MagicMapContentDeliverySessionData sessionData, NetworkServer server, String worldName) {
+    private boolean changeMap(ContentDeliverySession session, MagicMapContentDeliverySessionData sessionData, NetworkServer server, String worldName, int x, int z) {
         if (sessionData.isLoadingMap()) return false;
         String mapName = null;
         WorldFileCache worldFileCache = null;
@@ -560,7 +558,8 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             + makeClaimElements(sessionData).writeToString();
         session.sendMessage(new ChangeMapMessage(mapName, worldFileCache.getDisplayName() + " - Magic Map",
                                                  worldFileCache.getEffectiveWorldBorder(), innerHtml,
-                                                 worldFileCache.getTag().getEnvironment().toString()));
+                                                 worldFileCache.getTag().getEnvironment().toString(),
+                                                 x, z));
         return true;
     }
 }
