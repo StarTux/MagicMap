@@ -33,3 +33,7 @@ permissions:
   magicmap.receive:
     description: Be eligible for a free MagicMap.
     default: op
+
+  magicmap.hidden:
+    description: Hide from live map
+    default: false

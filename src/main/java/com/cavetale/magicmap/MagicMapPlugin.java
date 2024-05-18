@@ -13,6 +13,7 @@ import java.util.UUID;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -29,6 +30,7 @@ import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffectType;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
@@ -227,7 +229,10 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
             final UUID uuid = player.getUniqueId();
             final Location location = player.getLocation();
             PlayerLocationTag tag = playerLocationTags.get(uuid);
-            if (tag == null) {
+            if (tag != null && shouldHidePlayer(player)) {
+                playerLocationTags.remove(uuid);
+                tag.removeFromRedisAsync(uuid, null);
+            } else if (tag == null) {
                 tag = new PlayerLocationTag();
                 tag.update(location);
                 playerLocationTags.put(uuid, tag);
@@ -237,6 +242,13 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
                 tag.saveToRedisAsync(uuid, null);
             }
         }
+    }
+
+    private static boolean shouldHidePlayer(Player player) {
+        return player.isInvisible()
+            || player.getGameMode() == GameMode.SPECTATOR
+            || player.hasPotionEffect(PotionEffectType.INVISIBILITY)
+            || player.hasPermission("magicmap.hidden");
     }
 
     // --- Utility
