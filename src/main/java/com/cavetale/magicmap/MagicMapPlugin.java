@@ -229,9 +229,11 @@ public final class MagicMapPlugin extends JavaPlugin implements Listener {
             final UUID uuid = player.getUniqueId();
             final Location location = player.getLocation();
             PlayerLocationTag tag = playerLocationTags.get(uuid);
-            if (tag != null && shouldHidePlayer(player)) {
-                playerLocationTags.remove(uuid);
-                tag.removeFromRedisAsync(uuid, null);
+            if (shouldHidePlayer(player)) {
+                if (tag != null) {
+                    playerLocationTags.remove(uuid);
+                    tag.removeFromRedisAsync(uuid, null);
+                }
             } else if (tag == null) {
                 tag = new PlayerLocationTag();
                 tag.update(location);
