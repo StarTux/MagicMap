@@ -2,6 +2,8 @@ package com.cavetale.magicmap.file;
 
 import com.cavetale.core.struct.Vec2i;
 import com.cavetale.magicmap.RenderType;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,6 +25,7 @@ public final class WorldRenderCache {
     private final WorldFileCache worldFileCache; // parent
     private final RenderType renderType;
     private final File mapFolder;
+    private final boolean persistent;
     // Runtime
     private final Map<Vec2i, RegionFileCache> regionMap = new HashMap<>();
     private final List<Vec2i> unloadRegions = new ArrayList<>();
@@ -33,15 +36,25 @@ public final class WorldRenderCache {
     // - Add region vector to asyncQueue
     // - Call checkAsyncQueue()
     private final List<Vec2i> asyncQueue = new ArrayList<>();
+    // The Chunk Render Queue is only used in non-persistent worlds.
+    private final List<Vec2i> chunkRenderQueue = new ArrayList<>();
+    private ChunkRenderTask chunkRenderTask = null;
 
     public WorldRenderCache(final WorldFileCache worldFileCache, final RenderType renderType, final File magicMapFolder) {
         this.worldFileCache = worldFileCache;
         this.renderType = renderType;
-        this.mapFolder = new File(magicMapFolder, renderType.name().toLowerCase());
+        this.persistent = worldFileCache.isPersistent();
+        if (persistent) {
+            this.mapFolder = new File(magicMapFolder, renderType.name().toLowerCase());
+        } else {
+            this.mapFolder = null;
+        }
     }
 
     public void enable() {
-        mapFolder.mkdirs();
+        if (persistent) {
+            mapFolder.mkdirs();
+        }
     }
 
     public void disable() {
@@ -106,9 +119,9 @@ public final class WorldRenderCache {
     private void cleanUpIter(RegionFileCache regionFileCache) {
         switch (regionFileCache.getState()) {
         case INIT: {
-            if (!worldFileCache.getTag().getWorldBorder().containsRegion(regionFileCache.getRegion())) {
+            if (!worldFileCache.getEffectiveWorldBorder().containsRegion(regionFileCache.getRegion())) {
                 regionFileCache.setState(RegionFileCache.State.OUT_OF_BOUNDS);
-            } else {
+            } else if (persistent) {
                 scheduleLoad(regionFileCache);
             }
             break;
@@ -167,5 +180,168 @@ public final class WorldRenderCache {
                         checkAsyncQueue();
                     });
             });
+    }
+
+    /**
+     * Called by WorldFileCache whenever there is no full render happening.
+     */
+    protected void tickChunkRenderer(final long startTime) {
+        if (chunkRenderTask != null) {
+            if (!chunkRenderTask.isDone()) {
+                chunkRenderTask.tick(startTime);
+            }
+            if (chunkRenderTask.isDone()) {
+                chunkRenderTask = null;
+            }
+        } else if (!chunkRenderQueue.isEmpty()) {
+            chunkRenderTask = new ChunkRenderTask(worldFileCache, (Vec2i finishedChunk) -> chunkRenderQueue.remove(finishedChunk));
+            chunkRenderTask.init(List.of(this), chunkRenderQueue);
+        }
+    }
+
+    /**
+     * Request that a chunk be rendered.  This will be called by
+     * copy() in non-persistent worlds so that the chunk will be
+     * rendered soon in order to be displayed on a map.
+     *
+     * @return true if the render was scheduled, false if the chunk
+     *   was already rendered or already scheduled, or the chunk is
+     *   out of bounds.
+     */
+    public boolean requestChunkRender(int chunkX, int chunkZ) {
+        if (!worldFileCache.getWorldBorder().containsChunk(chunkX, chunkZ)) {
+            return false;
+        }
+        // final int regionX = chunkX >> 5;
+        // final int regionZ = chunkZ >> 5;
+        // final RegionFileCache region = loadRegion(Vec2i.of(regionX, regionZ));
+        // if (region.isChunkRendered(chunkX, chunkZ)) {
+        //     return false;
+        // }
+        final Vec2i chunkVector = Vec2i.of(chunkX, chunkZ);
+        if (chunkRenderQueue.contains(chunkVector)) {
+            return false;
+        }
+        chunkRenderQueue.add(chunkVector);
+        return true;
+    }
+
+    // /**
+    //  * Force a chunk render in the future.
+    //  *
+    //  * @return true if the render was scheduled, false if a render for
+    //  *   this chunk was already scheduled or the chunk is out of
+    //  *   bounds.
+    //  *
+    //  * TODO move to WorldFileCache
+    //  */
+    // public boolean forceChunkRender(int chunkX, int chunkZ) {
+    //     if (!worldFileCache.getEffectiveWorldBorder().containsChunk(chunkX, chunkZ)) {
+    //         return false;
+    //     }
+    //     final int regionX = chunkX >> 5;
+    //     final int regionZ = chunkZ >> 5;
+    //     final RegionFileCache region = loadRegion(Vec2i.of(regionX, regionZ));
+    //     if (!region.isChunkRendered(chunkX, chunkZ)) return false;
+    //     region.setChunkRendered(chunkX, chunkZ, false);
+    //     final Vec2i chunkVector = Vec2i.of(chunkX, chunkZ);
+    //     if (!chunkRenderQueue.contains(chunkVector)) {
+    //         // This should already be the case
+    //         chunkRenderQueue.add(chunkVector);
+    //     }
+    //     return true;
+    // }
+
+    public void keepAlive(int centerX, int centerZ, int radius) {
+        final WorldBorderCache worldBorder = worldFileCache.getEffectiveWorldBorder();
+        final int minMapX = Math.max(worldBorder.minX, centerX - radius);
+        final int minMapZ = Math.max(worldBorder.minZ, centerZ - radius);
+        final int maxMapX = Math.min(worldBorder.maxX, minMapX + radius);
+        final int maxMapZ = Math.min(worldBorder.maxZ, minMapZ + radius);
+        final int minRegionX = minMapX >> 9;
+        final int minRegionZ = minMapZ >> 9;
+        final int maxRegionX = maxMapX >> 9;
+        final int maxRegionZ = maxMapZ >> 9;
+        for (int rz = minRegionZ; rz <= maxRegionZ; rz += 1) {
+            for (int rx = minRegionX; rx <= maxRegionX; rx += 1) {
+                RegionFileCache rfc = loadRegion(Vec2i.of(rx, rz));
+            }
+        }
+    }
+
+    /**
+     * Copy the part of the map into one image.
+     *
+     * @return FULL if all chunks in the selected area were loaded and
+     *   rendered, PARTIAL otherwise.
+     */
+    public CopyResult copy(BufferedImage image, int centerX, int centerZ) {
+        CopyResult result = CopyResult.FULL;
+        final WorldBorderCache worldBorder = worldFileCache.getEffectiveWorldBorder();
+        final int width = image.getWidth();
+        final int height = image.getHeight();
+        // World coordinates
+        final int minMapX = Math.max(worldBorder.minX, centerX - width / 2);
+        final int minMapZ = Math.max(worldBorder.minZ, centerZ - height / 2);
+        final int maxMapX = Math.min(worldBorder.maxX, minMapX + width - 1);
+        final int maxMapZ = Math.min(worldBorder.maxZ, minMapZ + height - 1);
+        if (!persistent) {
+            // In this loop, we make sure that all chunks within the
+            // area are going to be loaded and rendered eventually.
+            final int minChunkX = minMapX >> 4;
+            final int minChunkZ = minMapZ >> 4;
+            final int maxChunkX = maxMapX >> 4;
+            final int maxChunkZ = maxMapZ >> 4;
+            for (int cz = minChunkZ; cz <= maxChunkZ; cz += 1) {
+                for (int cx = minChunkX; cx <= maxChunkX; cx += 1) {
+                    final RegionFileCache region = loadRegion(Vec2i.of(cx >> 5, cz >> 5));
+                    if (!region.isChunkRendered(cx, cz)) {
+                        result = CopyResult.PARTIAL;
+                        requestChunkRender(cx, cz);
+                    }
+                }
+            }
+        }
+        // Region coordinates
+        final int minRegionX = minMapX >> 9;
+        final int minRegionZ = minMapZ >> 9;
+        final int maxRegionX = maxMapX >> 9;
+        final int maxRegionZ = maxMapZ >> 9;
+        final Graphics2D gfx = image.createGraphics();
+        for (int rz = minRegionZ; rz <= maxRegionZ; rz += 1) {
+            for (int rx = minRegionX; rx <= maxRegionX; rx += 1) {
+                RegionFileCache rfc = loadRegion(Vec2i.of(rx, rz));
+                if (!rfc.getState().isLoaded()) {
+                    result = CopyResult.PARTIAL;
+                    continue;
+                }
+                // World coordinates
+                final int minInnerX = rx << 9;
+                final int minInnerZ = rz << 9;
+                final int maxInnerX = minInnerX + 511;
+                final int maxInnerZ = minInnerZ + 511;
+                // World coordinates
+                final int minClipX = Math.max(minInnerX, minMapX);
+                final int minClipZ = Math.max(minInnerZ, minMapZ);
+                final int maxClipX = Math.min(maxInnerX, maxMapX);
+                final int maxClipZ = Math.min(maxInnerZ, maxMapZ);
+                // Inner region coordinates [0..511]
+                final int minSrcX = minClipX & 0x1FF;
+                final int minSrcZ = minClipZ & 0x1FF;
+                final int maxSrcX = maxClipX & 0x1FF;
+                final int maxSrcZ = maxClipZ & 0x1FF;
+                // Inner image coordinates [0..width] [0..height]
+                final int minDstX = minClipX - minMapX;
+                final int minDstZ = minClipZ - minMapZ;
+                final int maxDstX = maxClipX - minMapX;
+                final int maxDstZ = maxClipZ - minMapZ;
+                gfx.drawImage(rfc.getImage(),
+                              minDstX, minDstZ, maxDstX + 1, maxDstZ + 1,
+                              minSrcX, minSrcZ, maxSrcX + 1, maxSrcZ + 1,
+                              null);
+            }
+        }
+        gfx.dispose();
+        return result;
     }
 }

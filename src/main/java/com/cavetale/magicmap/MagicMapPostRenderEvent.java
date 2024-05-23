@@ -9,8 +9,9 @@ import org.bukkit.event.HandlerList;
 
 @Getter
 public final class MagicMapPostRenderEvent extends Event {
-    private static final HandlerList HANDLERS = new HandlerList();
+    private static final HandlerList HANDLER_LIST = new HandlerList();
     private final Player player;
+    private final MapCache mapCache;
     private final String worldName;
     private final int centerX;
     private final int centerZ;
@@ -18,39 +19,29 @@ public final class MagicMapPostRenderEvent extends Event {
     private final int minZ;
     private final int maxX;
     private final int maxZ;
-    private final MapCache mapCache;
 
-    MagicMapPostRenderEvent(final Player player, final Session session) {
+    public MagicMapPostRenderEvent(final Player player, final MapCache mapCache, final String worldName, final int centerX, final int centerZ) {
         this.player = player;
-        worldName = session.world;
-        mapCache = session.pasteMap;
-        centerX = session.centerX;
-        centerZ = session.centerZ;
-        minX = centerX - 63;
-        minZ = centerZ - 63;
-        maxX = centerX + 64;
-        maxZ = centerZ + 64;
+        this.mapCache = mapCache;
+        this.worldName = worldName;
+        this.centerX = centerX;
+        this.centerZ = centerZ;
+        this.minX = centerX - 63;
+        this.minZ = centerZ - 63;
+        this.maxX = centerX + 64;
+        this.maxZ = centerZ + 64;
     }
 
-    World getWorld() {
+    public World getWorld() {
         return Bukkit.getWorld(worldName);
     }
 
-    // Necessary event methods
-
     @Override
     public HandlerList getHandlers() {
-        return HANDLERS;
+        return HANDLER_LIST;
     }
 
     public static HandlerList getHandlerList() {
-        return HANDLERS;
-    }
-
-    public static void call(Session session) {
-        Player player = Bukkit.getPlayer(session.player);
-        if (player == null) return;
-        MagicMapPostRenderEvent event = new MagicMapPostRenderEvent(player, session);
-        Bukkit.getPluginManager().callEvent(event);
+        return HANDLER_LIST;
     }
 }

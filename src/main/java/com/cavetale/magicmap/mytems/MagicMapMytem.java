@@ -8,8 +8,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import static com.cavetale.magicmap.MagicMapPlugin.plugin;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextDecoration.*;
 
@@ -51,5 +53,17 @@ public final class MagicMapMytem implements Mytem {
     @Override
     public int getMaxStackSize() {
         return 1;
+    }
+
+    @Override
+    public void onPlayerRightClick(PlayerInteractEvent event, Player player, ItemStack item) {
+        // Session session = plugin().getSession(player);
+        // double mapScale = session.getMapScale();
+        // mapScale *= 2;
+        // if (mapScale > 16.0) {
+        //     mapScale = 0.25;
+        // }
+        // session.setMapScale(mapScale);
+        // player.sendMessage("New scale " + mapScale);
     }
 }

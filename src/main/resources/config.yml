@@ -1,31 +1,3 @@
 debug: false
-render:
-  # seconds
-  cooldown: 5
-  # always refresh after x seconds
-  refresh: 30
-  # wait x seconds after (far) teleport
-  teleportCooldown: 5
-cursor:
-  enabled: true
-  players: true
-  maxPlayers: 16
-  playerNames: true
-  monsters: false
-  maxMonsters: 32
-  animals: false
-  maxAnimals: 32
-  villager: false
-  maxVillagers: 32
-  markerArmorStands: true
-  ticks: 10 # in ticks
-give:
-  enabled: false
-  persist: true
-  message: '&eYou received a MagicMap!'
-EnableCaveView:
-  default: true
-  world_the_end: false
-
 AllWorlds: false
 MapWorlds: []

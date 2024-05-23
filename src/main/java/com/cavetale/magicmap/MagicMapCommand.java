@@ -9,7 +9,6 @@ import com.cavetale.magicmap.file.WorldFileCache;
 import com.cavetale.magicmap.file.WorldRenderCache;
 import java.io.File;
 import java.util.Date;
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import static java.util.Arrays.copyOfRange;
@@ -32,13 +31,6 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
         rootNode.addChild("debug").denyTabCompletion()
             .description("Debug stuff")
             .playerCaller(this::debug);
-        rootNode.addChild("give").arguments("[player]")
-            .description("Spawn map item for player")
-            .completers(CommandArgCompleter.NULL)
-            .senderCaller(this::give);
-        rootNode.addChild("rerender").denyTabCompletion()
-            .description("Trigger map rerender")
-            .playerCaller(this::rerender);
         rootNode.addChild("area").denyTabCompletion()
             .description("Render areas")
             .playerCaller(this::area);
@@ -97,6 +89,14 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
             .completers(CommandArgCompleter.supplyList(() -> plugin.getWorlds().getWorldNames()))
             .description("Print full world render info")
             .senderCaller(this::fullRenderInfo);
+        fullRenderNode.addChild("pause").arguments("<world>")
+            .completers(CommandArgCompleter.supplyList(() -> plugin.getWorlds().getWorldNames()))
+            .description("Pause a full render")
+            .senderCaller(this::fullRenderPause);
+        fullRenderNode.addChild("unpause").arguments("<world>")
+            .completers(CommandArgCompleter.supplyList(() -> plugin.getWorlds().getWorldNames()))
+            .description("Unpause a full render")
+            .senderCaller(this::fullRenderUnpause);
     }
 
     private WorldFileCache requireWorldFileCache(String worldName) {
@@ -108,9 +108,9 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
     }
 
     private void reload(CommandSender sender) {
+        plugin.getWorlds().disableAllWorlds();
         plugin.setupMap();
         plugin.importConfig();
-        plugin.getMapGiver().reset();
         plugin.getSessions().clear();
         plugin.getWorlds().enableAllWorlds();
         sender.sendMessage(text("MagicMap config reloaded", AQUA));
@@ -118,37 +118,12 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
 
     private void debug(Player player) {
         Session session = plugin.getSession(player);
-        session.debug = !session.debug;
-        if (session.debug) {
+        session.setDebug(!session.isDebug());
+        if (session.isDebug()) {
             player.sendMessage(text("Debug mode enabled", GREEN));
         } else {
             player.sendMessage(text("Debug mode disabled", YELLOW));
         }
-    }
-
-    private boolean give(CommandSender sender, String[] args) {
-        if (args.length > 1) return false;
-        final Player target;
-        if (sender instanceof Player player && args.length == 0) {
-            target = player;
-        } else if (args.length >= 1) {
-            target = Bukkit.getPlayerExact(args[0]);
-            if (target == null) {
-                throw new CommandWarn("Player not found: " + args[1]);
-            }
-        } else {
-            return false;
-        }
-        if (!plugin.giveMapItem(target)) {
-            throw new CommandWarn("Inventory of " + target.getName() + " is full");
-        }
-        sender.sendMessage(text("MagicMap given to " + target.getName(), YELLOW));
-        return true;
-    }
-
-    private void rerender(Player player) {
-        plugin.triggerRerender(player);
-        player.sendMessage(text("Rerender triggered", AQUA));
     }
 
     private void grab(CommandSender sender) {
@@ -165,14 +140,12 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
     private boolean area(Player player, String[] args) {
         Session session = plugin.getSession(player);
         if (args.length == 0) {
-            session.shownArea = null;
-            plugin.triggerRerender(player);
+            session.setShownArea(null);
             player.sendMessage(text("Not showing any area", YELLOW));
             return true;
         } else if (args.length == 1) {
-            session.shownArea = args[0];
-            plugin.triggerRerender(player);
-            player.sendMessage(text("Showing area " + session.shownArea, AQUA));
+            session.setShownArea(args[0]);
+            player.sendMessage(text("Showing area " + session.getShownArea(), AQUA));
             return true;
         } else {
             return false;
@@ -211,12 +184,28 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
         final WorldFileCache cache = requireWorldFileCache(args[0]);
         sender.sendMessage(textOfChildren(text("Name ", GRAY),
                                           text(cache.getName(), WHITE)));
+        sender.sendMessage(textOfChildren(text("Persistent ", GRAY),
+                                          (cache.isPersistent()
+                                           ? text("Yes", GREEN)
+                                           : text("No", RED))));
         sender.sendMessage(textOfChildren(text("Border ", GRAY),
                                           text("" + cache.getTag().getWorldBorder(), WHITE)));
         sender.sendMessage(textOfChildren(text("Custom Border ", GRAY),
                                           text("" + cache.getTag().getCustomWorldBorder(), WHITE)));
         sender.sendMessage(textOfChildren(text("Display Name ", GRAY),
                                           text("" + cache.getTag().getDisplayName(), WHITE)));
+        sender.sendMessage(textOfChildren(text("Chunk Tickets ", GRAY),
+                                          text(cache.getChunkTicketMap().size(), WHITE),
+                                          text("/", DARK_GRAY),
+                                          text(cache.countChunkTickets(), WHITE)));
+        sender.sendMessage(textOfChildren(text("World Chunk Tickets ", GRAY),
+                                          text(cache.getWorldChunkTicketCount(), WHITE)));
+        sender.sendMessage(textOfChildren(text("Chunks Loading ", GRAY),
+                                          text(cache.getChunksLoading().size(), WHITE)));
+        sender.sendMessage(textOfChildren(text("Full Render ", GRAY),
+                                          (cache.isFullRenderScheduled()
+                                           ? text("Active", RED)
+                                           : text("Inactive", DARK_GRAY))));
         for (WorldRenderCache renderCache : cache.getRenderTypeMap().values()) {
             sender.sendMessage(text(renderCache.getRenderType().getHumanName(), YELLOW));
             sender.sendMessage(textOfChildren(text(" Regions Loaded ", GRAY),
@@ -225,17 +214,13 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
                                               text("" + renderCache.getCurrentAsyncRegion(), WHITE)));
             sender.sendMessage(textOfChildren(text(" Async Queue ", GRAY),
                                               text(renderCache.getAsyncQueue().size(), WHITE)));
+            sender.sendMessage(textOfChildren(text(" Chunk Render Queue ", GRAY),
+                                              text(renderCache.getChunkRenderQueue().size(), WHITE)));
+            sender.sendMessage(textOfChildren(text(" Chunk Render Task ", GRAY),
+                                              (renderCache.getChunkRenderTask() != null
+                                               ? renderCache.getChunkRenderTask().getInfoComponent()
+                                               : text("None", DARK_GRAY))));
         }
-        sender.sendMessage(textOfChildren(text("Chunk Tickets ", GRAY),
-                                          text(cache.getChunkTicketMap().size(), WHITE)));
-        sender.sendMessage(textOfChildren(text("Chunks Loading ", GRAY),
-                                          text(cache.getChunksLoading().size(), WHITE)));
-        sender.sendMessage(textOfChildren(text("Chunks Callbacks ", GRAY),
-                                          text(cache.getChunkCallbacks().size(), WHITE)));
-        sender.sendMessage(textOfChildren(text("Full Render ", GRAY),
-                                          (cache.isFullRenderScheduled()
-                                           ? text("Active", RED)
-                                           : text("Inactive", DARK_GRAY))));
         return true;
     }
 
@@ -296,6 +281,9 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
         if (cache.isFullRenderScheduled()) {
             throw new CommandWarn("Full render is already scheduled: " + cache.getName());
         }
+        if (!cache.isPersistent()) {
+            throw new CommandWarn("Not a persistent world: " + cache.getName());
+        }
         cache.scheduleFullRender();
         sender.sendMessage(text("Full render scheduled: " + cache.getName(), YELLOW));
         return true;
@@ -320,6 +308,10 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
         }
         final var render = cache.getTag().getFullRender();
         sender.sendMessage(text("Full render: " + cache.getName(), AQUA));
+        sender.sendMessage(textOfChildren(text("Status ", GRAY),
+                                          (render.getStatus() != null
+                                           ? text(render.getStatus(), WHITE)
+                                           : text("None", DARK_GRAY))));
         sender.sendMessage(textOfChildren(text("Start Time ", GRAY),
                                           text("" + new Date(render.getStartTime()), WHITE)));
         sender.sendMessage(textOfChildren(text("Timeout ", GRAY),
@@ -336,12 +328,48 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
                                           text("" + render.getCurrentRegion(), WHITE)));
         sender.sendMessage(textOfChildren(text("Current Chunks ", GRAY),
                                           text(render.getCurrentChunks().size(), WHITE)));
+        sender.sendMessage(textOfChildren(text("Chunks Held ", GRAY),
+                                          (render.isChunksHeld()
+                                           ? text("Chunks held", WHITE)
+                                           : text("Not held", DARK_GRAY))));
         sender.sendMessage(textOfChildren(text("Region Queue ", GRAY),
                                           text(render.getRegionQueue().size(), WHITE)));
         sender.sendMessage(textOfChildren(text("Renderers ", GRAY),
                                           (render.getRenderers() != null
                                            ? text("" + render.getRenderers().size(), WHITE)
-                                           : text("0", DARK_GRAY))));
+                                           : text("None", DARK_GRAY))));
+        sender.sendMessage(textOfChildren(text("Paused ", GRAY),
+                                          (render.isPaused()
+                                           ? text("Paused", YELLOW)
+                                           : text("Not paused", DARK_GRAY))));
+        return true;
+    }
+
+    private boolean fullRenderPause(CommandSender sender, String[] args) {
+        if (args.length != 1) return false;
+        final WorldFileCache cache = requireWorldFileCache(args[0]);
+        if (!cache.isFullRenderScheduled()) {
+            throw new CommandWarn(cache.getName() + " does not have an active full render");
+        }
+        if (cache.getTag().getFullRender().isPaused()) {
+            throw new CommandWarn("Full render already paused: " + cache.getName());
+        }
+        cache.getTag().getFullRender().setPaused(true);
+        sender.sendMessage(text("Full render paused: " + cache.getName()));
+        return true;
+    }
+
+    private boolean fullRenderUnpause(CommandSender sender, String[] args) {
+        if (args.length != 1) return false;
+        final WorldFileCache cache = requireWorldFileCache(args[0]);
+        if (!cache.isFullRenderScheduled()) {
+            throw new CommandWarn(cache.getName() + " does not have an active full render");
+        }
+        if (!cache.getTag().getFullRender().isPaused()) {
+            throw new CommandWarn("Full render not paused: " + cache.getName());
+        }
+        cache.getTag().getFullRender().setPaused(false);
+        sender.sendMessage(text("Full render unpaused: " + cache.getName()));
         return true;
     }
 }

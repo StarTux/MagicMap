@@ -41,8 +41,9 @@ public final class Worlds implements Listener {
     }
 
     private void tick() {
+        final long startTime = System.currentTimeMillis();
         for (WorldFileCache it : worldMap.values()) {
-            it.tick();
+            it.tick(startTime);
         }
     }
 
@@ -50,10 +51,8 @@ public final class Worlds implements Listener {
         final var plugin = MagicMapPlugin.getInstance();
         final String name = world.getName();
         if (worldMap.containsKey(name)) return;
-        if (!plugin.getConfig().getBoolean("AllWorlds") && !plugin.getConfig().getStringList("MapWorlds").contains(name)) {
-            return;
-        }
-        WorldFileCache cache = new WorldFileCache(name, world.getWorldFolder());
+        final boolean persistent = plugin.getConfig().getBoolean("AllWorlds") || plugin.getConfig().getStringList("MapWorlds").contains(name);
+        WorldFileCache cache = new WorldFileCache(name, persistent ? world.getWorldFolder() : null);
         worldMap.put(name, cache);
         cache.enableWorld(world);
         plugin.getLogger().info("World Cache loaded: " + name);

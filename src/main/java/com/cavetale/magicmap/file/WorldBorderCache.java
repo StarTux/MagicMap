@@ -46,13 +46,25 @@ public final class WorldBorderCache {
         if (bx < minX) return false;
         final int az = rz << 9;
         if (az > maxZ) return false;
-        final int bz = az + 512;
+        final int bz = az + 511;
         if (bz < minZ) return false;
         return true;
     }
 
     public boolean containsRegion(Vec2i region) {
         return containsRegion(region.x, region.z);
+    }
+
+    public boolean containsChunk(final int cx, final int cz) {
+        final int ax = cx << 4;
+        if (ax > maxX) return false;
+        final int bx = ax + 15;
+        if (bx < minX) return false;
+        final int az = cz << 4;
+        if (az > maxZ) return false;
+        final int bz = az + 15;
+        if (bz < minZ) return false;
+        return true;
     }
 
     public boolean isMalformed() {
