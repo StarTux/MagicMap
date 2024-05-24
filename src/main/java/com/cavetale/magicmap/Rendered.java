@@ -1,7 +1,8 @@
 package com.cavetale.magicmap;
 
 import com.cavetale.magicmap.file.CopyResult;
-import java.awt.Image;
+import com.cavetale.magicmap.file.WorldBorderCache;
+import java.awt.image.BufferedImage;
 import java.util.List;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -16,10 +17,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public final class Rendered {
     private final String worldName;
-    private final int centerX;
-    private final int centerZ;
+    private final WorldBorderCache mapArea;
     private final MagicMapScale mapScale;
-    private Image image;
+    private BufferedImage image;
     private CopyResult copyResult;
     private volatile boolean finished;
     private List<MagicMapCursor> cursors;
@@ -32,8 +32,8 @@ public final class Rendered {
      */
     public boolean didChange(final Session session, final String newWorldName, final int newCenterX, final int newCenterZ, final MagicMapScale newMapScale) {
         return copyResult != CopyResult.FULL
-            || Math.abs(newCenterX - centerX) >= mapScale.minWalkingDistance
-            || Math.abs(newCenterZ - centerZ) >= mapScale.minWalkingDistance
+            || Math.abs(newCenterX - mapArea.getCenterX()) >= mapScale.minWalkingDistance
+            || Math.abs(newCenterZ - mapArea.getCenterZ()) >= mapScale.minWalkingDistance
             || newMapScale != mapScale
             || !newWorldName.equals(worldName);
     }

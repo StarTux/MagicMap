@@ -1,6 +1,7 @@
 package com.cavetale.magicmap.file;
 
 import com.cavetale.core.struct.Vec2i;
+import com.cavetale.core.struct.Vec3i;
 import com.cavetale.magicmap.MagicMapScale;
 import lombok.Value;
 import org.bukkit.Location;
@@ -47,6 +48,14 @@ public final class WorldBorderCache {
     public boolean containsBlock(final int x, final int z) {
         return x >= minX && x <= maxX
             && z >= minZ && z <= maxZ;
+    }
+
+    public boolean containsBlock(Vec2i vec) {
+        return containsBlock(vec.x, vec.z);
+    }
+
+    public boolean containsBlock(Vec3i vec) {
+        return containsBlock(vec.x, vec.z);
     }
 
     public boolean containsRegion(final int rx, final int rz) {

@@ -21,26 +21,26 @@ import org.bukkit.map.MapCursor;
  */
 @Getter @RequiredArgsConstructor
 public final class MagicMapCursorEvent extends Event {
-    @Getter protected static HandlerList handlerList = new HandlerList();
+    protected static final HandlerList HANDLER_LIST = new HandlerList();
     private final Player player;
     private final MagicMapScale mapScale;
-    private final WorldBorderCache border;
+    private final WorldBorderCache mapArea;
     private final List<MagicMapCursor> cursors;
 
     public boolean contains(Location location) {
-        return border.containsBlock(location.getBlockX(), location.getBlockZ());
+        return mapArea.containsBlock(location.getBlockX(), location.getBlockZ());
     }
 
     public boolean contains(Block block) {
-        return border.containsBlock(block.getX(), block.getZ());
+        return mapArea.containsBlock(block.getX(), block.getZ());
     }
 
     public boolean contains(int x, int z) {
-        return border.containsBlock(x, z);
+        return mapArea.containsBlock(x, z);
     }
 
     public void addCursor(MapCursor.Type cursorType, Location location, Component caption) {
-        final var cursor = MagicMapCursor.make(cursorType, location, border.centerX, border.centerZ, mapScale, caption);
+        final var cursor = MagicMapCursor.make(cursorType, location, mapArea.centerX, mapArea.centerZ, mapScale, caption);
         cursors.add(cursor);
     }
 
@@ -50,6 +50,10 @@ public final class MagicMapCursorEvent extends Event {
 
     @Override
     public HandlerList getHandlers() {
-        return handlerList;
+        return HANDLER_LIST;
+    }
+
+    public static HandlerList getHandlerList() {
+        return HANDLER_LIST;
     }
 }

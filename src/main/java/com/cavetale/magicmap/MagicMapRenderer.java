@@ -2,10 +2,12 @@ package com.cavetale.magicmap;
 
 import com.cavetale.core.chat.Chat;
 import com.cavetale.magicmap.event.MagicMapCursorEvent;
+import com.cavetale.magicmap.event.MagicMapPostRenderEvent;
 import com.cavetale.magicmap.file.CopyResult;
 import com.cavetale.magicmap.file.WorldBorderCache;
 import com.cavetale.magicmap.file.WorldFileCache;
 import com.cavetale.magicmap.file.WorldRenderCache;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -37,11 +39,15 @@ final class MagicMapRenderer extends MapRenderer {
         final Session session = plugin.getSession(player);
         keepAlive(player, session);
         if (session.getCurrentRender() != null && session.getCurrentRender().isFinished()) {
-            canvas.drawImage(0, 0, session.getCurrentRender().getImage());
+            final BufferedImage image = session.getCurrentRender().getImage();
             session.getCurrentRender().discard();
             // Rotate the renders
-            session.setLastRender(session.getCurrentRender());
+            final Rendered rendered = session.getCurrentRender();
+            session.setLastRender(rendered);
             session.setCurrentRender(null);
+            // Paste
+            new MagicMapPostRenderEvent(player, rendered, image).callEvent();
+            canvas.drawImage(0, 0, image);
         }
         if (!session.isRendering()) {
             final boolean renderResult = renderNow(player, session);
@@ -85,12 +91,12 @@ final class MagicMapRenderer extends MapRenderer {
         final WorldRenderCache worldRenderCache = findPreferredRenderCache(worldFileCache, location);
         if (worldRenderCache == null) return false;
         // Point of no return
-        final Rendered currentRender = new Rendered(world.getName(), centerX, centerZ, mapScale);
+        final Rendered currentRender = new Rendered(world.getName(), WorldBorderCache.of(centerX, centerZ, mapScale), mapScale);
         session.setCurrentRender(currentRender);
         final BufferedImage image = new BufferedImage(mapScale.size, mapScale.size, BufferedImage.TYPE_INT_ARGB);
         final CopyResult copyResult = worldRenderCache.copy(image, centerX, centerZ);
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-                final Image scaled = scaleImageForMap(image);
+                final BufferedImage scaled = scaleImageForMap(image);
                 currentRender.setImage(scaled);
                 currentRender.setCopyResult(copyResult);
                 currentRender.setFinished(true);
@@ -130,17 +136,37 @@ final class MagicMapRenderer extends MapRenderer {
     /**
      * Scale an image to map size.  We assume the image is quadratic.
      */
-    private Image scaleImageForMap(BufferedImage input) {
-        return input.getWidth() != 128
+    private static BufferedImage scaleImageForMap(BufferedImage input) {
+        final Image result = input.getWidth() != 128
             ? input.getScaledInstance(128, 128, Image.SCALE_AREA_AVERAGING)
             : input;
+        return toBufferedImage(result);
+    }
+
+    /**
+     * Turn a map Image into a BufferedImage.  Attempt casting if
+     * possible.
+     *
+     * Testing reveals that BufferedImage#getScaledInstance (see
+     * above) returns a BufferedImage instance anyway, so this is
+     * bound to be quick.
+     */
+    private static BufferedImage toBufferedImage(Image image) {
+        if (image instanceof BufferedImage bufferedImage) {
+            return bufferedImage;
+        } else {
+            final BufferedImage result = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
+            final Graphics2D gfx = result.createGraphics();
+            gfx.drawImage(image, 0, 0, null);
+            gfx.dispose();
+            return result;
+        }
     }
 
     private List<MagicMapCursor> makeCursors(Player player, Rendered lastRender) {
         final List<MagicMapCursor> result = new ArrayList<>();
-        final int centerX = lastRender.getCenterX();
-        final int centerZ = lastRender.getCenterZ();
-        final WorldBorderCache border = WorldBorderCache.of(centerX, centerZ, lastRender.getMapScale());
+        final int centerX = lastRender.getMapArea().getCenterX();
+        final int centerZ = lastRender.getMapArea().getCenterZ();
         final MagicMapScale mapScale = lastRender.getMapScale();
         final World world = player.getWorld();
         for (Player p : world.getPlayers()) {
@@ -150,12 +176,12 @@ final class MagicMapRenderer extends MapRenderer {
             if (p.getGameMode() == GameMode.SPECTATOR) continue;
             if (Chat.doesIgnore(player.getUniqueId(), p.getUniqueId())) continue;
             final Location location = p.getLocation();
-            if (!border.containsBlock(location.getBlockX(), location.getBlockZ())) continue;
+            if (!lastRender.getMapArea().containsBlock(location.getBlockX(), location.getBlockZ())) continue;
             final MagicMapCursor playerCursor = MagicMapCursor.make(MapCursor.Type.GREEN_POINTER, location, centerX, centerZ, mapScale, p.displayName());
             result.add(playerCursor);
         }
         result.add(MagicMapCursor.make(MapCursor.Type.WHITE_POINTER, player.getLocation(), centerX, centerZ, mapScale, player.displayName()));
-        new MagicMapCursorEvent(player, mapScale, border, result).callEvent();
+        new MagicMapCursorEvent(player, mapScale, lastRender.getMapArea(), result).callEvent();
         return result;
     }
 }

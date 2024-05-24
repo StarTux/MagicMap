@@ -1,12 +1,12 @@
 package com.cavetale.magicmap.home;
 
+import com.cavetale.core.struct.Vec2i;
 import com.cavetale.home.Area;
 import com.cavetale.home.Claim;
 import com.cavetale.home.HomePlugin;
 import com.cavetale.home.Subclaim;
 import com.cavetale.magicmap.ColorIndex;
-import com.cavetale.magicmap.MagicMapPostRenderEvent;
-import com.cavetale.magicmap.MapCache;
+import com.cavetale.magicmap.event.MagicMapPostRenderEvent;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -15,11 +15,6 @@ import static com.cavetale.magicmap.MagicMapPlugin.plugin;
 
 @RequiredArgsConstructor
 public final class MagicMapHome implements Listener {
-    static final int CLAIM_COLOR = ColorIndex.COLOR_28.bright;
-    static final int SUBCLAIM_COLOR = ColorIndex.WHITE.bright;
-    static final int BLACK = ColorIndex.BLACK.dark;
-    static final int DARK_GRAY = ColorIndex.COLOR_21.dark;
-
     public MagicMapHome enable() {
         Bukkit.getPluginManager().registerEvents(this, plugin());
         return this;
@@ -31,39 +26,47 @@ public final class MagicMapHome implements Listener {
 
     @EventHandler
     private void onMagicMapPostRender(MagicMapPostRenderEvent event) {
-        if (!homePlugin().isLocalHomeWorld(event.getWorldName())) return;
-        Area mapArea = new Area(event.getMinX(), event.getMinZ(), event.getMaxX(), event.getMaxZ());
-        for (Claim claim : homePlugin().findClaimsInWorld(event.getWorldName())) {
+        if (!homePlugin().isLocalHomeWorld(event.getRendered().getWorldName())) return;
+        final Area mapArea = new Area(event.getMapArea().getMinX(), event.getMapArea().getMinZ(),
+                                      event.getMapArea().getMaxX(), event.getMapArea().getMaxZ());
+        for (Claim claim : homePlugin().findClaimsInWorld(event.getRendered().getWorldName())) {
             if (!claim.getArea().overlaps(mapArea)) continue;
             if (claim.isHidden() && !claim.getTrustType(event.getPlayer()).canBuild()) continue;
-            drawRect(event.getMapCache(), mapArea, claim.getArea(), CLAIM_COLOR, claim.getOwnerName() + "'s claim");
+            final String caption = claim.getName() != null ? claim.getName() : claim.getOwnerName();
+            drawRect(event, claim.getArea(), ColorIndex.COLOR_25, caption);
             for (Subclaim subclaim : claim.getSubclaims()) {
-                drawRect(event.getMapCache(), mapArea, subclaim.getArea(), SUBCLAIM_COLOR, null);
+                drawRect(event, subclaim.getArea(), ColorIndex.WHITE, null);
             }
         }
     }
 
-    static void drawRect(MapCache mapCache, Area mapArea, Area claimArea, int color, String label) {
-        Area drawArea = claimArea.fitWithin(mapArea);
-        for (int x = drawArea.ax; x <= drawArea.bx; x += 1) {
-            drawDotted(mapCache, mapArea, x, drawArea.ay, color);
-            drawDotted(mapCache, mapArea, x, drawArea.by, color);
+    static void drawRect(MagicMapPostRenderEvent event, Area claimArea, ColorIndex color, String label) {
+        Vec2i min = event.clampMap(event.worldToMap(claimArea.ax, claimArea.ay));
+        Vec2i max = event.clampMap(event.worldToMap(claimArea.bx, claimArea.by));
+        for (int x = min.x; x <= max.x; x += 1) {
+            drawDotted(event, x, min.z, color);
+            drawDotted(event, x, max.z, color);
         }
-        for (int y = drawArea.ay; y <= drawArea.by; y += 1) {
-            drawDotted(mapCache, mapArea, drawArea.ax, y, color);
-            drawDotted(mapCache, mapArea, drawArea.bx, y, color);
+        for (int z = min.z; z <= max.z; z += 1) {
+            drawDotted(event, min.x, z, color);
+            drawDotted(event, max.x, z, color);
         }
-        if (label == null) return;
-        plugin().getTinyFont()
-            .print(label, drawArea.ax - mapArea.ax + 2, drawArea.ay - mapArea.ay + 2,
-                   (x, y) -> mapCache.setPixel(x, y, color),
-                   (x, y) -> mapCache.setPixel(x, y, DARK_GRAY));
+        if (label != null) {
+            plugin().getTinyFont()
+                .print(label, min.x + 2, min.z + 2,
+                       (x, y) -> {
+                           if (x < 0 || x > 127 || y < 0 || y > 128) return;
+                           event.getImage().setRGB(x, y, color.brightRgb);
+                       },
+                       (x, y) -> {
+                           if (x < 0 || x > 127 || y < 0 || y > 128) return;
+                           event.getImage().setRGB(x, y, color.darkRgb);
+                       });
+        }
     }
 
-    static void drawDotted(MapCache mapCache, Area mapArea, int worldX, int worldY, int color) {
-        int x = worldX - mapArea.ax;
-        int y = worldY - mapArea.ay;
-        if ((x & 1) == (y & 1)) return;
-        mapCache.setPixel(x, y, color);
+    static void drawDotted(MagicMapPostRenderEvent event, int x, int y, ColorIndex color) {
+        final boolean b = (x & 1) == (y & 1);
+        event.getImage().setRGB(x, y, b ? color.brightRgb : color.normalRgb);
     }
 }
