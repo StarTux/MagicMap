@@ -35,8 +35,8 @@ public final class MagicMapPostRenderEvent extends Event {
 
     public Vec2i worldToMap(int blockX, int blockZ) {
         final double scale = getMapScale().getScale();
-        return Vec2i.of((int) Math.round(scale * (blockX - getMapArea().getMinX())),
-                        (int) Math.round(scale * (blockZ - getMapArea().getMinZ())));
+        return Vec2i.of((int) Math.round((blockX - getMapArea().getMinX()) / scale),
+                        (int) Math.round((blockZ - getMapArea().getMinZ()) / scale));
     }
 
     public Vec2i worldToMap(Vec2i in) {

@@ -41,8 +41,8 @@ public final class MagicMapHome implements Listener {
     }
 
     static void drawRect(MagicMapPostRenderEvent event, Area claimArea, ColorIndex color, String label) {
-        Vec2i min = event.clampMap(event.worldToMap(claimArea.ax, claimArea.ay));
-        Vec2i max = event.clampMap(event.worldToMap(claimArea.bx, claimArea.by));
+        final Vec2i min = event.clampMap(event.worldToMap(claimArea.ax, claimArea.ay));
+        final Vec2i max = event.clampMap(event.worldToMap(claimArea.bx, claimArea.by));
         for (int x = min.x; x <= max.x; x += 1) {
             drawDotted(event, x, min.z, color);
             drawDotted(event, x, max.z, color);
