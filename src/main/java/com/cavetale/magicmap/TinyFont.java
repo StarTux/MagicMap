@@ -113,12 +113,6 @@ public final class TinyFont {
         return length;
     }
 
-    public int print(MapCache mapCache, String msg, int x, int y, int color, int shadow) {
-        return print(msg, x, y,
-                     (px, py) -> mapCache.setPixel(px, py, color),
-                     (px, py) -> mapCache.setPixel(px, py, shadow));
-    }
-
     public int widthOf(String msg) {
         msg = msg.toUpperCase();
         int width = 0;
