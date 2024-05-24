@@ -84,7 +84,7 @@ public final class MagicMapListener implements Listener {
 
     private boolean requestChunkRerender(World world, int chunkX, int chunkZ) {
         final WorldFileCache worldFileCache = plugin.getWorlds().getWorld(world);
-        if (worldFileCache == null || !worldFileCache.isPersistent()) return false;
+        if (worldFileCache == null) return false;
         return worldFileCache.requestChunkRerender(chunkX, chunkZ);
     }
 
