@@ -1,9 +1,11 @@
 package com.cavetale.magicmap;
 
+import com.cavetale.core.util.Json;
 import com.cavetale.magicmap.file.Worlds;
 import com.cavetale.magicmap.home.MagicMapHome;
 import com.cavetale.magicmap.mytems.MagicMapMytem;
 import com.cavetale.magicmap.webserver.WebserverManager;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -38,7 +40,6 @@ public final class MagicMapPlugin extends JavaPlugin {
     private MagicMapCommand magicMapCommand;
     private final Map<String, Boolean> enableCaveView = new HashMap<>();
     static final String MAP_ID_PATH = "mapid.json";
-    protected Json json = new Json(this);
     // Queues
     private Map<UUID, Session> sessions = new HashMap<>();
     // Worlds
@@ -112,20 +113,23 @@ public final class MagicMapPlugin extends JavaPlugin {
 
     protected void setupMap() {
         resetMapView();
-        Integer id = json.load(MAP_ID_PATH, Integer.class);
+        final File mapIdFile = new File(getDataFolder(), MAP_ID_PATH);
+        Integer id = Json.load(mapIdFile, Integer.class);
         if (id == null) {
+            getLogger().info("Creating new MapView because " + MAP_ID_PATH + " does not exist");
             mapView = getServer().createMap(getServer().getWorlds().get(0));
             mapId = mapView.getId();
-            json.save(MAP_ID_PATH, mapId);
+            Json.save(mapIdFile, mapId);
         } else {
             mapId = id;
         }
         @SuppressWarnings("deprecation") final MapView theMapView = Bukkit.getMap(mapId);
         this.mapView = theMapView;
         if (mapView == null) {
+            getLogger().info("Creating new MapView because " + mapId + " is not a valid MapView");
             mapView = getServer().createMap(getServer().getWorlds().get(0));
             mapId = mapView.getId();
-            json.save(MAP_ID_PATH, mapId);
+            Json.save(mapIdFile, mapId);
         }
         for (MapRenderer renderer : mapView.getRenderers()) {
             mapView.removeRenderer(renderer);
