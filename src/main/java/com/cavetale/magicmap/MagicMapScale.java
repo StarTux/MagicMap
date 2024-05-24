@@ -1,8 +1,10 @@
 package com.cavetale.magicmap;
 
 import com.cavetale.core.font.Unicode;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+@Getter
 @RequiredArgsConstructor
 public enum MagicMapScale {
     SCALE_0(0.5, 1, 64, "2"),

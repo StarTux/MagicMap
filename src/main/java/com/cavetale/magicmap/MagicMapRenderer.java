@@ -1,7 +1,9 @@
 package com.cavetale.magicmap;
 
 import com.cavetale.core.chat.Chat;
+import com.cavetale.magicmap.event.MagicMapCursorEvent;
 import com.cavetale.magicmap.file.CopyResult;
+import com.cavetale.magicmap.file.WorldBorderCache;
 import com.cavetale.magicmap.file.WorldFileCache;
 import com.cavetale.magicmap.file.WorldRenderCache;
 import java.awt.Image;
@@ -138,6 +140,7 @@ final class MagicMapRenderer extends MapRenderer {
         final List<MagicMapCursor> result = new ArrayList<>();
         final int centerX = lastRender.getCenterX();
         final int centerZ = lastRender.getCenterZ();
+        final WorldBorderCache border = WorldBorderCache.of(centerX, centerZ, lastRender.getMapScale());
         final MagicMapScale mapScale = lastRender.getMapScale();
         final World world = player.getWorld();
         for (Player p : world.getPlayers()) {
@@ -146,13 +149,13 @@ final class MagicMapRenderer extends MapRenderer {
             if (!player.canSee(p)) continue;
             if (p.getGameMode() == GameMode.SPECTATOR) continue;
             if (Chat.doesIgnore(player.getUniqueId(), p.getUniqueId())) continue;
-            final MagicMapCursor playerCursor = MagicMapCursor.make(MapCursor.Type.GREEN_POINTER, p.getLocation(), centerX, centerZ, mapScale, p.displayName());
+            final Location location = p.getLocation();
+            if (!border.containsBlock(location.getBlockX(), location.getBlockZ())) continue;
+            final MagicMapCursor playerCursor = MagicMapCursor.make(MapCursor.Type.GREEN_POINTER, location, centerX, centerZ, mapScale, p.displayName());
             result.add(playerCursor);
         }
         result.add(MagicMapCursor.make(MapCursor.Type.WHITE_POINTER, player.getLocation(), centerX, centerZ, mapScale, player.displayName()));
-        // new MagicMapCursorEvent(player, cursors,
-        //                         centerX, centerZ,
-        //                         minX, minZ, maxX, maxZ).callEvent();
+        new MagicMapCursorEvent(player, mapScale, border, result).callEvent();
         return result;
     }
 }

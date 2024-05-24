@@ -1,6 +1,7 @@
 package com.cavetale.magicmap.file;
 
 import com.cavetale.core.struct.Vec2i;
+import com.cavetale.magicmap.MagicMapScale;
 import lombok.Value;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -31,6 +32,15 @@ public final class WorldBorderCache {
         final int maxX = (int) Math.floor(center.getX() + halfSize);
         final int minZ = (int) Math.floor(center.getZ() - halfSize);
         final int maxZ = (int) Math.floor(center.getX() + halfSize);
+        return new WorldBorderCache(centerX, centerZ, minX, minZ, maxX, maxZ);
+    }
+
+    public static WorldBorderCache of(final int centerX, final int centerZ, final MagicMapScale scale) {
+        final int size = scale.getSize();
+        final int minX = centerX - size / 2;
+        final int minZ = centerZ - size / 2;
+        final int maxX = minX + size - 1;
+        final int maxZ = minZ + size - 1;
         return new WorldBorderCache(centerX, centerZ, minX, minZ, maxX, maxZ);
     }
 
