@@ -82,4 +82,8 @@ public final class Worlds implements Listener {
     public WorldFileCache getWorld(final String worldName) {
         return worldMap.get(worldName);
     }
+
+    public WorldFileCache getWorld(final World world) {
+        return getWorld(world.getName());
+    }
 }

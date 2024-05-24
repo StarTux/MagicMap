@@ -206,6 +206,12 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
                                           (cache.isFullRenderScheduled()
                                            ? text("Active", RED)
                                            : text("Inactive", DARK_GRAY))));
+        sender.sendMessage(textOfChildren(text(" Chunk Render Queue ", GRAY),
+                                          text(cache.getChunkRenderQueue().size(), WHITE)));
+        sender.sendMessage(textOfChildren(text(" Chunk Render Task ", GRAY),
+                                          (cache.getChunkRenderTask() != null
+                                           ? cache.getChunkRenderTask().getInfoComponent()
+                                           : text("None", DARK_GRAY))));
         for (WorldRenderCache renderCache : cache.getRenderTypeMap().values()) {
             sender.sendMessage(text(renderCache.getRenderType().getHumanName(), YELLOW));
             sender.sendMessage(textOfChildren(text(" Regions Loaded ", GRAY),

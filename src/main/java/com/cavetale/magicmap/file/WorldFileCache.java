@@ -42,6 +42,9 @@ public final class WorldFileCache {
     // Timing
     private static final double TPS_THRESHOLD = 19.9;
     private long timeAdjustmentCooldown = 0L;
+    // Rendering
+    private ChunkRenderTask chunkRenderTask;
+    private List<Vec2i> chunkRenderQueue = new ArrayList<>();
 
     public WorldFileCache(final NetworkServer server, final String name, final File worldFolder) {
         this.server = server;
@@ -253,9 +256,17 @@ public final class WorldFileCache {
         if (fullRender != null && !fullRender.isPaused()) {
             fullRenderIter(fullRender, startTime);
         } else {
+            boolean didSomething = false;
             if (!persistent) {
                 for (WorldRenderCache render : renderTypeMap.values()) {
-                    render.tickChunkRenderer(startTime);
+                    if (render.tickChunkRenderer(startTime)) {
+                        didSomething = true;
+                    }
+                }
+            }
+            if (!didSomething) {
+                if (tickChunkRenderer(startTime)) {
+                    didSomething = true;
                 }
             }
         }
@@ -462,6 +473,69 @@ public final class WorldFileCache {
                 + " " + duration.toSeconds() + "s";
             plugin().getLogger().info("[" + name + "] full render finished in " + durationString);
         }
+    }
+
+    private boolean tickChunkRenderer(final long startTime) {
+        if (chunkRenderTask != null) {
+            if (!chunkRenderTask.isDone()) {
+                chunkRenderTask.tick(startTime);
+            }
+            if (chunkRenderTask.isDone()) {
+                chunkRenderQueue.removeAll(chunkRenderTask.getChunksToRender());
+                if (persistent) {
+                    // This is most likekly just one region, as per
+                    // the loading strategy of the ChunkRenderTask.
+                    final Set<Vec2i> regions = new HashSet<>();
+                    for (Vec2i chunk : chunkRenderTask.getChunksToRender()) {
+                        final Vec2i regionVector = Vec2i.of(chunk.x >> 5, chunk.z >> 5);
+                        if (!regions.add(regionVector)) continue;
+                        for (WorldRenderCache render : renderTypeMap.values()) {
+                            RegionFileCache region = render.getRegion(regionVector);
+                            if (region != null && region.getState() == RegionFileCache.State.LOADED) {
+                                render.scheduleSave(region);
+                            }
+                        }
+                    }
+                }
+                chunkRenderTask = null;
+            }
+            return true;
+        } else if (!chunkRenderQueue.isEmpty()) {
+            chunkRenderTask = new ChunkRenderTask(this, this::onChunkDidRerender);
+            chunkRenderTask.init(List.copyOf(renderTypeMap.values()), chunkRenderQueue);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * This will get called once per RenderType, thus once per
+     * ChunkRenderCache!  Via ChunkRenderTask#chunkRemoveCallback.
+     *
+     * We remove the chunk from the queue once the task is done, so
+     * this does nothing.
+     */
+    private void onChunkDidRerender(Vec2i chunk) {
+    }
+
+    /**
+     * Force a chunk render in the future.
+     *
+     * @return true if the render was scheduled, false if a render for
+     *   this chunk was already scheduled or the chunk is out of
+     *   bounds.
+     */
+    public boolean requestChunkRerender(int chunkX, int chunkZ) {
+        if (!getEffectiveWorldBorder().containsChunk(chunkX, chunkZ)) {
+            return false;
+        }
+        final Vec2i chunkVector = Vec2i.of(chunkX, chunkZ);
+        if (chunkRenderQueue.contains(chunkVector)) {
+            return false;
+        }
+        chunkRenderQueue.add(chunkVector);
+        return true;
     }
 
     /**

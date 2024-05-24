@@ -185,7 +185,7 @@ public final class WorldRenderCache {
     /**
      * Called by WorldFileCache whenever there is no full render happening.
      */
-    protected void tickChunkRenderer(final long startTime) {
+    protected boolean tickChunkRenderer(final long startTime) {
         if (chunkRenderTask != null) {
             if (!chunkRenderTask.isDone()) {
                 chunkRenderTask.tick(startTime);
@@ -193,9 +193,13 @@ public final class WorldRenderCache {
             if (chunkRenderTask.isDone()) {
                 chunkRenderTask = null;
             }
+            return true;
         } else if (!chunkRenderQueue.isEmpty()) {
             chunkRenderTask = new ChunkRenderTask(worldFileCache, (Vec2i finishedChunk) -> chunkRenderQueue.remove(finishedChunk));
             chunkRenderTask.init(List.of(this), chunkRenderQueue);
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -225,32 +229,6 @@ public final class WorldRenderCache {
         chunkRenderQueue.add(chunkVector);
         return true;
     }
-
-    // /**
-    //  * Force a chunk render in the future.
-    //  *
-    //  * @return true if the render was scheduled, false if a render for
-    //  *   this chunk was already scheduled or the chunk is out of
-    //  *   bounds.
-    //  *
-    //  * TODO move to WorldFileCache
-    //  */
-    // public boolean forceChunkRender(int chunkX, int chunkZ) {
-    //     if (!worldFileCache.getEffectiveWorldBorder().containsChunk(chunkX, chunkZ)) {
-    //         return false;
-    //     }
-    //     final int regionX = chunkX >> 5;
-    //     final int regionZ = chunkZ >> 5;
-    //     final RegionFileCache region = loadRegion(Vec2i.of(regionX, regionZ));
-    //     if (!region.isChunkRendered(chunkX, chunkZ)) return false;
-    //     region.setChunkRendered(chunkX, chunkZ, false);
-    //     final Vec2i chunkVector = Vec2i.of(chunkX, chunkZ);
-    //     if (!chunkRenderQueue.contains(chunkVector)) {
-    //         // This should already be the case
-    //         chunkRenderQueue.add(chunkVector);
-    //     }
-    //     return true;
-    // }
 
     public void keepAlive(int centerX, int centerZ, int radius) {
         final WorldBorderCache worldBorder = worldFileCache.getEffectiveWorldBorder();

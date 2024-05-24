@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.World;
@@ -25,12 +26,13 @@ import static net.kyori.adventure.text.format.NamedTextColor.*;
  * is used by WorldFileCache and WorldRenderCache for their respective
  * obligations.
  */
+@Getter
 @RequiredArgsConstructor
 public final class ChunkRenderTask {
     private final WorldFileCache worldFileCache;
     private final Consumer<Vec2i> chunkRemoveCallback;
     private State state = State.IDLE;
-    private final List<Vec2i> chunksToRender = new ArrayList<>(); // make local?
+    private final List<Vec2i> chunksToRender = new ArrayList<>();
     private final List<Vec2i> chunksToLoad = new ArrayList<>();
     private List<TypeSpecific> renderTypes;
     private String debugMessage;
