@@ -53,10 +53,10 @@ public final class MagicMapHome implements Listener {
         }
         if (label != null) {
             plugin().getTinyFont()
-                .print(label, min.x + 2, min.z + 2,
+                .print(label, min.x + 1, min.z + 1,
                        (x, y) -> {
                            if (x <= min.x || x >= max.x || y <= min.z || y >= max.z) return;
-                           event.getImage().setRGB(x, y, color.brightRgb);
+                           event.getImage().setRGB(x, y, ColorIndex.WHITE.brightRgb);
                        },
                        (x, y) -> {
                            if (x <= min.x || x >= max.x || y <= min.z || y >= max.z) return;

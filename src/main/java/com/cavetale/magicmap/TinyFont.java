@@ -68,7 +68,7 @@ public final class TinyFont {
             }
             for (Pixel pixel: pixels) {
                 Pixel shadowPixel;
-                shadowPixel = new Pixel(pixel.x + 1, pixel.y);
+                shadowPixel = new Pixel(pixel.x + 1, pixel.y + 1);
                 if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) {
                     shadowPixels.add(shadowPixel);
                 }
@@ -76,11 +76,7 @@ public final class TinyFont {
                 if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) {
                     shadowPixels.add(shadowPixel);
                 }
-                shadowPixel = new Pixel(pixel.x - 1, pixel.y);
-                if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) {
-                    shadowPixels.add(shadowPixel);
-                }
-                shadowPixel = new Pixel(pixel.x, pixel.y - 1);
+                shadowPixel = new Pixel(pixel.x + 1, pixel.y);
                 if (!pixels.contains(shadowPixel) && !shadowPixels.contains(shadowPixel)) {
                     shadowPixels.add(shadowPixel);
                 }
