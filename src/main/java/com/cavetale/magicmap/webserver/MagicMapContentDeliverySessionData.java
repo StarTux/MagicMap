@@ -17,6 +17,7 @@ public final class MagicMapContentDeliverySessionData implements ContentDelivery
     private WorldFileCache worldFileCache;
     private final Map<UUID, PlayerLocationTag> playerLocationTags = new HashMap<>();
     private List<PlayerCache> playerList;
+    private final Map<UUID, Integer> missingPlayers = new HashMap<>();
     private boolean loadingMap = false;
 
     public boolean isInWorld(PlayerLocationTag tag) {

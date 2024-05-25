@@ -14,6 +14,7 @@ import com.cavetale.magicmap.file.WorldFileCache;
 import com.cavetale.magicmap.file.WorldRenderCache;
 import com.cavetale.webserver.content.ContentDelivery;
 import com.cavetale.webserver.content.ContentDeliverySession;
+import com.cavetale.webserver.content.ContentDeliveryState;
 import com.cavetale.webserver.content.FileContentProvider;
 import com.cavetale.webserver.html.CachedHtmlContentProvider;
 import com.cavetale.webserver.html.DefaultStyleSheet;
@@ -314,11 +315,11 @@ public final class MagicMapContentDelivery implements ContentDelivery {
         for (UUID online : Connect.get().getOnlinePlayers()) {
             result.add(PlayerCache.forUuid(online));
         }
-        Collections.sort(result, Comparator.comparing(PlayerCache::getName, String.CASE_INSENSITIVE_ORDER));
         return result;
     }
 
     public HtmlNodeList makePlayerList(List<PlayerCache> playerList) {
+        Collections.sort(playerList, Comparator.comparing(PlayerCache::getName, String.CASE_INSENSITIVE_ORDER));
         final HtmlNodeList result = new HtmlNodeList();
         for (PlayerCache player : playerList) {
             final SimpleHtmlElement playerDiv = new SimpleHtmlElement("div");
@@ -381,6 +382,7 @@ public final class MagicMapContentDelivery implements ContentDelivery {
 
     @Override
     public void tick(ContentDeliverySession session) {
+        if (session.getState() != ContentDeliveryState.WEBSOCKET_CONNECTED) return;
         final MagicMapContentDeliverySessionData sessionData = (MagicMapContentDeliverySessionData) session.getContentDeliverySessionData();
         if (sessionData == null) return;
         // Prune our map
@@ -420,6 +422,30 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             }
         }
         // Update player list
+        boolean doUpdatePlayerList = false;
+        final List<PlayerCache> playerList = fetchPlayerList();
+        for (PlayerCache it : playerList) {
+            if (!sessionData.getPlayerList().contains(it)) {
+                sessionData.getPlayerList().add(it);
+                doUpdatePlayerList = true;
+            }
+        }
+        for (Iterator<PlayerCache> iter = sessionData.getPlayerList().iterator(); iter.hasNext();) {
+            final PlayerCache it = iter.next();
+            if (!playerList.contains(it)) {
+                final int ticks = sessionData.getMissingPlayers().getOrDefault(it.uuid, 0);
+                if (ticks > 20) {
+                    iter.remove();
+                    sessionData.getMissingPlayers().remove(it.uuid);
+                    doUpdatePlayerList = true;
+                } else {
+                    sessionData.getMissingPlayers().put(it.uuid, ticks + 1);
+                }
+            }
+        }
+        if (doUpdatePlayerList) {
+            updatePlayerList(session, sessionData);
+        }
     }
 
     private void updatePlayerList(ContentDeliverySession session, MagicMapContentDeliverySessionData sessionData) {
