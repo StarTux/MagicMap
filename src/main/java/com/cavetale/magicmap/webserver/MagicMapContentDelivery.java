@@ -23,7 +23,6 @@ import com.cavetale.webserver.http.HttpContentType;
 import com.cavetale.webserver.http.HttpResponseStatus;
 import com.cavetale.webserver.http.StaticContentProvider;
 import com.cavetale.webserver.message.AddHtmlElementsMessage;
-import com.cavetale.webserver.message.ChatClientMessage;
 import com.cavetale.webserver.message.RemoveHtmlElementMessage;
 import com.cavetale.webserver.message.ServerMessage;
 import com.cavetale.webserver.message.SetInnerHtmlMessage;
@@ -426,31 +425,6 @@ public final class MagicMapContentDelivery implements ContentDelivery {
     private void updatePlayerList(ContentDeliverySession session, MagicMapContentDeliverySessionData sessionData) {
         session.sendMessage(new SetInnerHtmlMessage("player-list",
                                                     makePlayerList(sessionData.getPlayerList()).writeToString()));
-    }
-
-    @Override
-    public void onPlayerJoin(ContentDeliverySession session, PlayerCache player) {
-        final MagicMapContentDeliverySessionData sessionData = (MagicMapContentDeliverySessionData) session.getContentDeliverySessionData();
-        if (sessionData == null) return;
-        final String raw = player.name + " joined";
-        session.sendMessage(new ChatClientMessage(new PlayerCache(new UUID(0L, 0L), "Console"),
-                                                  raw,
-                                                  new SimpleHtmlElement("span").addText(raw).setAttribute("style", "color: #55ff55").writeToString()));
-        sessionData.getPlayerList().add(player);
-        Collections.sort(sessionData.getPlayerList(), Comparator.comparing(PlayerCache::getName, String.CASE_INSENSITIVE_ORDER));
-        updatePlayerList(session, sessionData);
-    }
-
-    @Override
-    public void onPlayerQuit(ContentDeliverySession session, PlayerCache player) {
-        final MagicMapContentDeliverySessionData sessionData = (MagicMapContentDeliverySessionData) session.getContentDeliverySessionData();
-        if (sessionData == null) return;
-        final String raw = player.name + " disconnected";
-        session.sendMessage(new ChatClientMessage(new PlayerCache(new UUID(0L, 0L), "Console"),
-                                                  raw,
-                                                  new SimpleHtmlElement("span").addText(raw).setAttribute("style", "color: #55ffff").writeToString()));
-        sessionData.getPlayerList().removeIf(p -> p.uuid.equals(player.uuid));
-        updatePlayerList(session, sessionData);
     }
 
     @Override
