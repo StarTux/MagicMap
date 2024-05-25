@@ -437,6 +437,8 @@ public final class MagicMapContentDelivery implements ContentDelivery {
                 } else {
                     sessionData.getMissingPlayers().put(it.uuid, ticks + 1);
                 }
+            } else {
+                sessionData.getMissingPlayers().remove(it.uuid);
             }
         }
         if (doUpdatePlayerList) {
