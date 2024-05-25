@@ -24,6 +24,7 @@ import com.cavetale.webserver.http.HttpContentType;
 import com.cavetale.webserver.http.HttpResponseStatus;
 import com.cavetale.webserver.http.StaticContentProvider;
 import com.cavetale.webserver.message.AddHtmlElementsMessage;
+import com.cavetale.webserver.message.ChatClientMessage;
 import com.cavetale.webserver.message.RemoveHtmlElementMessage;
 import com.cavetale.webserver.message.ServerMessage;
 import com.cavetale.webserver.message.SetInnerHtmlMessage;
@@ -189,17 +190,12 @@ public final class MagicMapContentDelivery implements ContentDelivery {
         chatBox.setId("chat-box");
         chatBox.setClassNames(List.of("minecraft-chat", "chat-box"));
         for (ChannelChatEvent event : chatHistory) {
-            final PlayerCache sender = event.getSender() != null
-                ? PlayerCache.forUuid(event.getSender())
-                : new PlayerCache(new UUID(0L, 0L), "Console");
-            chatBox.addElement("p", p -> p
-                               .setClassName("minecraft-chat-line")
-                               .addElement("img", img -> {
-                                       img.setClassName("minecraft-chat-emoji");
-                                       img.setAttribute("src", "/skin/face/" + sender.uuid + ".png");
-                                   })
-                               .addElement("span", span -> span.addText(sender.name + ": "))
-                               .addElement("span", span -> span.addText(event.getRawMessage())));
+            chatBox.addElement("p", p -> {
+                    p.setClassName("minecraft-chat-line");
+                    for (var it : ChatClientMessage.eventToHtml(event)) {
+                        p.addChild(it);
+                    }
+                });
         }
         // Player List
         final var playerListBox = provider.getDocument().getBody().addElement("div");
