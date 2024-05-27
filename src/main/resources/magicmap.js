@@ -306,6 +306,7 @@ function removeTooltip() {
 }
 
 function setScalingFactor(newScalingFactor) {
+    removeTooltip();
     const scrolling = document.scrollingElement;
     const w = scrolling.clientWidth;
     const h = scrolling.clientHeight;
