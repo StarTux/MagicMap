@@ -4,6 +4,7 @@ import com.cavetale.core.playercache.PlayerCache;
 import com.cavetale.magicmap.PlayerLocationTag;
 import com.cavetale.magicmap.file.WorldFileCache;
 import com.cavetale.webserver.content.ContentDeliverySessionData;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,9 +17,10 @@ public final class MagicMapContentDeliverySessionData implements ContentDelivery
     private String mapName;
     private WorldFileCache worldFileCache;
     private final Map<UUID, PlayerLocationTag> playerLocationTags = new HashMap<>();
-    private List<PlayerCache> playerList;
+    private final List<PlayerCache> playerList = new ArrayList<>();
     private final Map<UUID, Integer> missingPlayers = new HashMap<>();
     private boolean loadingMap = false;
+    private boolean sendAllClaims = true;
 
     public boolean isInWorld(PlayerLocationTag tag) {
         return worldFileCache != null

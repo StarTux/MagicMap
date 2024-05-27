@@ -1,23 +1,29 @@
-.map-frame {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    overflow: scroll;
-    padding: 0px;
-    margin: 0px;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    background-color: #cda882;
-    cursor: crosshair;
+html {
+    overflow: hidden;
 }
 
-.map-nether {
+.map-frame {
+    position: absolute;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    width: auto;
+    height: auto;
+    cursor: crosshair;
+
+    transform: scale(2.0, 2.0);
+    transform-origin: center;
+}
+
+.map-frame > img {
+    background-color: #cda882;
+}
+
+.map-nether > img {
     background-color: #8b0000;
 }
 
-.map-the-end {
+.map-the-end > img {
     background-color: #301934;
 }
 
@@ -25,6 +31,11 @@
     position: absolute;
     image-rendering: pixelated;
     user-select: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    width: 512px;
+    height: 512px;
 }
 
 .chat-box {
@@ -35,12 +46,10 @@
     margin: 0;
     padding: 20px;
     border: 0;
-    border-radius: 12px;
-    width: auto;
+    width: 800px;
     height: 200px;
-    bottom: 30px;
-    left: 20px;
-    right: 30px;
+    bottom: 0px;
+    left: 0px;
     z-index: 400;
 }
 
@@ -57,9 +66,12 @@
     z-index: 300;
     image-rendering: pixelated;
     user-select: none;
-    outline: 2px solid white;
+    outline: 1px solid white;
     z-index: 300;
     cursor: pointer;
+    width: 16px;
+    height: 16px;
+    transform: translate(-50%, -50%);
 }
 
 .player-list {
@@ -72,12 +84,11 @@
     margin: 0;
     padding: 12px;
     border: 0;
-    border-radius: 12px;
     width: auto;
     height: 90px;
-    top: 20px;
-    left: 20px;
-    right: 30px;
+    top: 0px;
+    left: 0px;
+    right: 0px;
     z-index: 400;
 }
 
