@@ -338,6 +338,7 @@ public final class MagicMapContentDelivery implements ContentDelivery {
         case "magicmap:did_change_map":
             sessionData.setLoadingMap(false);
             sessionData.getPlayerLocationTags().clear();
+            sessionData.setSendAllClaims(true);
             break;
         case "magicmap:click_player_list": {
             if (message.getValue() == null) return;
