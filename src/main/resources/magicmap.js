@@ -374,7 +374,6 @@ function setScalingFactor(newScalingFactor) {
 
 function onClickHideUi(element, event) {
     uiHidden = !uiHidden;
-    console.log(uiHidden);
     if (uiHidden) {
         document.getElementById('player-list').style.display = 'none';
         document.getElementById('chat-box').style.display = 'none';

@@ -394,7 +394,6 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             break;
         }
         case "magicmap:select_world": {
-            System.out.println("SELECT WORLD '" + message.getValue() + "'");
             if (message.getValue() == null) return;
             final WorldFileCache worldFileCache = worldMap.get(message.getValue());
             if (worldFileCache == null) return;
