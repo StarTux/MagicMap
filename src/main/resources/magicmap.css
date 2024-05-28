@@ -1,5 +1,8 @@
 html {
     overflow: hidden;
+    padding: 0;
+    margin: 0;
+    border: 0;
 }
 
 .map-frame {
@@ -11,10 +14,9 @@ html {
     height: auto;
     cursor: crosshair;
     transform: scale(2.0, 2.0);
-    transform-origin: center;
 }
 
-.map-frame > img {
+.map-overworld > img {
     background-color: #cda882;
 }
 
@@ -81,24 +83,31 @@ html {
     overflow-y: none;
     background-color: rgba(0, 0, 0, 0.25);
     margin: 0;
-    padding: 12px;
+    padding: 4px;
     border: 0;
     width: auto;
-    height: 90px;
+    height: 88px;
     top: 0px;
     left: 0px;
     right: 0px;
     z-index: 400;
+    user-select: none;
 }
 
 .player-list-box {
     flex-shrink: 0;
     width: 128px;
     height: 72px;
-    padding: 0px;
-    border: 0px;
-    margin: 0px;
+    padding: 0;
+    border: 0;
+    margin: 0;
     text-align: center;
+    cursor: pointer;
+    border-radius: 16px;
+}
+
+.player-list-box:hover {
+    background-color: rgba(0, 0, 0, 0.25);
 }
 
 .player-list-face {
@@ -108,7 +117,6 @@ html {
     margin: 0px;
     image-rendering: pixelated;
     box-shadow: 2px 2px 10px black;
-    cursor: pointer;
 }
 
 .player-list-name {
@@ -128,4 +136,28 @@ html {
     padding: 12px;
     border-radius: 4px;
     font-size: 16px;
+}
+
+.world-select {
+    position: fixed;
+    top: 100px;
+    left: 0px;
+    z-index: 600;
+}
+
+.hide-ui {
+    position: fixed;
+    right: 0px;
+    bottom: 0px;
+    margin: 0;
+    border: 2px solid #55FF55;
+    padding: 0;
+    width: 64px;
+    height: 32px;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    z-index: 600;
+    user-select: none;
+    color: #55FF55;
 }

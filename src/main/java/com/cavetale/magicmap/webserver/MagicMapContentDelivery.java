@@ -104,6 +104,7 @@ public final class MagicMapContentDelivery implements ContentDelivery {
                 mapName = worldFolder.getFileName().toString().replace("world", "beta");
                 break;
             case HUB:
+            case MINE:
             case EINS:
             case ZWEI:
             case DREI:
@@ -193,6 +194,37 @@ public final class MagicMapContentDelivery implements ContentDelivery {
         final var playerListBox = provider.getDocument().getBody().addElement("div");
         playerListBox.setId("player-list");
         playerListBox.setClassName("player-list");
+        // World Select
+        final var worldSelectBox = provider.getDocument().getBody().addElement("select");
+        worldSelectBox.setId("world-select");
+        worldSelectBox.setClassName("world-select");
+        List<String> mapKeys = new ArrayList<>(worldMap.keySet());
+        Collections.sort(mapKeys, Comparator.comparing(key -> worldMap.get(key).getServer().ordinal())
+                         .thenComparing(key -> worldMap.get(key).getTag().getEnvironment().ordinal())
+                         .thenComparing(key -> worldMap.get(key).getDisplayName(), String.CASE_INSENSITIVE_ORDER));
+        for (String key : mapKeys) {
+            final WorldFileCache worldFileCache = worldMap.get(key);
+            switch (worldFileCache.getServer()) {
+            case BETA:
+            case CREATIVE:
+                continue;
+            default: break;
+            }
+            worldSelectBox.addElement("option", option -> {
+                    option.setAttribute("value", key);
+                    option.addText(worldFileCache.getDisplayName());
+                    if (key.equals(sessionData.getMapName())) {
+                        option.setAttribute("selected", "selected");
+                    }
+                });
+        }
+        // Hide UI
+        final var hideUiButton = provider.getDocument().getBody().addElement("div");
+        hideUiButton.addText("ON");
+        hideUiButton.setId("hide-ui");
+        hideUiButton.setClassName("hide-ui minecraft-chat");
+        hideUiButton.setAttribute("title", "Toggle UI");
+        // OK
         session.getResponse().setStatus(HttpResponseStatus.OK);
         session.setReceiveChatMessages(true);
         session.send();
@@ -361,6 +393,17 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             }
             break;
         }
+        case "magicmap:select_world": {
+            System.out.println("SELECT WORLD '" + message.getValue() + "'");
+            if (message.getValue() == null) return;
+            final WorldFileCache worldFileCache = worldMap.get(message.getValue());
+            if (worldFileCache == null) return;
+            changeMap(session, sessionData, worldFileCache.getServer(), worldFileCache.getName(),
+                      worldFileCache.getEffectiveWorldBorder().getCenterX(),
+                      worldFileCache.getEffectiveWorldBorder().getCenterZ(),
+                      null);
+            break;
+        }
         case "magicmap:click_claim": {
             if (message.getValue() == null) return;
             final int claimId;
@@ -433,10 +476,14 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             }
         }
         if (worldFileCache == null) {
-            session.sendChatMessage(text(PlayerCache.nameForUuid(uuid) + " is in an unmapped world", DARK_RED));
+            if (uuid != null) {
+                session.sendChatMessage(text(PlayerCache.nameForUuid(uuid) + " is in an unmapped world", DARK_RED));
+            }
             return false;
         }
-        session.sendChatMessage(text("Jumping to " + PlayerCache.nameForUuid(uuid), GREEN));
+        if (uuid != null) {
+            session.sendChatMessage(text("Jumping to " + PlayerCache.nameForUuid(uuid), GREEN));
+        }
         sessionData.setLoadingMap(true);
         sessionData.setMapName(mapName);
         sessionData.setWorldFileCache(worldFileCache);

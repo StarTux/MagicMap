@@ -2,6 +2,9 @@
 var mapName = 'map_name';
 var worldBorder = world_border;
 var scalingFactor = 2.0;
+var environment = 'OVERWORLD';
+var mapDisplayName = 'Spawn';
+var uiHidden = false;
 
 function fixWorldBorder() {
     worldBorder.minX = (worldBorder.minX >> 9) << 9;
@@ -41,8 +44,23 @@ function makeMapRegions() {
             mapRegion.setAttribute('data-region-x', '' + rx);
             mapRegion.setAttribute('data-region-z', '' + rz);
             mapRegion.loading = 'lazy';
+            mapRegion.title = mapDisplayName + ' region ' + rx + ', ' + rz;
             mapFrame.appendChild(mapRegion);
         }
+    }
+    mapFrame.classList.remove('map-overworld');
+    mapFrame.classList.remove('map-nether');
+    mapFrame.classList.remove('map-the-end');
+    switch (environment) {
+    case 'NETHER':
+        mapFrame.classList.add('map-nether');
+        break;
+    case 'THE_END':
+        mapFrame.classList.add('map-the-end');
+        break;
+    default:
+        mapFrame.classList.add('map-overworld');
+        break;
     }
 }
 
@@ -65,10 +83,8 @@ function calculateFrame() {
             if (mapRegion.getAttribute('src')) continue;
             const url = '/map/' + mapName + '/r.' + rx + '.' + rz + '.png';
             mapRegion.setAttribute('src', url);
-            //mapRegion.style['background-image'] = 'url("' + url + '")';
         } else {
             mapRegion.removeAttribute('src');
-            //mapRegion.style['background-image'] = null;
         }
     }
 }
@@ -93,7 +109,6 @@ window.addEventListener('load', event => {
         mouseDown = true;
         dragX = event.clientX;
         dragY = event.clientY;
-        event.preventDefault();
     };
     mouseSurface.onmousemove = event => {
         mouseX = event.clientX;
@@ -109,12 +124,35 @@ window.addEventListener('load', event => {
     mouseSurface.onmouseup = event => {
         if (!mouseDown) return;
         mouseDown = false;
-        event.preventDefault();
     };
     mouseSurface.onmouseleave = event => {
         mouseDown = false;
     };
-    document.onwheel = event => setScalingFactor(Math.max(0.5, scalingFactor - event.deltaY * 0.001));
+    mouseSurface.onwheel = event => setScalingFactor(Math.max(0.5, scalingFactor - event.deltaY * 0.001));
+    mouseSurface.onkeydown = event => {
+        const d = 32;
+        switch (event.code) {
+        case 'ArrowLeft':
+            scrollRelative(-d, 0, true);
+            break;
+        case 'ArrowRight':
+            scrollRelative(d, 0, true);
+            break;
+        case 'ArrowUp':
+            scrollRelative(0, -d, true);
+            break;
+        case 'ArrowDown':
+            scrollRelative(0, d, true);
+            break;
+        default: break;
+        }
+    };
+    document.getElementById('chat-box').onwheel = event => {
+        event.stopPropagation();
+    };
+    document.getElementById('player-list').onwheel = event => {
+        event.stopPropagation();
+    };
     websocket.addEventListener('websocketMessage', event => {
         switch (event.packet.id) {
         case 'chat': {
@@ -168,7 +206,7 @@ window.addEventListener('load', event => {
                 img.setAttribute('data-uuid', '' + player.uuid);
                 img.setAttribute('data-name', player.name);
                 img.title = player.name;
-                img.onclick = event => onClickPlayerList(img, event);
+                playerDiv.onclick = event => onClickPlayerList(img, event);
                 playerDiv.appendChild(img);
                 const nameDiv = document.createElement('div');
                 nameDiv.appendChild(document.createTextNode(player.name));
@@ -217,20 +255,15 @@ window.addEventListener('load', event => {
         case 'magicmap:change_map': {
             mapName = event.packet.mapName;
             worldBorder = event.packet.worldBorder;
+            environment = event.packet.environment;
+            mapDisplayName = event.packet.displayName;
             fixWorldBorder();
             makeMapRegions();
             const mapFrame = document.getElementById('map-frame');
-            mapFrame.innerHTML += event.packet.innerHtml;
             document.title = event.packet.displayName;
             calculateFrame();
-            mapFrame.classList.remove('map-nether');
-            mapFrame.classList.remove('map-the-end');
-            if (event.packet.environment === 'NETHER') {
-                mapFrame.classList.add('map-nether');
-            } else if (event.packet.environment === 'THE_END') {
-                mapFrame.classList.add('map-the-end');
-            }
             scrollTo(event.packet.x, event.packet.z);
+            document.getElementById('world-select').value = mapName;
             sendServerMessage('magicmap:did_change_map');
             break;
         }
@@ -252,6 +285,13 @@ window.addEventListener('load', event => {
     };
     const chatBox = document.getElementById('chat-box');
     chatBox.scrollTo(0, chatBox.scrollHeight);
+    const worldSelect = document.getElementById('world-select');
+    worldSelect.onchange = event => {
+        sendServerMessage('magicmap:select_world', worldSelect.value);
+    };
+    worldSelect.style.top = document.getElementById('player-list').clientHeight + 'px';
+    const hideUiButton = document.getElementById('hide-ui');
+    hideUiButton.onclick = event => onClickHideUi(hideUiButton, event);
     calculateFrame();
 });
 
@@ -261,6 +301,21 @@ function scrollTo(x, z, smooth = false) {
     const height = scrolling.clientHeight;
     const left = scalingFactor * (x - worldBorder.minX) - (width / 2);
     const top = scalingFactor * (z - worldBorder.minZ) - (height / 2);
+    if (smooth) {
+        scrolling.scrollTo({
+            'left': left,
+            'top': top,
+            'behavior': 'smooth'
+        });
+    } else {
+        scrolling.scrollTo(left, top);
+    }
+}
+
+function scrollRelative(x, z, smooth = false) {
+    const scrolling = document.scrollingElement;
+    const left = scrolling.scrollLeft + x;
+    const top = scrolling.scrollTop + z;
     if (smooth) {
         scrolling.scrollTo({
             'left': left,
@@ -315,4 +370,24 @@ function setScalingFactor(newScalingFactor) {
     scalingFactor = newScalingFactor;
     document.getElementById('map-frame').style.transform = 'scale(' + scalingFactor + ', ' + scalingFactor + ')';
     scrolling.scrollTo(x * scrolling.scrollWidth - (w / 2), y * scrolling.scrollHeight - (h / 2));
+}
+
+function onClickHideUi(element, event) {
+    uiHidden = !uiHidden;
+    console.log(uiHidden);
+    if (uiHidden) {
+        document.getElementById('player-list').style.display = 'none';
+        document.getElementById('chat-box').style.display = 'none';
+        document.getElementById('world-select').style.display = 'none';
+        document.getElementById('hide-ui').textContent = 'OFF';
+        document.getElementById('hide-ui').style.color = '#ff5555';
+        document.getElementById('hide-ui').style['border-color'] = '#ff5555';
+    } else {
+        document.getElementById('player-list').style.display = 'flex';
+        document.getElementById('chat-box').style.display = null;
+        document.getElementById('world-select').style.display = null;
+        document.getElementById('hide-ui').textContent = 'ON';
+        document.getElementById('hide-ui').style.color = null;
+        document.getElementById('hide-ui').style['border-color'] = null;
+    }
 }
