@@ -177,10 +177,10 @@ final class MagicMapRenderer extends MapRenderer {
             if (Chat.doesIgnore(player.getUniqueId(), p.getUniqueId())) continue;
             final Location location = p.getLocation();
             if (!lastRender.getMapArea().containsBlock(location.getBlockX(), location.getBlockZ())) continue;
-            final MagicMapCursor playerCursor = MagicMapCursor.make(MapCursor.Type.GREEN_POINTER, location, centerX, centerZ, mapScale, p.displayName());
+            final MagicMapCursor playerCursor = MagicMapCursor.make(MapCursor.Type.FRAME, location, centerX, centerZ, mapScale, p.displayName());
             result.add(playerCursor);
         }
-        result.add(MagicMapCursor.make(MapCursor.Type.WHITE_POINTER, player.getLocation(), centerX, centerZ, mapScale, player.displayName()));
+        result.add(MagicMapCursor.make(MapCursor.Type.PLAYER, player.getLocation(), centerX, centerZ, mapScale, player.displayName()));
         new MagicMapCursorEvent(player, mapScale, lastRender.getMapArea(), result).callEvent();
         return result;
     }
