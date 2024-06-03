@@ -306,6 +306,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.LANTERN, 6);
         MATERIAL_MAP.put(Material.SOUL_LANTERN, 6);
         MATERIAL_MAP.put(Material.LODESTONE, 6);
+        MATERIAL_MAP.put(Material.HEAVY_CORE, 6);
         MATERIAL_MAP.put(Material.OAK_SAPLING, 7);
         MATERIAL_MAP.put(Material.SPRUCE_SAPLING, 7);
         MATERIAL_MAP.put(Material.BIRCH_SAPLING, 7);
@@ -480,6 +481,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.COPPER_ORE, 11);
         MATERIAL_MAP.put(Material.CRAFTER, 11);
         MATERIAL_MAP.put(Material.TRIAL_SPAWNER, 11);
+        MATERIAL_MAP.put(Material.VAULT, 11);
         MATERIAL_MAP.put(Material.SEAGRASS, 12);
         MATERIAL_MAP.put(Material.TALL_SEAGRASS, 12);
         MATERIAL_MAP.put(Material.KELP, 12);

@@ -79,12 +79,13 @@ final class ColorGrabber {
             int colorIndex = (Integer) getField(materialMapColor, materialMapColorClass, "al");
             // BlockBase::v() => MinecraftKey
             String key = getter(block, blockBaseClass, "v").toString();
-            int idx = key.lastIndexOf("/");
-            if (idx < 0) {
-                MagicMapPlugin.getInstance().getLogger().warning("Illegal material: " + key + " / " + colorIndex);
+            //ResourceKey[minecraft:loot_table / minecraft:blocks/heavy_core]
+            final String prefix = "ResourceKey[minecraft:loot_table / minecraft:blocks/";
+            if (!key.startsWith(prefix)) {
+                MagicMapPlugin.getInstance().getLogger().warning("Illegal material: " + key);
                 continue;
             }
-            String mat = key.substring(idx + 1);
+            String mat = key.substring(prefix.length(), key.length() - 1);
             try {
                 final Material material = Material.valueOf(mat.toUpperCase());
                 indexList.add(new ColorEntry(colorIndex, material));
