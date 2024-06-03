@@ -5,16 +5,13 @@ import com.cavetale.core.event.block.PlayerChangeBlockEvent;
 import com.cavetale.core.event.block.PluginBlockEvent;
 import com.cavetale.core.struct.Vec2i;
 import com.cavetale.magicmap.file.WorldFileCache;
-import com.cavetale.mytems.Mytems;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
-import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -32,16 +29,11 @@ import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.block.SpongeAbsorbEvent;
 import org.bukkit.event.block.TNTPrimeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.player.PlayerItemHeldEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.StructureGrowEvent;
-import static com.cavetale.core.font.Unicode.tiny;
-import static com.cavetale.magicmap.MagicMapPlugin.isMagicMap;
-import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.Component.textOfChildren;
-import static net.kyori.adventure.text.format.NamedTextColor.*;
 
+/**
+ * Listen for map updates.
+ */
 @RequiredArgsConstructor
 public final class MagicMapListener implements Listener {
     private final MagicMapPlugin plugin;
@@ -49,33 +41,6 @@ public final class MagicMapListener implements Listener {
     public MagicMapListener enable() {
         Bukkit.getPluginManager().registerEvents(this, plugin);
         return this;
-    }
-
-    @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        plugin.getSessions().remove(event.getPlayer().getUniqueId());
-    }
-
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        plugin.getSession(event.getPlayer());
-        if (plugin.getMagicMapMytem() != null) {
-            plugin.getMagicMapMytem().fixPlayerInventory(event.getPlayer());
-        }
-    }
-
-    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
-    private void onPlayerItemHeld(PlayerItemHeldEvent event) {
-        final Player player = event.getPlayer();
-        if (!isMagicMap(player.getInventory().getItemInOffHand())) return;
-        if (!player.isSneaking()) return;
-        final Session session = plugin.getSession(player);
-        final MagicMapScale mapScale = MagicMapScale.values()[event.getNewSlot()];
-        session.setMapScale(mapScale);
-        player.sendActionBar(textOfChildren(Mytems.MAGIC_MAP,
-                                            text(tiny(" zoom "), DARK_PURPLE),
-                                            text(mapScale.zoomFormat, LIGHT_PURPLE)));
-        player.playSound(player.getLocation(), Sound.ITEM_SPYGLASS_USE, 1f, 2f);
     }
 
     private boolean requestBlockRerender(Block block) {

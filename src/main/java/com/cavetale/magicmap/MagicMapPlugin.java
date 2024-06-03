@@ -63,6 +63,8 @@ public final class MagicMapPlugin extends JavaPlugin {
         importConfig();
         new MagicMapListener(this).enable();
         if (getServer().getPluginManager().isPluginEnabled("Mytems")) {
+            new PlayerListener(this).enable();
+            getLogger().info("Player Listener enabled");
             magicMapMytem = new MagicMapMytem(this);
             magicMapMytem.register();
             getLogger().info("Mytem registered!");

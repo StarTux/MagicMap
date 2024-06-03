@@ -10,12 +10,12 @@ main: com.cavetale.magicmap.MagicMapPlugin
 
 depend:
 - Core
-- Mytems
 softdepend:
 - Area
-- Webserver
-- Home
 - Connect
+- Home
+- Mytems
+- Webserver
 
 commands:
 
