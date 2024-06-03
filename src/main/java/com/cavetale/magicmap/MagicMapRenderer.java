@@ -22,6 +22,7 @@ import org.bukkit.map.MapCursor;
 import org.bukkit.map.MapCursorCollection;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
+import static net.kyori.adventure.text.Component.text;
 
 final class MagicMapRenderer extends MapRenderer {
     private final MagicMapPlugin plugin;
@@ -177,10 +178,10 @@ final class MagicMapRenderer extends MapRenderer {
             if (Chat.doesIgnore(player.getUniqueId(), p.getUniqueId())) continue;
             final Location location = p.getLocation();
             if (!lastRender.getMapArea().containsBlock(location.getBlockX(), location.getBlockZ())) continue;
-            final MagicMapCursor playerCursor = MagicMapCursor.make(MapCursor.Type.FRAME, location, centerX, centerZ, mapScale, p.displayName());
+            final MagicMapCursor playerCursor = MagicMapCursor.make(MapCursor.Type.FRAME, location, centerX, centerZ, mapScale, text(p.getName()));
             result.add(playerCursor);
         }
-        result.add(MagicMapCursor.make(MapCursor.Type.PLAYER, player.getLocation(), centerX, centerZ, mapScale, player.displayName()));
+        result.add(MagicMapCursor.make(MapCursor.Type.PLAYER, player.getLocation(), centerX, centerZ, mapScale, text(player.getName())));
         new MagicMapCursorEvent(player, mapScale, lastRender.getMapArea(), result).callEvent();
         return result;
     }
