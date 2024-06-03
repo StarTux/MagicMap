@@ -100,9 +100,13 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             worldFileCache.enableWebserver();
             final String mapName;
             switch (server) {
-            case BETA:
-                mapName = worldFolder.getFileName().toString().replace("world", "beta");
+            case BETA: {
+                final String folderName = worldFolder.getFileName().toString();
+                mapName = folderName.startsWith("world")
+                    ? folderName.replace("world", "beta")
+                    : "beta." + folderName;
                 break;
+            }
             case HUB:
             case MINE:
             case EINS:
