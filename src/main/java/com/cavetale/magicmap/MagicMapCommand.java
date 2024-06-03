@@ -233,8 +233,11 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
     private boolean worldsBorderReset(CommandSender sender, String[] args) {
         if (args.length != 1) return false;
         final WorldFileCache cache = requireWorldFileCache(args[0]);
+        if (!cache.isPersistent()) {
+            throw new CommandWarn("World is not persistent: " + cache.getName());
+        }
         if (cache.getTag().getCustomWorldBorder() == null) {
-            throw new CommandWarn(cache.getName() + " does not have a custom world border");
+            throw new CommandWarn("No custom world border: " + cache.getName());
         }
         cache.getTag().setCustomWorldBorder(null);
         cache.saveTag();
@@ -245,6 +248,9 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
     private boolean worldsBorderSet(CommandSender sender, String[] args) {
         if (args.length != 7) return false;
         final WorldFileCache cache = requireWorldFileCache(args[0]);
+        if (!cache.isPersistent()) {
+            throw new CommandWarn("World is not persistent: " + cache.getName());
+        }
         final WorldBorderCache border = new WorldBorderCache(CommandArgCompleter.requireInt(args[1]),
                                                              CommandArgCompleter.requireInt(args[2]),
                                                              CommandArgCompleter.requireInt(args[3]),
@@ -263,6 +269,9 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
     private boolean worldsDisplayNameReset(CommandSender sender, String[] args) {
         if (args.length != 1) return false;
         final WorldFileCache cache = requireWorldFileCache(args[0]);
+        if (!cache.isPersistent()) {
+            throw new CommandWarn("World is not persistent: " + cache.getName());
+        }
         if (cache.getTag().getDisplayName() == null) {
             throw new CommandWarn(cache.getName() + " does not set a display name");
         }
@@ -275,6 +284,9 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
     private boolean worldsDisplayNameSet(CommandSender sender, String[] args) {
         if (args.length < 2) return false;
         final WorldFileCache cache = requireWorldFileCache(args[0]);
+        if (!cache.isPersistent()) {
+            throw new CommandWarn("World is not persistent: " + cache.getName());
+        }
         cache.getTag().setDisplayName(String.join(" ", copyOfRange(args, 1, args.length)));
         cache.saveTag();
         sender.sendMessage(text("Display name was updated: " + cache.getName() + ", " + cache.getDisplayName(), YELLOW));
@@ -284,6 +296,9 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
     private boolean fullRenderStart(CommandSender sender, String[] args) {
         if (args.length != 1) return false;
         final WorldFileCache cache = requireWorldFileCache(args[0]);
+        if (!cache.isPersistent()) {
+            throw new CommandWarn("World is not persistent: " + cache.getName());
+        }
         if (cache.isFullRenderScheduled()) {
             throw new CommandWarn("Full render is already scheduled: " + cache.getName());
         }
@@ -298,6 +313,9 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
     private boolean fullRenderStop(CommandSender sender, String[] args) {
         if (args.length != 1) return false;
         final WorldFileCache cache = requireWorldFileCache(args[0]);
+        if (!cache.isPersistent()) {
+            throw new CommandWarn("World is not persistent: " + cache.getName());
+        }
         if (!cache.isFullRenderScheduled()) {
             throw new CommandWarn(cache.getName() + " does not have an active full render");
         }
@@ -309,6 +327,9 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
     private boolean fullRenderInfo(CommandSender sender, String[] args) {
         if (args.length != 1) return false;
         final WorldFileCache cache = requireWorldFileCache(args[0]);
+        if (!cache.isPersistent()) {
+            throw new CommandWarn("World is not persistent: " + cache.getName());
+        }
         if (!cache.isFullRenderScheduled()) {
             throw new CommandWarn(cache.getName() + " does not have an active full render");
         }
@@ -354,6 +375,9 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
     private boolean fullRenderPause(CommandSender sender, String[] args) {
         if (args.length != 1) return false;
         final WorldFileCache cache = requireWorldFileCache(args[0]);
+        if (!cache.isPersistent()) {
+            throw new CommandWarn("World is not persistent: " + cache.getName());
+        }
         if (!cache.isFullRenderScheduled()) {
             throw new CommandWarn(cache.getName() + " does not have an active full render");
         }
@@ -368,6 +392,9 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
     private boolean fullRenderUnpause(CommandSender sender, String[] args) {
         if (args.length != 1) return false;
         final WorldFileCache cache = requireWorldFileCache(args[0]);
+        if (!cache.isPersistent()) {
+            throw new CommandWarn("World is not persistent: " + cache.getName());
+        }
         if (!cache.isFullRenderScheduled()) {
             throw new CommandWarn(cache.getName() + " does not have an active full render");
         }
