@@ -7,14 +7,11 @@ import com.cavetale.magicmap.mytems.MagicMapMytem;
 import com.cavetale.magicmap.webserver.WebserverManager;
 import java.io.File;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -22,7 +19,6 @@ import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.potion.PotionEffectType;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
@@ -49,7 +45,6 @@ public final class MagicMapPlugin extends JavaPlugin {
     private WebserverManager webserverManager;
     private MagicMapHome magicMapHome;
     // Player locations for the web server
-    private Map<UUID, PlayerLocationTag> playerLocationTags = new HashMap<>();
 
     @Override
     public void onLoad() {
@@ -66,7 +61,6 @@ public final class MagicMapPlugin extends JavaPlugin {
         magicMapCommand = new MagicMapCommand(this);
         magicMapCommand.enable();
         importConfig();
-        getServer().getScheduler().runTaskTimer(this, this::tick, 1L, 1L);
         new MagicMapListener(this).enable();
         if (getServer().getPluginManager().isPluginEnabled("Mytems")) {
             magicMapMytem = new MagicMapMytem(this);
@@ -91,6 +85,10 @@ public final class MagicMapPlugin extends JavaPlugin {
             } else {
                 getLogger().warning("Home module disabled");
             }
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("Connect")) {
+            new LocalPlayersModule().enable();
+            getLogger().info("Local players module enabled");
         }
         worlds.enableWorldServer();
     }
@@ -135,53 +133,6 @@ public final class MagicMapPlugin extends JavaPlugin {
             mapView.removeRenderer(renderer);
         }
         mapView.addRenderer(magicMapRenderer);
-    }
-
-    private void tick() {
-        updatePlayerLocationTags();
-    }
-
-    /**
-     * This is run on every live server for the web server to pick it
-     * up in WebserverManager with a method of the same name.
-     */
-    private void updatePlayerLocationTags() {
-        // Remove offline players
-        for (Iterator<Map.Entry<UUID, PlayerLocationTag>> iter = playerLocationTags.entrySet().iterator(); iter.hasNext();) {
-            final Map.Entry<UUID, PlayerLocationTag> entry = iter.next();
-            final UUID uuid = entry.getKey();
-            final PlayerLocationTag tag = entry.getValue();
-            if (Bukkit.getPlayer(uuid) == null) {
-                tag.removeFromRedisAsync(uuid, null);
-                iter.remove();
-            }
-        }
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            final UUID uuid = player.getUniqueId();
-            final Location location = player.getLocation();
-            PlayerLocationTag tag = playerLocationTags.get(uuid);
-            if (shouldHidePlayer(player)) {
-                if (tag != null) {
-                    playerLocationTags.remove(uuid);
-                    tag.removeFromRedisAsync(uuid, null);
-                }
-            } else if (tag == null) {
-                tag = new PlayerLocationTag();
-                tag.update(location);
-                playerLocationTags.put(uuid, tag);
-                tag.saveToRedisAsync(uuid, null);
-            } else if (tag.isOutOfDate() || tag.didChange(location)) {
-                tag.update(location);
-                tag.saveToRedisAsync(uuid, null);
-            }
-        }
-    }
-
-    private static boolean shouldHidePlayer(Player player) {
-        return player.isInvisible()
-            || player.getGameMode() == GameMode.SPECTATOR
-            || player.hasPotionEffect(PotionEffectType.INVISIBILITY)
-            || player.hasPermission("magicmap.hidden");
     }
 
     public Session getSession(Player player) {
