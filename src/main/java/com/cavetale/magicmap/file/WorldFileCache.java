@@ -40,7 +40,8 @@ public final class WorldFileCache {
     private File tagFile;
     private WorldFileTag tag;
     // Timing
-    private static final double TPS_THRESHOLD = 19.9;
+    private static final double TPS_LOWER_THRESHOLD = 19.5;
+    private static final double TPS_UPPER_THRESHOLD = 19.9;
     private long timeAdjustmentCooldown = 0L;
     // Rendering
     private ChunkRenderTask chunkRenderTask;
@@ -276,7 +277,7 @@ public final class WorldFileCache {
     private void fullRenderIter(FullRenderTag fullRender, final long startTime) {
         final double tps = Bukkit.getTPS()[0];
         if (fullRender.getTimeout() > startTime) {
-            if (tps > TPS_THRESHOLD) {
+            if (tps > TPS_UPPER_THRESHOLD) {
                 fullRender.setTimeout(0L);
             } else {
                 fullRender.setStatus("Timeout");
@@ -286,10 +287,10 @@ public final class WorldFileCache {
             fullRender.setTimeout(0L);
         }
         final long maxMillis = fullRender.getMaxMillisPerTick();
-        if (tps < TPS_THRESHOLD) {
+        if (tps < TPS_LOWER_THRESHOLD) {
             // Lower millis per tick if necessary
             fullRender.setTimeout(startTime + 10_000L);
-            if (maxMillis > 1L) {
+            if (maxMillis > 10L) {
                 final long newMaxMillis = maxMillis - 1;
                 fullRender.setMaxMillisPerTick(newMaxMillis);
                 timeAdjustmentCooldown = startTime + 600_000L;
@@ -299,7 +300,7 @@ public final class WorldFileCache {
             }
             fullRender.setStatus("Decreasing max millis per tick");
             return;
-        } else if (tps > TPS_THRESHOLD && startTime > timeAdjustmentCooldown && maxMillis < 50) {
+        } else if (tps > TPS_UPPER_THRESHOLD && startTime > timeAdjustmentCooldown && maxMillis < 50) {
             // Every now and then, try raising millis per tick
             final long newMaxMillis = maxMillis + 1L;
             fullRender.setMaxMillisPerTick(newMaxMillis);
