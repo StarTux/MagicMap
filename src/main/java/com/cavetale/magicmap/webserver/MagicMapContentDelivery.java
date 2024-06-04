@@ -4,6 +4,8 @@ import com.cavetale.core.chat.ChannelChatEvent;
 import com.cavetale.core.chat.Chat;
 import com.cavetale.core.connect.Connect;
 import com.cavetale.core.connect.NetworkServer;
+import com.cavetale.core.connect.ServerCategory;
+import com.cavetale.core.connect.ServerGroup;
 import com.cavetale.core.playercache.PlayerCache;
 import com.cavetale.home.Claim;
 import com.cavetale.home.HomePlugin;
@@ -60,6 +62,12 @@ public final class MagicMapContentDelivery implements ContentDelivery {
      */
     public MagicMapContentDelivery enable() {
         for (NetworkServer server : NetworkServer.values()) {
+            // Show the beta server only on the test web server
+            if (server.group != ServerGroup.MAIN && NetworkServer.current() != NetworkServer.BETA) continue;
+            // Exclude some categories
+            if (server.category == ServerCategory.TECHNICAL) continue;
+            if (server.category == ServerCategory.UNKNOWN) continue;
+            if (server.category == ServerCategory.WORLD_GENERATION) continue;
             enableNetworkServer(server);
         }
         return this;
