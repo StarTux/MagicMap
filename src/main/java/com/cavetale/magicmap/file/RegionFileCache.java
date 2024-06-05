@@ -23,6 +23,9 @@ public final class RegionFileCache {
     private State state = State.INIT;
     private int noTicks = 0;
     private BitSet renderedChunks = new BitSet(1024);
+    /** This is a gate for async load and save operations so they are
+        only scheduled once. */
+    private boolean busy = false;
 
     public enum State {
         INIT,

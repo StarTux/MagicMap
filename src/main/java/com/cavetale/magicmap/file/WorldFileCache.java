@@ -540,6 +540,21 @@ public final class WorldFileCache {
         return true;
     }
 
+    public boolean requestRegionRerender(int regionX, int regionZ) {
+        if (isFullRenderScheduled()) return false;
+        final int ax = (regionX << 5);
+        final int az = (regionZ << 5);
+        final int bx = ax + 31;
+        final int bz = az + 31;
+        boolean result = false;
+        for (int z = az; z <= bz; z += 1) {
+            for (int x = ax; x <= bx; x += 1) {
+                result |= requestChunkRerender(x, z);
+            }
+        }
+        return result;
+    }
+
     /**
      * Regular cleaning up of unused regions.
      */

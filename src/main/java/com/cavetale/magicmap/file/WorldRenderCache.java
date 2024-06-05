@@ -155,6 +155,8 @@ public final class WorldRenderCache {
             currentAsyncRegion = null;
             return;
         }
+        if (regionFileCache.isBusy()) return;
+        regionFileCache.setBusy(true);
         Bukkit.getScheduler().runTaskAsynchronously(plugin(), () -> {
                 switch (regionFileCache.getState()) {
                 case LOADING:
@@ -169,6 +171,7 @@ public final class WorldRenderCache {
                     break;
                 }
                 Bukkit.getScheduler().runTask(plugin(), () -> {
+                        regionFileCache.setBusy(false);
                         if (!regionFileCache.getRegion().equals(currentAsyncRegion)) {
                             plugin().getLogger().severe("[" + worldFileCache.getName() + "/" + renderType + "] current async region changed"
                                                         + " from " + regionFileCache.getRegion()

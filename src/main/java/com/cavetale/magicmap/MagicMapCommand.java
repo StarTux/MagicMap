@@ -49,6 +49,11 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
             .description("Get mapped world info")
             .completers(CommandArgCompleter.supplyList(() -> plugin.getWorlds().getWorldNames()))
             .senderCaller(this::worldsInfo);
+        worldsNode.addChild("renderregion").arguments("<world> <x> <z>")
+            .description("Schedule a region rerender")
+            .completers(CommandArgCompleter.supplyList(() -> plugin.getWorlds().getWorldNames()),
+                        CommandArgCompleter.INTEGER, CommandArgCompleter.INTEGER)
+            .senderCaller(this::worldsRenderRegion);
         final CommandNode worldsBorderNode = worldsNode.addChild("border")
             .description("Custom world border");
         worldsBorderNode.addChild("reset").arguments("<world>")
@@ -227,6 +232,25 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
                                                ? renderCache.getChunkRenderTask().getInfoComponent()
                                                : text("None", DARK_GRAY))));
         }
+        return true;
+    }
+
+    private boolean worldsRenderRegion(CommandSender sender, String[] args) {
+        if (args.length != 3) return false;
+        final WorldFileCache cache = requireWorldFileCache(args[0]);
+        final int regionX = CommandArgCompleter.requireInt(args[1]);
+        final int regionZ = CommandArgCompleter.requireInt(args[2]);
+        if (!cache.isPersistent()) {
+            throw new CommandWarn("World is not persistent: " + cache.getName());
+        }
+        if (!cache.isPersistent()) {
+            throw new CommandWarn("World is not persistent: " + cache.getName());
+        }
+        final boolean result = cache.requestRegionRerender(regionX, regionZ);
+        if (!result) {
+            throw new CommandWarn("Chunk rerender request failed: " + cache.getName() + " " + regionX + " " + regionZ);
+        }
+        sender.sendMessage(text("Chunk rerender requested: " + cache.getName() + " " + regionX + " " + regionZ, YELLOW));
         return true;
     }
 

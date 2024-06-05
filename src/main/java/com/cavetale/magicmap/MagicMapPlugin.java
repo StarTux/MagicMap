@@ -65,6 +65,7 @@ public final class MagicMapPlugin extends JavaPlugin {
         importConfig();
         if (NetworkServer.current().getCategory() != ServerCategory.WORLD_GENERATION) {
             new BlockChangeListener(this).enable();
+            getLogger().info("Block change listener enabled");
         }
         if (getServer().getPluginManager().isPluginEnabled("Mytems")) {
             new PlayerListener(this).enable();
