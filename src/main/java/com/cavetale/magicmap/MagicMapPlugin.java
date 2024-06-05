@@ -1,5 +1,7 @@
 package com.cavetale.magicmap;
 
+import com.cavetale.core.connect.NetworkServer;
+import com.cavetale.core.connect.ServerCategory;
 import com.cavetale.core.util.Json;
 import com.cavetale.magicmap.file.Worlds;
 import com.cavetale.magicmap.home.MagicMapHome;
@@ -61,7 +63,9 @@ public final class MagicMapPlugin extends JavaPlugin {
         magicMapCommand = new MagicMapCommand(this);
         magicMapCommand.enable();
         importConfig();
-        new MagicMapListener(this).enable();
+        if (NetworkServer.current().getCategory() != ServerCategory.WORLD_GENERATION) {
+            new BlockChangeListener(this).enable();
+        }
         if (getServer().getPluginManager().isPluginEnabled("Mytems")) {
             new PlayerListener(this).enable();
             getLogger().info("Player Listener enabled");

@@ -528,6 +528,7 @@ public final class WorldFileCache {
      *   bounds.
      */
     public boolean requestChunkRerender(int chunkX, int chunkZ) {
+        if (isFullRenderScheduled()) return false;
         if (!getEffectiveWorldBorder().containsChunk(chunkX, chunkZ)) {
             return false;
         }
@@ -560,6 +561,7 @@ public final class WorldFileCache {
         final FullRenderTag fullRender = new FullRenderTag();
         fullRender.setWorldBorder(computeWorldBorder());
         tag.setFullRender(fullRender);
+        chunkRenderQueue.clear();
         saveTag();
         return fullRender;
     }

@@ -35,10 +35,10 @@ import org.bukkit.event.world.StructureGrowEvent;
  * Listen for map updates.
  */
 @RequiredArgsConstructor
-public final class MagicMapListener implements Listener {
+public final class BlockChangeListener implements Listener {
     private final MagicMapPlugin plugin;
 
-    public MagicMapListener enable() {
+    public BlockChangeListener enable() {
         Bukkit.getPluginManager().registerEvents(this, plugin);
         return this;
     }
