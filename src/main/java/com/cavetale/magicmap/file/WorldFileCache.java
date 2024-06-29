@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 import lombok.Data;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
@@ -85,19 +86,24 @@ public final class WorldFileCache {
             doSaveTag = true;
         }
         final List<RenderType> renderTypes = new ArrayList<>();
-        switch (environment) {
-        case NORMAL:
-            renderTypes.add(RenderType.SURFACE);
-            renderTypes.add(RenderType.CAVE);
-            break;
-        case NETHER:
-            renderTypes.add(RenderType.NETHER);
-            break;
-        case THE_END:
-        case CUSTOM:
-        default:
-            renderTypes.add(RenderType.SURFACE);
-            break;
+        final List<RenderType> configRenderTypes = getConfigRenderTypes(world);
+        if (!configRenderTypes.isEmpty()) {
+            renderTypes.addAll(configRenderTypes);
+        } else {
+            switch (environment) {
+            case NORMAL:
+                renderTypes.add(RenderType.SURFACE);
+                renderTypes.add(RenderType.CAVE);
+                break;
+            case NETHER:
+                renderTypes.add(RenderType.NETHER);
+                break;
+            case THE_END:
+            case CUSTOM:
+            default:
+                renderTypes.add(RenderType.SURFACE);
+                break;
+            }
         }
         if (!renderTypes.equals(tag.getRenderTypes())) {
             tag.setRenderTypes(renderTypes);
@@ -111,6 +117,23 @@ public final class WorldFileCache {
             renderTypeMap.put(renderType, worldRenderCache);
             worldRenderCache.enable();
         }
+    }
+
+    private static List<RenderType> getConfigRenderTypes(World world) {
+        final String worldName = world.getName();
+        final String path = "RenderTypes." + worldName;
+        if (!plugin().getConfig().isList(path)) {
+            return List.of();
+        }
+        final List<RenderType> result = new ArrayList<>();
+        for (String entry : plugin().getConfig().getStringList(path)) {
+            try {
+                result.add(RenderType.valueOf(entry.toUpperCase()));
+            } catch (IllegalArgumentException iae) {
+                plugin().getLogger().log(Level.SEVERE, "world=" + worldName + " entry=" + entry);
+            }
+        }
+        return result;
     }
 
     public void disableWorld() {

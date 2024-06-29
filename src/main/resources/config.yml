@@ -1,3 +1,8 @@
 debug: false
 AllWorlds: false
 MapWorlds: []
+RenderTypes:
+  Example:
+  - surface
+  - cave
+  - nether
