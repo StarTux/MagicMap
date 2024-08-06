@@ -75,16 +75,19 @@ public final class WorldFileCache {
             tag = new WorldFileTag();
         }
         boolean doSaveTag = false;
+        // Update world border from world
         final WorldBorderCache worldBorder = WorldBorderCache.of(world);
         if (!worldBorder.equals(tag.getWorldBorder())) {
             tag.setWorldBorder(computeWorldBorder());
             doSaveTag = true;
         }
+        // Update environment from world
         final Environment environment = world.getEnvironment();
         if (environment != tag.getEnvironment()) {
             tag.setEnvironment(environment);
             doSaveTag = true;
         }
+        // Update render types from config
         final List<RenderType> renderTypes = new ArrayList<>();
         final List<RenderType> configRenderTypes = getConfigRenderTypes(world);
         if (!configRenderTypes.isEmpty()) {
@@ -109,6 +112,13 @@ public final class WorldFileCache {
             tag.setRenderTypes(renderTypes);
             doSaveTag = true;
         }
+        // Update display name from config
+        final String displayName = plugin().getConfig().getString("DisplayNames." + world.getName());
+        if (displayName != null && !displayName.equals(tag.getDisplayName())) {
+            tag.setDisplayName(displayName);
+            doSaveTag = true;
+        }
+        // Save
         if (persistent && doSaveTag) {
             saveTag();
         }

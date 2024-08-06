@@ -6,3 +6,7 @@ RenderTypes:
   - surface
   - cave
   - nether
+DisplayNames:
+  world: Overworld
+  world_nether: Nether
+  world_the_end: End
