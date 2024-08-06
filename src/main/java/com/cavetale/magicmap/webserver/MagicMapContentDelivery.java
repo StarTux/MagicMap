@@ -68,6 +68,7 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             if (server.category == ServerCategory.TECHNICAL) continue;
             if (server.category == ServerCategory.UNKNOWN) continue;
             if (server.category == ServerCategory.WORLD_GENERATION) continue;
+            if (server.category == ServerCategory.MINIGAME) continue;
             enableNetworkServer(server);
         }
         return this;
