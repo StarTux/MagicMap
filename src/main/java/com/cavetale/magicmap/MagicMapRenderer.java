@@ -49,6 +49,7 @@ final class MagicMapRenderer extends MapRenderer {
             // Paste
             new MagicMapPostRenderEvent(player, rendered, image).callEvent();
             canvas.drawImage(0, 0, image);
+            Bukkit.getScheduler().runTask(plugin, () -> player.sendMap(view));
         }
         if (!session.isRendering()) {
             final boolean renderResult = renderNow(player, session);
