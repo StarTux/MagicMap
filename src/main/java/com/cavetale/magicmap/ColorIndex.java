@@ -123,6 +123,7 @@ public enum ColorIndex {
         for (ColorIndex it : values()) {
             INDEXED[it.index] = it;
         }
+        MATERIAL_MAP.put(Material.AIR, 0);
         MATERIAL_MAP.put(Material.GLASS, 0);
         MATERIAL_MAP.put(Material.POWERED_RAIL, 0);
         MATERIAL_MAP.put(Material.DETECTOR_RAIL, 0);
@@ -143,7 +144,6 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.IRON_BARS, 0);
         MATERIAL_MAP.put(Material.CHAIN, 0);
         MATERIAL_MAP.put(Material.GLASS_PANE, 0);
-        MATERIAL_MAP.put(Material.REDSTONE_LAMP, 0);
         MATERIAL_MAP.put(Material.TRIPWIRE_HOOK, 0);
         MATERIAL_MAP.put(Material.TRIPWIRE, 0);
         MATERIAL_MAP.put(Material.FLOWER_POT, 0);
@@ -155,6 +155,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.POTTED_ACACIA_SAPLING, 0);
         MATERIAL_MAP.put(Material.POTTED_CHERRY_SAPLING, 0);
         MATERIAL_MAP.put(Material.POTTED_DARK_OAK_SAPLING, 0);
+        MATERIAL_MAP.put(Material.POTTED_PALE_OAK_SAPLING, 0);
         MATERIAL_MAP.put(Material.POTTED_MANGROVE_PROPAGULE, 0);
         MATERIAL_MAP.put(Material.POTTED_FERN, 0);
         MATERIAL_MAP.put(Material.POTTED_DANDELION, 0);
@@ -181,6 +182,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.ACACIA_BUTTON, 0);
         MATERIAL_MAP.put(Material.CHERRY_BUTTON, 0);
         MATERIAL_MAP.put(Material.DARK_OAK_BUTTON, 0);
+        MATERIAL_MAP.put(Material.PALE_OAK_BUTTON, 0);
         MATERIAL_MAP.put(Material.MANGROVE_BUTTON, 0);
         MATERIAL_MAP.put(Material.BAMBOO_BUTTON, 0);
         MATERIAL_MAP.put(Material.SKELETON_SKULL, 0);
@@ -215,8 +217,13 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.GREEN_STAINED_GLASS_PANE, 0);
         MATERIAL_MAP.put(Material.RED_STAINED_GLASS_PANE, 0);
         MATERIAL_MAP.put(Material.BLACK_STAINED_GLASS_PANE, 0);
+        MATERIAL_MAP.put(Material.BARRIER, 0);
+        MATERIAL_MAP.put(Material.LIGHT, 0);
         MATERIAL_MAP.put(Material.END_ROD, 0);
+        MATERIAL_MAP.put(Material.STRUCTURE_VOID, 0);
         MATERIAL_MAP.put(Material.POTTED_BAMBOO, 0);
+        MATERIAL_MAP.put(Material.VOID_AIR, 0);
+        MATERIAL_MAP.put(Material.CAVE_AIR, 0);
         MATERIAL_MAP.put(Material.CRIMSON_BUTTON, 0);
         MATERIAL_MAP.put(Material.WARPED_BUTTON, 0);
         MATERIAL_MAP.put(Material.POTTED_CRIMSON_FUNGUS, 0);
@@ -287,6 +294,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.COBWEB, 3);
         MATERIAL_MAP.put(Material.MUSHROOM_STEM, 3);
         MATERIAL_MAP.put(Material.WHITE_CANDLE, 3);
+        MATERIAL_MAP.put(Material.LAVA, 4);
         MATERIAL_MAP.put(Material.TNT, 4);
         MATERIAL_MAP.put(Material.FIRE, 4);
         MATERIAL_MAP.put(Material.REDSTONE_BLOCK, 4);
@@ -426,6 +434,8 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.ANDESITE, 11);
         MATERIAL_MAP.put(Material.POLISHED_ANDESITE, 11);
         MATERIAL_MAP.put(Material.COBBLESTONE, 11);
+        MATERIAL_MAP.put(Material.PALE_OAK_WOOD, 11);
+        MATERIAL_MAP.put(Material.BEDROCK, 11);
         MATERIAL_MAP.put(Material.GRAVEL, 11);
         MATERIAL_MAP.put(Material.SUSPICIOUS_GRAVEL, 11);
         MATERIAL_MAP.put(Material.GOLD_ORE, 11);
@@ -435,6 +445,8 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.DISPENSER, 11);
         MATERIAL_MAP.put(Material.STICKY_PISTON, 11);
         MATERIAL_MAP.put(Material.PISTON, 11);
+        MATERIAL_MAP.put(Material.PISTON_HEAD, 11);
+        MATERIAL_MAP.put(Material.MOVING_PISTON, 11);
         MATERIAL_MAP.put(Material.MOSSY_COBBLESTONE, 11);
         MATERIAL_MAP.put(Material.SPAWNER, 11);
         MATERIAL_MAP.put(Material.DIAMOND_ORE, 11);
@@ -482,10 +494,12 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.CRAFTER, 11);
         MATERIAL_MAP.put(Material.TRIAL_SPAWNER, 11);
         MATERIAL_MAP.put(Material.VAULT, 11);
+        MATERIAL_MAP.put(Material.WATER, 12);
         MATERIAL_MAP.put(Material.SEAGRASS, 12);
         MATERIAL_MAP.put(Material.TALL_SEAGRASS, 12);
         MATERIAL_MAP.put(Material.KELP, 12);
         MATERIAL_MAP.put(Material.KELP_PLANT, 12);
+        MATERIAL_MAP.put(Material.BUBBLE_COLUMN, 12);
         MATERIAL_MAP.put(Material.FROGSPAWN, 12);
         MATERIAL_MAP.put(Material.OAK_PLANKS, 13);
         MATERIAL_MAP.put(Material.OAK_LOG, 13);
@@ -556,13 +570,29 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.BEEHIVE, 13);
         MATERIAL_MAP.put(Material.DIORITE, 14);
         MATERIAL_MAP.put(Material.POLISHED_DIORITE, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_PLANKS, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_SAPLING, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_LOG, 14);
+        MATERIAL_MAP.put(Material.STRIPPED_PALE_OAK_LOG, 14);
+        MATERIAL_MAP.put(Material.STRIPPED_PALE_OAK_WOOD, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_SIGN, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_SIGN, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_HANGING_SIGN, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_HANGING_SIGN, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_PRESSURE_PLATE, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_TRAPDOOR, 14);
         MATERIAL_MAP.put(Material.QUARTZ_BLOCK, 14);
         MATERIAL_MAP.put(Material.CHISELED_QUARTZ_BLOCK, 14);
         MATERIAL_MAP.put(Material.QUARTZ_PILLAR, 14);
         MATERIAL_MAP.put(Material.QUARTZ_STAIRS, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_STAIRS, 14);
         MATERIAL_MAP.put(Material.SEA_LANTERN, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_SLAB, 14);
         MATERIAL_MAP.put(Material.QUARTZ_SLAB, 14);
         MATERIAL_MAP.put(Material.SMOOTH_QUARTZ, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_FENCE_GATE, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_FENCE, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_DOOR, 14);
         MATERIAL_MAP.put(Material.POLISHED_DIORITE_STAIRS, 14);
         MATERIAL_MAP.put(Material.SMOOTH_QUARTZ_STAIRS, 14);
         MATERIAL_MAP.put(Material.DIORITE_STAIRS, 14);
@@ -579,6 +609,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.STRIPPED_ACACIA_WOOD, 15);
         MATERIAL_MAP.put(Material.ORANGE_BED, 15);
         MATERIAL_MAP.put(Material.ORANGE_WOOL, 15);
+        MATERIAL_MAP.put(Material.CREAKING_HEART, 15);
         MATERIAL_MAP.put(Material.ACACIA_SIGN, 15);
         MATERIAL_MAP.put(Material.ACACIA_SIGN, 15);
         MATERIAL_MAP.put(Material.ACACIA_HANGING_SIGN, 15);
@@ -687,7 +718,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.HORN_CORAL_BLOCK, 18);
         MATERIAL_MAP.put(Material.HORN_CORAL, 18);
         MATERIAL_MAP.put(Material.HORN_CORAL_FAN, 18);
-        MATERIAL_MAP.put(Material.HORN_CORAL_FAN, 18);
+        MATERIAL_MAP.put(Material.HORN_CORAL_WALL_FAN, 18);
         MATERIAL_MAP.put(Material.BEE_NEST, 18);
         MATERIAL_MAP.put(Material.YELLOW_CANDLE, 18);
         MATERIAL_MAP.put(Material.LIME_BED, 19);
@@ -713,7 +744,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.BRAIN_CORAL_BLOCK, 20);
         MATERIAL_MAP.put(Material.BRAIN_CORAL, 20);
         MATERIAL_MAP.put(Material.BRAIN_CORAL_FAN, 20);
-        MATERIAL_MAP.put(Material.BRAIN_CORAL_FAN, 20);
+        MATERIAL_MAP.put(Material.BRAIN_CORAL_WALL_FAN, 20);
         MATERIAL_MAP.put(Material.PINK_CANDLE, 20);
         MATERIAL_MAP.put(Material.PEARLESCENT_FROGLIGHT, 20);
         MATERIAL_MAP.put(Material.ACACIA_WOOD, 21);
@@ -740,11 +771,11 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.DEAD_BUBBLE_CORAL_FAN, 21);
         MATERIAL_MAP.put(Material.DEAD_FIRE_CORAL_FAN, 21);
         MATERIAL_MAP.put(Material.DEAD_HORN_CORAL_FAN, 21);
-        MATERIAL_MAP.put(Material.DEAD_TUBE_CORAL_FAN, 21);
-        MATERIAL_MAP.put(Material.DEAD_BRAIN_CORAL_FAN, 21);
-        MATERIAL_MAP.put(Material.DEAD_BUBBLE_CORAL_FAN, 21);
-        MATERIAL_MAP.put(Material.DEAD_FIRE_CORAL_FAN, 21);
-        MATERIAL_MAP.put(Material.DEAD_HORN_CORAL_FAN, 21);
+        MATERIAL_MAP.put(Material.DEAD_TUBE_CORAL_WALL_FAN, 21);
+        MATERIAL_MAP.put(Material.DEAD_BRAIN_CORAL_WALL_FAN, 21);
+        MATERIAL_MAP.put(Material.DEAD_BUBBLE_CORAL_WALL_FAN, 21);
+        MATERIAL_MAP.put(Material.DEAD_FIRE_CORAL_WALL_FAN, 21);
+        MATERIAL_MAP.put(Material.DEAD_HORN_CORAL_WALL_FAN, 21);
         MATERIAL_MAP.put(Material.GRAY_CANDLE, 21);
         MATERIAL_MAP.put(Material.TINTED_GLASS, 21);
         MATERIAL_MAP.put(Material.LIGHT_GRAY_BED, 22);
@@ -755,7 +786,12 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.LIGHT_GRAY_GLAZED_TERRACOTTA, 22);
         MATERIAL_MAP.put(Material.LIGHT_GRAY_CONCRETE, 22);
         MATERIAL_MAP.put(Material.LIGHT_GRAY_CONCRETE_POWDER, 22);
+        MATERIAL_MAP.put(Material.STRUCTURE_BLOCK, 22);
+        MATERIAL_MAP.put(Material.JIGSAW, 22);
         MATERIAL_MAP.put(Material.LIGHT_GRAY_CANDLE, 22);
+        MATERIAL_MAP.put(Material.PALE_MOSS_BLOCK, 22);
+        MATERIAL_MAP.put(Material.PALE_MOSS_CARPET, 22);
+        MATERIAL_MAP.put(Material.PALE_HANGING_MOSS, 22);
         MATERIAL_MAP.put(Material.CYAN_BED, 23);
         MATERIAL_MAP.put(Material.CYAN_WOOL, 23);
         MATERIAL_MAP.put(Material.CYAN_STAINED_GLASS, 23);
@@ -783,6 +819,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.PURPLE_CARPET, 24);
         MATERIAL_MAP.put(Material.CHORUS_PLANT, 24);
         MATERIAL_MAP.put(Material.CHORUS_FLOWER, 24);
+        MATERIAL_MAP.put(Material.REPEATING_COMMAND_BLOCK, 24);
         MATERIAL_MAP.put(Material.SHULKER_BOX, 24);
         MATERIAL_MAP.put(Material.PURPLE_GLAZED_TERRACOTTA, 24);
         MATERIAL_MAP.put(Material.PURPLE_CONCRETE, 24);
@@ -790,7 +827,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.BUBBLE_CORAL_BLOCK, 24);
         MATERIAL_MAP.put(Material.BUBBLE_CORAL, 24);
         MATERIAL_MAP.put(Material.BUBBLE_CORAL_FAN, 24);
-        MATERIAL_MAP.put(Material.BUBBLE_CORAL_FAN, 24);
+        MATERIAL_MAP.put(Material.BUBBLE_CORAL_WALL_FAN, 24);
         MATERIAL_MAP.put(Material.PURPLE_CANDLE, 24);
         MATERIAL_MAP.put(Material.AMETHYST_BLOCK, 24);
         MATERIAL_MAP.put(Material.BUDDING_AMETHYST, 24);
@@ -809,7 +846,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.TUBE_CORAL_BLOCK, 25);
         MATERIAL_MAP.put(Material.TUBE_CORAL, 25);
         MATERIAL_MAP.put(Material.TUBE_CORAL_FAN, 25);
-        MATERIAL_MAP.put(Material.TUBE_CORAL_FAN, 25);
+        MATERIAL_MAP.put(Material.TUBE_CORAL_WALL_FAN, 25);
         MATERIAL_MAP.put(Material.BLUE_CANDLE, 25);
         MATERIAL_MAP.put(Material.DARK_OAK_PLANKS, 26);
         MATERIAL_MAP.put(Material.DARK_OAK_LOG, 26);
@@ -828,6 +865,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.SOUL_SOIL, 26);
         MATERIAL_MAP.put(Material.BROWN_STAINED_GLASS, 26);
         MATERIAL_MAP.put(Material.DARK_OAK_TRAPDOOR, 26);
+        MATERIAL_MAP.put(Material.COMMAND_BLOCK, 26);
         MATERIAL_MAP.put(Material.DARK_OAK_STAIRS, 26);
         MATERIAL_MAP.put(Material.BROWN_CARPET, 26);
         MATERIAL_MAP.put(Material.DARK_OAK_SLAB, 26);
@@ -842,7 +880,9 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.GREEN_BED, 27);
         MATERIAL_MAP.put(Material.GREEN_WOOL, 27);
         MATERIAL_MAP.put(Material.GREEN_STAINED_GLASS, 27);
+        MATERIAL_MAP.put(Material.END_PORTAL_FRAME, 27);
         MATERIAL_MAP.put(Material.GREEN_CARPET, 27);
+        MATERIAL_MAP.put(Material.CHAIN_COMMAND_BLOCK, 27);
         MATERIAL_MAP.put(Material.GREEN_SHULKER_BOX, 27);
         MATERIAL_MAP.put(Material.GREEN_GLAZED_TERRACOTTA, 27);
         MATERIAL_MAP.put(Material.GREEN_CONCRETE, 27);
@@ -888,7 +928,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.FIRE_CORAL_BLOCK, 28);
         MATERIAL_MAP.put(Material.FIRE_CORAL, 28);
         MATERIAL_MAP.put(Material.FIRE_CORAL_FAN, 28);
-        MATERIAL_MAP.put(Material.FIRE_CORAL_FAN, 28);
+        MATERIAL_MAP.put(Material.FIRE_CORAL_WALL_FAN, 28);
         MATERIAL_MAP.put(Material.BRICK_WALL, 28);
         MATERIAL_MAP.put(Material.SHROOMLIGHT, 28);
         MATERIAL_MAP.put(Material.RED_CANDLE, 28);
@@ -898,9 +938,11 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.BASALT, 29);
         MATERIAL_MAP.put(Material.POLISHED_BASALT, 29);
         MATERIAL_MAP.put(Material.BLACK_STAINED_GLASS, 29);
+        MATERIAL_MAP.put(Material.END_PORTAL, 29);
         MATERIAL_MAP.put(Material.DRAGON_EGG, 29);
         MATERIAL_MAP.put(Material.BLACK_CARPET, 29);
         MATERIAL_MAP.put(Material.COAL_BLOCK, 29);
+        MATERIAL_MAP.put(Material.END_GATEWAY, 29);
         MATERIAL_MAP.put(Material.BLACK_SHULKER_BOX, 29);
         MATERIAL_MAP.put(Material.BLACK_GLAZED_TERRACOTTA, 29);
         MATERIAL_MAP.put(Material.BLACK_CONCRETE, 29);
@@ -999,6 +1041,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.CHERRY_FENCE, 36);
         MATERIAL_MAP.put(Material.CHERRY_DOOR, 36);
         MATERIAL_MAP.put(Material.CALCITE, 36);
+        MATERIAL_MAP.put(Material.REDSTONE_LAMP, 37);
         MATERIAL_MAP.put(Material.ORANGE_TERRACOTTA, 37);
         MATERIAL_MAP.put(Material.MAGENTA_TERRACOTTA, 38);
         MATERIAL_MAP.put(Material.LIGHT_BLUE_TERRACOTTA, 39);
@@ -1055,6 +1098,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.BROWN_TERRACOTTA, 48);
         MATERIAL_MAP.put(Material.POINTED_DRIPSTONE, 48);
         MATERIAL_MAP.put(Material.DRIPSTONE_BLOCK, 48);
+        MATERIAL_MAP.put(Material.PALE_OAK_LEAVES, 49);
         MATERIAL_MAP.put(Material.GREEN_TERRACOTTA, 49);
         MATERIAL_MAP.put(Material.RED_TERRACOTTA, 50);
         MATERIAL_MAP.put(Material.DECORATED_POT, 50);
