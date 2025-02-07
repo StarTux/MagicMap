@@ -250,6 +250,8 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.BLACK_CANDLE_CAKE, 0);
         MATERIAL_MAP.put(Material.POTTED_AZALEA_BUSH, 0);
         MATERIAL_MAP.put(Material.POTTED_FLOWERING_AZALEA_BUSH, 0);
+        MATERIAL_MAP.put(Material.POTTED_OPEN_EYEBLOSSOM, 0);
+        MATERIAL_MAP.put(Material.POTTED_CLOSED_EYEBLOSSOM, 0);
         MATERIAL_MAP.put(Material.GRASS_BLOCK, 1);
         MATERIAL_MAP.put(Material.SLIME_BLOCK, 1);
         MATERIAL_MAP.put(Material.BIRCH_PLANKS, 2);
@@ -664,6 +666,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.WAXED_COPPER_BULB, 15);
         MATERIAL_MAP.put(Material.LIGHTNING_ROD, 15);
         MATERIAL_MAP.put(Material.RAW_COPPER_BLOCK, 15);
+        MATERIAL_MAP.put(Material.OPEN_EYEBLOSSOM, 15);
         MATERIAL_MAP.put(Material.MAGENTA_BED, 16);
         MATERIAL_MAP.put(Material.MAGENTA_WOOL, 16);
         MATERIAL_MAP.put(Material.MAGENTA_STAINED_GLASS, 16);
@@ -1041,6 +1044,13 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.CHERRY_FENCE, 36);
         MATERIAL_MAP.put(Material.CHERRY_DOOR, 36);
         MATERIAL_MAP.put(Material.CALCITE, 36);
+        MATERIAL_MAP.put(Material.RESIN_CLUMP, 37);
+        MATERIAL_MAP.put(Material.RESIN_BLOCK, 37);
+        MATERIAL_MAP.put(Material.RESIN_BRICKS, 37);
+        MATERIAL_MAP.put(Material.RESIN_BRICK_STAIRS, 37);
+        MATERIAL_MAP.put(Material.RESIN_BRICK_SLAB, 37);
+        MATERIAL_MAP.put(Material.RESIN_BRICK_WALL, 37);
+        MATERIAL_MAP.put(Material.CHISELED_RESIN_BRICKS, 37);
         MATERIAL_MAP.put(Material.REDSTONE_LAMP, 37);
         MATERIAL_MAP.put(Material.ORANGE_TERRACOTTA, 37);
         MATERIAL_MAP.put(Material.MAGENTA_TERRACOTTA, 38);
@@ -1100,6 +1110,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.DRIPSTONE_BLOCK, 48);
         MATERIAL_MAP.put(Material.PALE_OAK_LEAVES, 49);
         MATERIAL_MAP.put(Material.GREEN_TERRACOTTA, 49);
+        MATERIAL_MAP.put(Material.CLOSED_EYEBLOSSOM, 49);
         MATERIAL_MAP.put(Material.RED_TERRACOTTA, 50);
         MATERIAL_MAP.put(Material.DECORATED_POT, 50);
         MATERIAL_MAP.put(Material.BLACK_TERRACOTTA, 51);
