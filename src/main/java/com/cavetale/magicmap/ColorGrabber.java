@@ -8,15 +8,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import lombok.Value;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 
 final class ColorGrabber {
     private ColorGrabber() { }
-
-    static String getServerVersion() {
-        return Bukkit.getServer().getClass().getPackage().getName().substring(23);
-    }
 
     static Object getField(Object object, Class<?> type, String name) throws Exception {
         Field field = type.getDeclaredField(name);
@@ -60,11 +55,6 @@ final class ColorGrabber {
      * as a command.
      */
     static void grabMaterials(File output) throws Exception {
-        String ver = getServerVersion();
-        String expectedVersion = "v1_20_R3";
-        if (!ver.equals(expectedVersion)) {
-            MagicMapPlugin.getInstance().getLogger().warning("Using ColorGrabber for " + expectedVersion + " on " + ver);
-        }
         Class<?> blockClass = Class.forName("net.minecraft.world.level.block.Block");
         Class<?> blockBaseClass = Class.forName("net.minecraft.world.level.block.state.BlockBase");
         Class<?> blocksClass = Class.forName("net.minecraft.world.level.block.Blocks");
