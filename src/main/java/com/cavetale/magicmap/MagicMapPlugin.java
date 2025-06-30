@@ -159,7 +159,6 @@ public final class MagicMapPlugin extends JavaPlugin {
         ItemStack item = new ItemStack(Material.FILLED_MAP);
         MapMeta meta = (MapMeta) item.getItemMeta();
         meta.setMapView(mapView);
-        meta.setScaling(false);
         meta.setColor(Color.fromRGB(0xFF00FF));
         meta.displayName(text("Magic Map", LIGHT_PURPLE));
         if (magicMapMytem != null) {
