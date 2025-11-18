@@ -34,9 +34,12 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
         rootNode.addChild("area").denyTabCompletion()
             .description("Render areas")
             .playerCaller(this::area);
-        rootNode.addChild("grab").denyTabCompletion()
+        rootNode.addChild("grabcolors").denyTabCompletion()
             .description("Grab colors")
-            .senderCaller(this::grab);
+            .senderCaller(this::grabColors);
+        rootNode.addChild("grabmaterials").denyTabCompletion()
+            .description("Grab materials")
+            .senderCaller(this::grabMaterials);
         rootNode.addChild("getcolor").denyTabCompletion()
             .description("Get color of current block")
             .playerCaller(this::getColor);
@@ -131,10 +134,21 @@ final class MagicMapCommand extends AbstractCommand<MagicMapPlugin> {
         }
     }
 
-    private void grab(CommandSender sender) {
-        File file = new File(plugin.getDataFolder(), "colors.txt");
+    private void grabMaterials(CommandSender sender) {
+        File file = new File(plugin.getDataFolder(), "materials.txt");
         try {
             ColorGrabber.grabMaterials(file);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new CommandWarn("An error occured. See console");
+        }
+        sender.sendMessage("Materials grabbed, see " + file + "");
+    }
+
+    private void grabColors(CommandSender sender) {
+        File file = new File(plugin.getDataFolder(), "colors.txt");
+        try {
+            ColorGrabber.grabColors(file);
         } catch (Exception e) {
             e.printStackTrace();
             throw new CommandWarn("An error occured. See console");

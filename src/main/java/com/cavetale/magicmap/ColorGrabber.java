@@ -55,26 +55,22 @@ final class ColorGrabber {
      * as a command.
      */
     static void grabMaterials(File output) throws Exception {
-        Class<?> blockClass = Class.forName("net.minecraft.world.level.block.Block");
-        Class<?> blockBaseClass = Class.forName("net.minecraft.world.level.block.state.BlockBase");
         Class<?> blocksClass = Class.forName("net.minecraft.world.level.block.Blocks");
-        Class<?> materialMapColorClass = Class.forName("net.minecraft.world.level.material.MaterialMapColor");
+        Class<?> blockClass = Class.forName("net.minecraft.world.level.block.Block");
+        Class<?> blockBehaviourClass = Class.forName("net.minecraft.world.level.block.state.BlockBehaviour");
+        Class<?> mapColorClass = Class.forName("net.minecraft.world.level.material.MapColor");
         List<ColorEntry> indexList = new ArrayList<>();
         // All fields in Blocks
         for (Field field : getStaticFields(blocksClass, blockClass)) {
             Object block = field.get(null);
-            // BlockBase::w() => MaterialMapColor
-            Object materialMapColor = getter(block, blockBaseClass, "w");
-            // MaterialMapColor.am => int (color id)
-            int colorIndex = (Integer) getField(materialMapColor, materialMapColorClass, "al");
-            // BlockBase::v() => MinecraftKey
-            String key = getter(block, blockBaseClass, "v").toString();
-            final String prefix = "block.minecraft.";
-            if (!key.startsWith(prefix)) {
-                MagicMapPlugin.getInstance().getLogger().warning("Illegal material: " + key);
-                continue;
-            }
-            String mat = key.substring(prefix.length(), key.length());
+            System.out.println("block=" + block);
+            // BlockBehaviour::w() => MapColor
+            Object mapColor = getter(block, blockBehaviourClass, "defaultMapColor");
+            System.out.println("mapColor=" + mapColor);
+            // MapColor.id => int (color id)
+            int colorIndex = (Integer) getField(mapColor, mapColorClass, "id");
+            System.out.println("colorIndex=" + colorIndex);
+            String mat = field.getName();
             try {
                 final Material material = Material.valueOf(mat.toUpperCase());
                 indexList.add(new ColorEntry(colorIndex, material));
@@ -100,23 +96,25 @@ final class ColorGrabber {
     }
 
     /**
-     * This can run as a test case.
+     * This can NOT run as a test case.
      */
-    public static void grabColors() throws Exception {
-        Class<?> materialMapColorClass = Class.forName("net.minecraft.world.level.material.MaterialMapColor");
-        for (Field field : getStaticFields(materialMapColorClass, materialMapColorClass)) {
-            Object color = field.get(null);
-            int index = (Integer) getField(color, materialMapColorClass, "al");
-            int hex = (Integer) getField(color, materialMapColorClass, "ak");
-            System.out.println("COLOR_" + index
-                               + "(" + index
-                               + ", 0x" + Integer.toHexString(brightness(hex, 180))
-                               + ", 0x" + Integer.toHexString(brightness(hex, 220))
-                               + ", 0x" + Integer.toHexString(brightness(hex, 255))
-                               + ", 0x" + Integer.toHexString(brightness(hex, 135))
-                               + "),");
-            if (index != 0) {
-                assert (0xFF000000 | hex) == brightness(hex, 255);
+    public static void grabColors(File output) throws Exception {
+        Class<?> materialMapColorClass = Class.forName("net.minecraft.world.level.material.MapColor");
+        try (java.io.PrintStream out = new java.io.PrintStream(output)) {
+            for (Field field : getStaticFields(materialMapColorClass, materialMapColorClass)) {
+                Object color = field.get(null);
+                int index = (Integer) getField(color, materialMapColorClass, "al");
+                int hex = (Integer) getField(color, materialMapColorClass, "ak");
+                out.println("COLOR_" + index
+                            + "(" + index
+                            + ", 0x" + Integer.toHexString(brightness(hex, 180))
+                            + ", 0x" + Integer.toHexString(brightness(hex, 220))
+                            + ", 0x" + Integer.toHexString(brightness(hex, 255))
+                            + ", 0x" + Integer.toHexString(brightness(hex, 135))
+                            + "),");
+                if (index != 0) {
+                    assert (0xFF000000 | hex) == brightness(hex, 255);
+                }
             }
         }
     }
