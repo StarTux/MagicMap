@@ -6,6 +6,7 @@ import com.cavetale.core.connect.Connect;
 import com.cavetale.core.connect.NetworkServer;
 import com.cavetale.core.connect.ServerCategory;
 import com.cavetale.core.connect.ServerGroup;
+import com.cavetale.core.perm.Perm;
 import com.cavetale.core.playercache.PlayerCache;
 import com.cavetale.home.Claim;
 import com.cavetale.home.HomePlugin;
@@ -197,6 +198,9 @@ public final class MagicMapContentDelivery implements ContentDelivery {
         chatBox.setClassNames(List.of("minecraft-chat", "chat-box"));
         for (int chatIndex = Math.max(0, chatHistory.size() - 40); chatIndex < chatHistory.size(); chatIndex += 1) {
             final ChannelChatEvent channelChatEvent = chatHistory.get(chatIndex);
+            if (channelChatEvent.getSender() != null && Perm.get().has(channelChatEvent.getSender(), "magicmap.hidden")) {
+                continue;
+            }
             chatBox.addElement("p", p -> {
                     p.setClassName("minecraft-chat-line");
                     for (var it : ChatClientMessage.eventToHtml(channelChatEvent)) {
