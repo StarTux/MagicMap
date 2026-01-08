@@ -265,6 +265,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.SANDSTONE, 2);
         MATERIAL_MAP.put(Material.CHISELED_SANDSTONE, 2);
         MATERIAL_MAP.put(Material.CUT_SANDSTONE, 2);
+        MATERIAL_MAP.put(Material.BIRCH_SHELF, 2);
         MATERIAL_MAP.put(Material.BIRCH_SIGN, 2);
         MATERIAL_MAP.put(Material.BIRCH_WALL_SIGN, 2);
         MATERIAL_MAP.put(Material.BIRCH_HANGING_SIGN, 2);
@@ -416,6 +417,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.STRIPPED_JUNGLE_LOG, 10);
         MATERIAL_MAP.put(Material.JUNGLE_WOOD, 10);
         MATERIAL_MAP.put(Material.STRIPPED_JUNGLE_WOOD, 10);
+        MATERIAL_MAP.put(Material.JUNGLE_SHELF, 10);
         MATERIAL_MAP.put(Material.FARMLAND, 10);
         MATERIAL_MAP.put(Material.JUNGLE_SIGN, 10);
         MATERIAL_MAP.put(Material.JUNGLE_WALL_SIGN, 10);
@@ -519,18 +521,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.DEAD_BUSH, 13);
         MATERIAL_MAP.put(Material.BOOKSHELF, 13);
         MATERIAL_MAP.put(Material.CHISELED_BOOKSHELF, 13);
-        MATERIAL_MAP.put(Material.ACACIA_SHELF, 13);
-        MATERIAL_MAP.put(Material.BAMBOO_SHELF, 13);
-        MATERIAL_MAP.put(Material.BIRCH_SHELF, 13);
-        MATERIAL_MAP.put(Material.CHERRY_SHELF, 13);
-        MATERIAL_MAP.put(Material.CRIMSON_SHELF, 13);
-        MATERIAL_MAP.put(Material.DARK_OAK_SHELF, 13);
-        MATERIAL_MAP.put(Material.JUNGLE_SHELF, 13);
-        MATERIAL_MAP.put(Material.MANGROVE_SHELF, 13);
         MATERIAL_MAP.put(Material.OAK_SHELF, 13);
-        MATERIAL_MAP.put(Material.PALE_OAK_SHELF, 13);
-        MATERIAL_MAP.put(Material.SPRUCE_SHELF, 13);
-        MATERIAL_MAP.put(Material.WARPED_SHELF, 13);
         MATERIAL_MAP.put(Material.OAK_STAIRS, 13);
         MATERIAL_MAP.put(Material.CHEST, 13);
         MATERIAL_MAP.put(Material.CRAFTING_TABLE, 13);
@@ -595,6 +586,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.PALE_OAK_LOG, 14);
         MATERIAL_MAP.put(Material.STRIPPED_PALE_OAK_LOG, 14);
         MATERIAL_MAP.put(Material.STRIPPED_PALE_OAK_WOOD, 14);
+        MATERIAL_MAP.put(Material.PALE_OAK_SHELF, 14);
         MATERIAL_MAP.put(Material.PALE_OAK_SIGN, 14);
         MATERIAL_MAP.put(Material.PALE_OAK_WALL_SIGN, 14);
         MATERIAL_MAP.put(Material.PALE_OAK_HANGING_SIGN, 14);
@@ -629,6 +621,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.STRIPPED_ACACIA_WOOD, 15);
         MATERIAL_MAP.put(Material.ORANGE_BED, 15);
         MATERIAL_MAP.put(Material.ORANGE_WOOL, 15);
+        MATERIAL_MAP.put(Material.ACACIA_SHELF, 15);
         MATERIAL_MAP.put(Material.CREAKING_HEART, 15);
         MATERIAL_MAP.put(Material.ACACIA_SIGN, 15);
         MATERIAL_MAP.put(Material.ACACIA_WALL_SIGN, 15);
@@ -723,6 +716,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.SHORT_DRY_GRASS, 18);
         MATERIAL_MAP.put(Material.TALL_DRY_GRASS, 18);
         MATERIAL_MAP.put(Material.YELLOW_WOOL, 18);
+        MATERIAL_MAP.put(Material.BAMBOO_SHELF, 18);
         MATERIAL_MAP.put(Material.BAMBOO_SIGN, 18);
         MATERIAL_MAP.put(Material.BAMBOO_WALL_SIGN, 18);
         MATERIAL_MAP.put(Material.BAMBOO_HANGING_SIGN, 18);
@@ -887,6 +881,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.BROWN_BED, 26);
         MATERIAL_MAP.put(Material.BROWN_WOOL, 26);
         MATERIAL_MAP.put(Material.BROWN_MUSHROOM, 26);
+        MATERIAL_MAP.put(Material.DARK_OAK_SHELF, 26);
         MATERIAL_MAP.put(Material.DARK_OAK_SIGN, 26);
         MATERIAL_MAP.put(Material.DARK_OAK_WALL_SIGN, 26);
         MATERIAL_MAP.put(Material.DARK_OAK_HANGING_SIGN, 26);
@@ -933,6 +928,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.RED_WOOL, 28);
         MATERIAL_MAP.put(Material.RED_MUSHROOM, 28);
         MATERIAL_MAP.put(Material.BRICKS, 28);
+        MATERIAL_MAP.put(Material.MANGROVE_SHELF, 28);
         MATERIAL_MAP.put(Material.MANGROVE_SIGN, 28);
         MATERIAL_MAP.put(Material.MANGROVE_WALL_SIGN, 28);
         MATERIAL_MAP.put(Material.MANGROVE_HANGING_SIGN, 28);
@@ -1028,6 +1024,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.STRIPPED_SPRUCE_LOG, 34);
         MATERIAL_MAP.put(Material.SPRUCE_WOOD, 34);
         MATERIAL_MAP.put(Material.STRIPPED_SPRUCE_WOOD, 34);
+        MATERIAL_MAP.put(Material.SPRUCE_SHELF, 34);
         MATERIAL_MAP.put(Material.SPRUCE_SIGN, 34);
         MATERIAL_MAP.put(Material.SPRUCE_WALL_SIGN, 34);
         MATERIAL_MAP.put(Material.SPRUCE_HANGING_SIGN, 34);
@@ -1062,6 +1059,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.CHERRY_PLANKS, 36);
         MATERIAL_MAP.put(Material.CHERRY_LOG, 36);
         MATERIAL_MAP.put(Material.STRIPPED_CHERRY_LOG, 36);
+        MATERIAL_MAP.put(Material.CHERRY_SHELF, 36);
         MATERIAL_MAP.put(Material.CHERRY_SIGN, 36);
         MATERIAL_MAP.put(Material.CHERRY_WALL_SIGN, 36);
         MATERIAL_MAP.put(Material.CHERRY_PRESSURE_PLATE, 36);
@@ -1148,6 +1146,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.DECORATED_POT, 50);
         MATERIAL_MAP.put(Material.BLACK_TERRACOTTA, 51);
         MATERIAL_MAP.put(Material.CRIMSON_NYLIUM, 52);
+        MATERIAL_MAP.put(Material.CRIMSON_SHELF, 53);
         MATERIAL_MAP.put(Material.CRIMSON_HANGING_SIGN, 53);
         MATERIAL_MAP.put(Material.CRIMSON_WALL_HANGING_SIGN, 53);
         MATERIAL_MAP.put(Material.CRIMSON_STEM, 53);
@@ -1189,6 +1188,7 @@ public enum ColorIndex {
         MATERIAL_MAP.put(Material.WAXED_OXIDIZED_COPPER_GOLEM_STATUE, 55);
         MATERIAL_MAP.put(Material.OXIDIZED_LIGHTNING_ROD, 55);
         MATERIAL_MAP.put(Material.WAXED_OXIDIZED_LIGHTNING_ROD, 55);
+        MATERIAL_MAP.put(Material.WARPED_SHELF, 56);
         MATERIAL_MAP.put(Material.WARPED_HANGING_SIGN, 56);
         MATERIAL_MAP.put(Material.WARPED_WALL_HANGING_SIGN, 56);
         MATERIAL_MAP.put(Material.WARPED_STEM, 56);
