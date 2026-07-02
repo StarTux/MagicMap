@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.logging.Level;
 import lombok.Getter;
@@ -88,7 +89,15 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             plugin().getLogger().warning("[ContentDelivery] Not a server folder: " + serverFolder);
             return;
         }
-        final Path worldsFolder = serverFolder.resolve("worlds");
+        final Properties serverProperties = new Properties();
+        try {
+            serverProperties.load(Files.newInputStream(serverFolder.resolve("server.properties")));
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+        final String levelName = serverProperties.getProperty("level-name", "world");
+        System.out.println("LEVEL NAME " + server + " " + levelName);
+        final Path worldsFolder = serverFolder.resolve("worlds", levelName, "dimensions", "minecraft");
         if (!Files.isDirectory(worldsFolder)) {
             plugin().getLogger().warning("[ContentDelivery] Not a worlds folder: " + worldsFolder);
             return;
@@ -124,7 +133,12 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             case ZWEI:
             case DREI:
             case VIER:
-                mapName = "" + worldFolder.getFileName();
+                switch (worldFolder.getFileName().toString()) {
+                case "overworld": mapName = levelName; break;
+                case "the_nether": mapName = levelName + "_nether"; break;
+                case "the_end": mapName = levelName + "_the_end"; break;
+                default: mapName = "" + worldFolder.getFileName(); break;
+                }
                 break;
             default:
                 mapName = server.name().toLowerCase().replace("_", "") + "." + worldFolder.getFileName();
