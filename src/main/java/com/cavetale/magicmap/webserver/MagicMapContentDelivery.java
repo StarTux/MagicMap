@@ -96,7 +96,6 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             ioe.printStackTrace();
         }
         final String levelName = serverProperties.getProperty("level-name", "world");
-        System.out.println("LEVEL NAME " + server + " " + levelName);
         final Path worldsFolder = serverFolder.resolve("worlds", levelName, "dimensions", "minecraft");
         if (!Files.isDirectory(worldsFolder)) {
             plugin().getLogger().warning("[ContentDelivery] Not a worlds folder: " + worldsFolder);
