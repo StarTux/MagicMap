@@ -114,9 +114,6 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             if (!Files.isDirectory(magicMapFolder)) {
                 continue;
             }
-            plugin().getLogger().info("Creating map " + server + " " + worldFolder.getFileName().toString() + " " + worldFolder.toFile());
-            WorldFileCache worldFileCache = new WorldFileCache(server, worldFolder.getFileName().toString(), worldFolder.toFile());
-            worldFileCache.enableWebserver();
             final String mapName;
             switch (server) {
             case BETA: {
@@ -142,6 +139,8 @@ public final class MagicMapContentDelivery implements ContentDelivery {
             default:
                 mapName = server.name().toLowerCase().replace("_", "") + "." + worldFolder.getFileName();
             }
+            WorldFileCache worldFileCache = new WorldFileCache(server, mapName, worldFolder.toFile());
+            worldFileCache.enableWebserver();
             worldMap.put(mapName, worldFileCache);
             plugin().getLogger().info("[ContentDelivery] Map registered: " + server + " " + mapName + " " + worldFolder);
         }
